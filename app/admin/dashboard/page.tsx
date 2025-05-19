@@ -13,7 +13,7 @@ export default async function AdminDashboardPage() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-2">Simple Admin Page</h2>
           <p className="mb-4">A simple admin page for testing.</p>
-          <Link href="/admin/simple-page" className="text-blue-600 hover:underline">
+          <Link href="/admin/simple" className="text-blue-600 hover:underline">
             View Simple Admin Page
           </Link>
         </div>
