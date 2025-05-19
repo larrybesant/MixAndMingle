@@ -2,8 +2,13 @@
 
 import { createClient } from "@supabase/supabase-js"
 
-export async function createAccount(email: string, name: string, password?: string) {
+export async function createAdminAccount(formData: FormData) {
   try {
+    // Extract form data
+    const email = formData.get("email") as string
+    const name = formData.get("name") as string
+    const password = (formData.get("password") as string) || null
+
     // Validate inputs
     if (!email || !email.includes("@")) {
       return { success: false, message: "Invalid email address" }
@@ -13,12 +18,21 @@ export async function createAccount(email: string, name: string, password?: stri
       return { success: false, message: "Name is required (minimum 2 characters)" }
     }
 
+    // Check for required environment variables
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable")
+      return { success: false, message: "Server configuration error: Missing service role key" }
+    }
+
     // Generate a random password if none provided
     const finalPassword =
-      password || Math.random().toString(36).slice(-8) + Math.random().toString(36).toUpperCase().slice(-4)
+      password ||
+      Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).toUpperCase().slice(-4) +
+        Math.floor(Math.random() * 10)
 
     // Create a Supabase client with admin privileges
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -36,32 +50,38 @@ export async function createAccount(email: string, name: string, password?: stri
       },
     })
 
-    if (userError) throw userError
-
-    if (userData.user) {
-      // Create a profile for the user
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: userData.user.id,
-          full_name: name,
-          email: email,
-          is_beta_tester: true,
-          beta_joined_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ])
-
-      if (profileError) throw profileError
-
-      return {
-        success: true,
-        message: "Account created successfully!",
-        password: password ? undefined : finalPassword,
-      }
+    if (userError) {
+      console.error("Error creating user:", userError)
+      return { success: false, message: userError.message }
     }
 
-    return { success: false, message: "Failed to create user" }
+    if (!userData.user) {
+      return { success: false, message: "Failed to create user" }
+    }
+
+    // Create a profile for the user
+    const { error: profileError } = await supabase.from("profiles").insert([
+      {
+        id: userData.user.id,
+        full_name: name,
+        email: email,
+        is_beta_tester: true,
+        beta_joined_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ])
+
+    if (profileError) {
+      console.error("Error creating profile:", profileError)
+      return { success: false, message: `User created but profile failed: ${profileError.message}` }
+    }
+
+    return {
+      success: true,
+      message: "Account created successfully!",
+      password: password ? undefined : finalPassword,
+    }
   } catch (error: any) {
     console.error("Error creating account:", error)
     return {

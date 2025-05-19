@@ -92,3 +92,36 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-friendly button styles */
+@media (max-width: 640px) {
+  .button,
+  button[class*="Button"],
+  a[class*="Button"] {
+    min-height: 44px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Increase touch target size for form elements */
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
+
+/* Improved focus styles for better accessibility */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* High contrast mode improvements */
+@media (forced-colors: active) {
+  .button,
+  button[class*="Button"],
+  a[class*="Button"] {
+    border: 2px solid currentColor;
+  }
+}
