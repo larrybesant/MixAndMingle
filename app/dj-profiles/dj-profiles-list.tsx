@@ -1,84 +1,85 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import Link from "next/link"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { useRouter } from "next/navigation"
+import { MusicIcon, InstagramIcon, ExternalLinkIcon } from "lucide-react"
+import Image from "next/image"
+
+interface DjProfile {
+  id: string
+  name: string
+  genre: string
+  bio: string
+  profileImage: string
+  socialLinks?: {
+    instagram?: string
+    soundcloud?: string
+    [key: string]: string | undefined
+  }
+}
 
 interface DjProfilesListProps {
-  djProfiles: any[]
+  djProfiles: DjProfile[]
 }
 
 export function DjProfilesList({ djProfiles }: DjProfilesListProps) {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-
-  const checkIfUserHasDjProfile = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      router.push("/signin")
-      return
-    }
-
-    const { data } = await supabase.from("dj_profiles").select("id").eq("id", user.id).single()
-
-    if (data) {
-      router.push("/dj-profile")
-    } else {
-      router.push("/dj-profile/create")
-    }
-  }
-
   if (!djProfiles || djProfiles.length === 0) {
     return (
-      <div className="text-center py-10">
+      <div className="text-center p-12 border border-dashed rounded-lg">
         <h3 className="text-lg font-medium">No DJ profiles found</h3>
-        <p className="text-muted-foreground mt-1">Create your DJ profile to get started</p>
-        <Button className="mt-4" onClick={checkIfUserHasDjProfile}>
-          Create DJ Profile
-        </Button>
+        <p className="text-muted-foreground mt-1">Create your DJ profile to get started.</p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {djProfiles.map((profile) => (
         <Card key={profile.id}>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={profile.profiles?.avatar_url || "/placeholder.svg"} alt={profile.artist_name} />
-                <AvatarFallback>{profile.artist_name.substring(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <div className="relative h-16 w-16 rounded-full overflow-hidden">
+                <Image
+                  src={profile.profileImage || "/placeholder.svg"}
+                  alt={profile.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
               <div>
-                <CardTitle className="text-xl">{profile.artist_name}</CardTitle>
-                <CardDescription>
-                  {profile.experience_years} {profile.experience_years === 1 ? "year" : "years"} of experience
+                <CardTitle>{profile.name}</CardTitle>
+                <CardDescription className="flex items-center">
+                  <MusicIcon className="mr-1 h-3 w-3" />
+                  {profile.genre}
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {profile.bio && <p className="text-sm text-muted-foreground line-clamp-2">{profile.bio}</p>}
-            <div className="flex flex-wrap gap-1 mt-2">
-              {profile.genre &&
-                profile.genre.map((genre: string) => (
-                  <Badge key={genre} variant="outline">
-                    {genre}
-                  </Badge>
-                ))}
-            </div>
+          <CardContent>
+            <p className="text-sm">{profile.bio}</p>
           </CardContent>
-          <CardFooter className="pt-3">
-            <Button variant="outline" className="w-full" asChild>
-              <Link href={`/dj-profiles/${profile.id}`}>View Profile</Link>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" className="w-full">
+              View Profile
             </Button>
+            {profile.socialLinks && (
+              <div className="flex gap-2 ml-2">
+                {profile.socialLinks.instagram && (
+                  <Button size="icon" variant="ghost" asChild>
+                    <a href={profile.socialLinks.instagram} target="_blank" rel="noopener noreferrer">
+                      <InstagramIcon className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+                {profile.socialLinks.soundcloud && (
+                  <Button size="icon" variant="ghost" asChild>
+                    <a href={profile.socialLinks.soundcloud} target="_blank" rel="noopener noreferrer">
+                      <ExternalLinkIcon className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+            )}
           </CardFooter>
         </Card>
       ))}

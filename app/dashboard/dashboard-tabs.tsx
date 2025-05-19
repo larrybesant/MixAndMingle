@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast"
 import { EventsList } from "../events/events-list"
 import { DjProfilesList } from "../dj-profiles/dj-profiles-list"
 import { LiveStreamsList } from "../live-streams/live-streams-list"
-import { djProfiles } from "@/data/djProfiles" // Assuming djProfiles is imported from a data file
+import { djProfiles } from "../data/djProfiles" // Updated import path
 
 interface DashboardTabsProps {
   profile: any
@@ -16,6 +16,7 @@ interface DashboardTabsProps {
   streams: any[]
 }
 
+// Default export
 export default function DashboardTabs({ profile, events, djProfile, streams }: DashboardTabsProps) {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("events")
@@ -23,7 +24,7 @@ export default function DashboardTabs({ profile, events, djProfile, streams }: D
   const [isCreatingDjProfile, setIsCreatingDjProfile] = useState(false)
   const [isCreatingStream, setIsCreatingStream] = useState(false)
 
-  const handleCreateEvent = async (formData) => {
+  const handleCreateEvent = async (formData: any) => {
     try {
       const result = await createEvent(formData)
       if (result.success) {
@@ -35,7 +36,7 @@ export default function DashboardTabs({ profile, events, djProfile, streams }: D
       } else {
         toast({
           title: "Error",
-          description: result.message,
+          description: result.message || "An error occurred",
           variant: "destructive",
         })
       }
@@ -48,7 +49,7 @@ export default function DashboardTabs({ profile, events, djProfile, streams }: D
     }
   }
 
-  const handleCreateDjProfile = async (formData) => {
+  const handleCreateDjProfile = async (formData: any) => {
     try {
       const result = await createDjProfile(formData)
       if (result.success) {
@@ -60,7 +61,7 @@ export default function DashboardTabs({ profile, events, djProfile, streams }: D
       } else {
         toast({
           title: "Error",
-          description: result.message,
+          description: result.message || "An error occurred",
           variant: "destructive",
         })
       }
@@ -73,7 +74,7 @@ export default function DashboardTabs({ profile, events, djProfile, streams }: D
     }
   }
 
-  const handleCreateLiveStream = async (formData) => {
+  const handleCreateLiveStream = async (formData: any) => {
     try {
       const result = await createLiveStream(formData)
       if (result.success) {
@@ -85,7 +86,7 @@ export default function DashboardTabs({ profile, events, djProfile, streams }: D
       } else {
         toast({
           title: "Error",
-          description: result.message,
+          description: result.message || "An error occurred",
           variant: "destructive",
         })
       }
@@ -117,3 +118,6 @@ export default function DashboardTabs({ profile, events, djProfile, streams }: D
     </Tabs>
   )
 }
+
+// Named export
+export { DashboardTabs }
