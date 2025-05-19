@@ -3,354 +3,171 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
-      categories: {
+      interests: {
         Row: {
-          name: string | null
-          description: string | null
-          id: number
-          created_at: string | null
+          category: string | null
+          created_at: string
+          id: string
+          name: string
         }
         Insert: {
-          name?: string | null
-          description?: string | null
-          id?: number
-          created_at?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          name: string
         }
         Update: {
-          name?: string | null
-          description?: string | null
-          id?: number
-          created_at?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
-      chat_messages: {
+      match_chat_messages: {
         Row: {
-          created_at: string | null
-          content: string | null
-          sender_id: string | null
-          room_id: string | null
-          id: string
-        }
-        Insert: {
-          created_at?: string | null
-          content?: string | null
-          sender_id?: string | null
-          room_id?: string | null
-          id?: string
-        }
-        Update: {
-          created_at?: string | null
-          content?: string | null
-          sender_id?: string | null
-          room_id?: string | null
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_room_id_fkey"
-            columns: ["room_id"]
-            referencedRelation: "chat_rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_rooms: {
-        Row: {
-          event_id: string | null
-          name: string | null
-          updated_at: string | null
-          created_at: string | null
-          id: string
-        }
-        Insert: {
-          event_id?: string | null
-          name?: string | null
-          updated_at?: string | null
-          created_at?: string | null
-          id?: string
-        }
-        Update: {
-          event_id?: string | null
-          name?: string | null
-          updated_at?: string | null
-          created_at?: string | null
-          id?: string
-        }
-        Relationships: []
-      }
-      comments: {
-        Row: {
-          created_at: string | null
-          updated_at: string | null
-          event_id: string | null
-          id: string
-          content: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          updated_at?: string | null
-          event_id?: string | null
-          id?: string
-          content?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          updated_at?: string | null
-          event_id?: string | null
-          id?: string
-          content?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      direct_messages: {
-        Row: {
-          created_at: string | null
-          is_read: boolean | null
-          recipient_id: string | null
-          sender_id: string | null
-          id: string
-          content: string | null
-          attachment_url: string | null
           attachment_type: string | null
-          is_voice_message: boolean | null
+          attachment_url: string | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            referencedRelation: "match_chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_chat_rooms: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          match_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          match_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          match_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_chat_rooms_match_id_fkey"
+            columns: ["match_id"]
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          match_score: number
+          status: string
           updated_at: string | null
+          user1_id: string
+          user2_id: string
         }
         Insert: {
-          created_at?: string | null
-          is_read?: boolean | null
-          recipient_id?: string | null
-          sender_id?: string | null
+          created_at?: string
           id?: string
-          content?: string | null
-          attachment_url?: string | null
-          attachment_type?: string | null
-          is_voice_message?: boolean | null
+          match_score: number
+          status?: string
           updated_at?: string | null
+          user1_id: string
+          user2_id: string
         }
         Update: {
-          created_at?: string | null
-          is_read?: boolean | null
-          recipient_id?: string | null
-          sender_id?: string | null
+          created_at?: string
           id?: string
-          content?: string | null
-          attachment_url?: string | null
-          attachment_type?: string | null
-          is_voice_message?: boolean | null
+          match_score?: number
+          status?: string
           updated_at?: string | null
+          user1_id?: string
+          user2_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "direct_messages_recipient_id_fkey"
-            columns: ["recipient_id"]
+            foreignKeyName: "matches_user1_id_fkey"
+            columns: ["user1_id"]
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "direct_messages_sender_id_fkey"
-            columns: ["sender_id"]
+            foreignKeyName: "matches_user2_id_fkey"
+            columns: ["user2_id"]
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dj_profiles: {
-        Row: {
-          id: string
-          artist_name: string
-          bio: string | null
-          genre: string[]
-          experience_years: number
-          hourly_rate: number
-          portfolio_links: string[]
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          artist_name: string
-          bio?: string | null
-          genre?: string[]
-          experience_years?: number
-          hourly_rate?: number
-          portfolio_links?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          artist_name?: string
-          bio?: string | null
-          genre?: string[]
-          experience_years?: number
-          hourly_rate?: number
-          portfolio_links?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dj_profiles_id_fkey"
-            columns: ["id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      events: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          location: string
-          start_time: string
-          end_time: string
-          creator_id: string
-          capacity: number
-          dj_id: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          location: string
-          start_time: string
-          end_time: string
-          creator_id: string
-          capacity?: number
-          dj_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          location?: string
-          start_time?: string
-          end_time?: string
-          creator_id?: string
-          capacity?: number
-          dj_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "events_creator_id_fkey"
-            columns: ["creator_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      live_streams: {
-        Row: {
-          actual_start: string | null
-          created_at: string | null
-          description: string | null
-          dj_id: string | null
-          ended_at: string | null
-          event_id: string | null
-          id: string
-          is_public: boolean | null
-          scheduled_start: string | null
-          status: string | null
-          stream_key: string | null
-          thumbnail_url: string | null
-          title: string | null
-          viewer_count: number | null
-        }
-        Insert: {
-          actual_start?: string | null
-          created_at?: string | null
-          description?: string | null
-          dj_id?: string | null
-          ended_at?: string | null
-          event_id?: string | null
-          id?: string
-          is_public?: boolean | null
-          scheduled_start?: string | null
-          status?: string | null
-          stream_key: string | null
-          thumbnail_url?: string | null
-          title?: string | null
-          viewer_count?: number | null
-        }
-        Update: {
-          actual_start?: string | null
-          created_at?: string | null
-          description?: string | null
-          dj_id?: string | null
-          ended_at?: string | null
-          event_id?: string | null
-          id?: string
-          is_public?: boolean | null
-          scheduled_start?: string | null
-          status?: string | null
-          stream_key?: string | null
-          thumbnail_url?: string | null
-          title?: string | null
-          viewer_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "live_streams_dj_id_fkey"
-            columns: ["dj_id"]
-            referencedRelation: "dj_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "live_streams_event_id_fkey"
-            columns: ["event_id"]
-            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
       }
       profiles: {
         Row: {
-          id: string
-          first_name: string
-          last_name: string
-          email: string
+          avatar_url: string | null
+          bio: string | null
           created_at: string
-          updated_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          location: string | null
+          updated_at: string | null
         }
         Insert: {
-          id: string
-          first_name: string
-          last_name: string
-          email: string
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
-          updated_at?: string
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          location?: string | null
+          updated_at?: string | null
         }
         Update: {
-          id?: string
-          first_name?: string
-          last_name?: string
-          email?: string
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
-          updated_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          location?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -361,240 +178,126 @@ export interface Database {
           },
         ]
       }
-      song_requests: {
+      user_interests: {
         Row: {
-          artist: string | null
-          content: string | null
-          created_at: string | null
-          id: string
-          song_title: string | null
-          status: string | null
-          stream_id: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          artist?: string | null
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          song_title?: string | null
-          status?: string | null
-          stream_id?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          artist?: string | null
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          song_title?: string | null
-          status?: string | null
-          stream_id?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "song_requests_stream_id_fkey"
-            columns: ["stream_id"]
-            referencedRelation: "live_streams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "song_requests_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stream_chat_messages: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          id: string
-          stream_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          stream_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          stream_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stream_chat_messages_stream_id_fkey"
-            columns: ["stream_id"]
-            referencedRelation: "live_streams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stream_chat_messages_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stream_viewers: {
-        Row: {
-          joined_at: string | null
-          left_at: string | null
-          stream_id: string | null
-          user_id: string | null
-          id: string
-        }
-        Insert: {
-          joined_at?: string | null
-          left_at?: string | null
-          stream_id?: string | null
-          user_id?: string | null
-          id?: string
-        }
-        Update: {
-          joined_at?: string | null
-          left_at?: string | null
-          stream_id?: string | null
-          user_id?: string | null
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stream_viewers_stream_id_fkey"
-            columns: ["stream_id"]
-            referencedRelation: "live_streams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stream_viewers_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      webrtc_signals: {
-        Row: {
-          created_at: string | null
-          from_peer_id: string
-          id: string
-          signal_data: Json | null
-          stream_id: string
-          to_peer_id: string
-        }
-        Insert: {
-          from_peer_id: string
-          id?: string
-          signal_data: Json | null
-          stream_id: string
-          to_peer_id: string
-        }
-        Update: {
-          from_peer_id?: string
-          id?: string
-          signal_data?: Json | null
-          stream_id?: string
-          to_peer_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "webrtc_signals_stream_id_fkey"
-            columns: ["stream_id"]
-            referencedRelation: "live_streams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      beta_codes: {
-        Row: {
-          id: string
-          code: string
-          description: string | null
-          max_uses: number | null
-          uses: number
           created_at: string
-          expires_at: string | null
-          created_by: string | null
+          id: string
+          interest: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          code: string
-          description?: string | null
-          max_uses?: number | null
-          uses?: number
           created_at?: string
-          expires_at?: string | null
-          created_by?: string | null
+          id?: string
+          interest: string
+          user_id: string
         }
         Update: {
-          id?: string
-          code?: string
-          description?: string | null
-          max_uses?: number | null
-          uses?: number
           created_at?: string
-          expires_at?: string | null
-          created_by?: string | null
+          id?: string
+          interest?: string
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_interests_interest_fkey"
+            columns: ["interest"]
+            referencedRelation: "interests"
+            referencedColumns: ["name"]
+          },
+          {
+            foreignKeyName: "user_interests_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_locations: {
+        Row: {
+          city: string | null
+          country: string | null
+          id: string
+          last_updated: string | null
+          latitude: number | null
+          longitude: number | null
+          state: string | null
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          id?: string
+          last_updated?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          state?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          id?: string
+          last_updated?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          state?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_locations_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          distance_radius: number | null
+          gender_preference: string | null
+          id: string
+          max_age: number | null
+          min_age: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distance_radius?: number | null
+          gender_preference?: string | null
+          id?: string
+          max_age?: number | null
+          min_age?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distance_radius?: number | null
+          gender_preference?: string | null
+          id?: string
+          max_age?: number | null
+          min_age?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      create_decrement_viewer_count_function: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      create_increment_viewer_count_function: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      create_webrtc_signals_table: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      decrement_viewer_count: {
-        Args: { stream_id: string }
-        Returns: void
-      }
-      increment_viewer_count: {
-        Args: { stream_id: string }
-        Returns: void
-      }
-      get_user_upcoming_events: {
-        Args: { user_id: string }
-        Returns: {
-          id: string
-          title: string
-          location: string
-          start_time: string
-          end_time: string
-          rsvp_status: string
-        }[]
-      }
-      get_dj_events: {
-        Args: { dj_id: string }
-        Returns: {
-          id: string
-          title: string
-          location: string
-          start_time: string
-          end_time: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
