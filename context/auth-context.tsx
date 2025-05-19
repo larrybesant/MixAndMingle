@@ -7,11 +7,11 @@ import type { User } from "@supabase/supabase-js"
 
 type Profile = {
   id: string
-  first_name: string
-  last_name: string
-  email: string
-  created_at: string
-  updated_at: string
+  first_name?: string
+  last_name?: string
+  email?: string
+  created_at?: string
+  updated_at?: string
   [key: string]: any
 }
 

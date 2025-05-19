@@ -1,21 +1,39 @@
-import { redirect } from "next/navigation"
-import { AdminDashboardClient } from "./admin-dashboard-client"
-import { getCurrentUser, checkIsAdmin } from "@/lib/supabase/server-actions"
+import { requireAdmin } from "@/lib/auth/server-auth"
+import Link from "next/link"
 
 export default async function AdminDashboardPage() {
-  // Server-side authentication and authorization
-  const user = await getCurrentUser()
+  // This will redirect if not admin
+  await requireAdmin()
 
-  if (!user) {
-    redirect("/signin?redirect=/admin/dashboard")
-  }
+  return (
+    <div className="container py-10">
+      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
 
-  const isAdmin = await checkIsAdmin(user.id)
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-2">Simple Admin Page</h2>
+          <p className="mb-4">A simple admin page for testing.</p>
+          <Link href="/admin/simple-page" className="text-blue-600 hover:underline">
+            View Simple Admin Page
+          </Link>
+        </div>
 
-  if (!isAdmin) {
-    redirect("/dashboard")
-  }
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-2">Client Test</h2>
+          <p className="mb-4">A client component test page.</p>
+          <Link href="/client-test" className="text-blue-600 hover:underline">
+            View Client Test
+          </Link>
+        </div>
 
-  // Pass data to client component
-  return <AdminDashboardClient userId={user.id} />
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-2">Test Page</h2>
+          <p className="mb-4">A simple test page.</p>
+          <Link href="/test-page" className="text-blue-600 hover:underline">
+            View Test Page
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
 }

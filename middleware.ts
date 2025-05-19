@@ -43,9 +43,6 @@ export async function middleware(req: NextRequest) {
     try {
       const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", session.user.id).single()
 
-      // For debugging purposes, log the admin status
-      console.log("Admin check for user:", session.user.id, "is_admin:", profile?.is_admin)
-
       if (!profile?.is_admin) {
         // Redirect non-admin users to dashboard
         const redirectUrl = req.nextUrl.clone()
@@ -80,7 +77,6 @@ export const config = {
     "/profile/:path*",
     "/settings/:path*",
     "/admin/:path*",
-    "/admin-test",
     "/signin",
     "/signup",
     "/my-events/:path*",
