@@ -4,18 +4,13 @@ import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Mic, MicOff, Video, VideoOff, ScreenShare, StopCircle } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Mic, MicOff, Video, VideoOff, ScreenShare, StopCircle, Settings, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import {
-  getUserMedia,
-  getDisplayMedia,
-  stopMediaStream,
-  createBroadcasterPeer,
-  sendSignal,
-  subscribeToSignals,
-  type SignalData,
-} from "@/services/webrtc-service"
-import { startStream, endStream, getStreamViewers } from "@/services/stream-service"
+import { startStream, endStream } from "@/services/stream-service"
 
 interface StreamBroadcasterProps {
   streamId: string
@@ -29,225 +24,259 @@ export function StreamBroadcaster({ streamId, djId }: StreamBroadcasterProps) {
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoEnabled, setIsVideoEnabled] = useState(true)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
-  const [viewers, setViewers] = useState<any[]>([])
+  const [isRecording, setIsRecording] = useState(false)
   const [viewerCount, setViewerCount] = useState(0)
+  const [audioLevel, setAudioLevel] = useState(100)
+  const [showSettings, setShowSettings] = useState(false)
+  const [selectedVideoDevice, setSelectedVideoDevice] = useState<string>("")
+  const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>("")
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([])
 
   const localVideoRef = useRef<HTMLVideoElement>(null)
-  const localStreamRef = useRef<MediaStream | null>(null)
+  const mediaStreamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
-  const peerConnectionsRef = useRef<{ [userId: string]: any }>({})
-  const signalUnsubscribeRef = useRef<() => void>(() => {})
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recordedChunksRef = useRef<Blob[]>([])
+  const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({})
+  const audioAnalyserRef = useRef<AnalyserNode | null>(null)
+  const audioLevelIntervalRef = useRef<number | null>(null)
 
-  // Initialize local stream
+  // Initialize media devices
   useEffect(() => {
-    const initLocalStream = async () => {
-      const stream = await getUserMedia(isVideoEnabled, !isMuted)
-      if (stream) {
-        localStreamRef.current = stream
+    const getMediaDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const videoInputs = devices.filter((device) => device.kind === "videoinput")
+        const audioInputs = devices.filter((device) => device.kind === "audioinput")
+
+        setVideoDevices(videoInputs)
+        setAudioDevices(audioInputs)
+
+        if (videoInputs.length > 0 && !selectedVideoDevice) {
+          setSelectedVideoDevice(videoInputs[0].deviceId)
+        }
+
+        if (audioInputs.length > 0 && !selectedAudioDevice) {
+          setSelectedAudioDevice(audioInputs[0].deviceId)
+        }
+      } catch (error) {
+        console.error("Error getting media devices:", error)
+        toast({
+          title: "Error",
+          description: "Could not access media devices",
+          variant: "destructive",
+        })
+      }
+    }
+
+    getMediaDevices()
+
+    // Listen for device changes
+    navigator.mediaDevices.addEventListener("devicechange", getMediaDevices)
+
+    return () => {
+      navigator.mediaDevices.removeEventListener("devicechange", getMediaDevices)
+    }
+  }, [toast])
+
+  // Initialize media stream
+  useEffect(() => {
+    const initMediaStream = async () => {
+      try {
+        if (mediaStreamRef.current) {
+          // Stop all tracks in the current stream
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop())
+        }
+
+        const constraints: MediaStreamConstraints = {
+          audio: selectedAudioDevice ? { deviceId: { exact: selectedAudioDevice } } : true,
+          video: selectedVideoDevice ? { deviceId: { exact: selectedVideoDevice } } : true,
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        mediaStreamRef.current = stream
+
+        // Set up audio analyzer for volume meter
+        if (stream.getAudioTracks().length > 0) {
+          const audioContext = new AudioContext()
+          const audioSource = audioContext.createMediaStreamSource(stream)
+          const analyser = audioContext.createAnalyser()
+          analyser.fftSize = 256
+          audioSource.connect(analyser)
+          audioAnalyserRef.current = analyser
+
+          // Start monitoring audio level
+          startAudioLevelMonitoring()
+        }
+
+        // Apply initial mute state
+        stream.getAudioTracks().forEach((track) => {
+          track.enabled = !isMuted
+        })
+
+        // Apply initial video state
+        stream.getVideoTracks().forEach((track) => {
+          track.enabled = isVideoEnabled
+        })
+
+        // Set the stream as the source for the video element
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream
         }
-      } else {
+      } catch (error) {
+        console.error("Error initializing media stream:", error)
         toast({
-          title: "Media Error",
+          title: "Error",
           description: "Could not access camera or microphone",
           variant: "destructive",
         })
       }
     }
 
-    initLocalStream()
+    if (selectedVideoDevice || selectedAudioDevice) {
+      initMediaStream()
+    }
 
     return () => {
-      stopMediaStream(localStreamRef.current)
-      stopMediaStream(screenStreamRef.current)
-      Object.values(peerConnectionsRef.current).forEach((peer) => {
-        if (peer) peer.destroy()
-      })
-      signalUnsubscribeRef.current()
-    }
-  }, [])
+      // Clean up
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop())
+      }
 
-  // Subscribe to signals when live
-  useEffect(() => {
-    if (isLive && user) {
-      const unsubscribe = subscribeToSignals(streamId, user.uid, handleIncomingSignal)
-      signalUnsubscribeRef.current = unsubscribe
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((track) => track.stop())
+      }
 
-      // Fetch viewers periodically
-      const interval = setInterval(fetchViewers, 10000)
-      return () => {
-        clearInterval(interval)
-        unsubscribe()
+      if (audioLevelIntervalRef.current) {
+        clearInterval(audioLevelIntervalRef.current)
       }
     }
-  }, [isLive, streamId, user])
+  }, [selectedVideoDevice, selectedAudioDevice, isMuted, isVideoEnabled, toast])
 
-  // Fetch viewers
-  const fetchViewers = async () => {
-    if (!isLive) return
-    try {
-      const viewers = await getStreamViewers(streamId)
-      setViewers(viewers)
-      setViewerCount(viewers.length)
-    } catch (error) {
-      console.error("Error fetching viewers:", error)
-    }
-  }
-
-  // Handle incoming signals from viewers
-  const handleIncomingSignal = async (fromUserId: string, signal: SignalData) => {
-    if (!user || !localStreamRef.current) return
-
-    // If we don't have a peer connection for this user yet, create one
-    if (!peerConnectionsRef.current[fromUserId]) {
-      const peer = createBroadcasterPeer(
-        isScreenSharing ? screenStreamRef.current! : localStreamRef.current,
-        user.uid,
-        (signal) => sendSignal(streamId, user.uid, fromUserId, signal),
-        () => console.log(`Connected to viewer ${fromUserId}`),
-        () => {
-          console.log(`Disconnected from viewer ${fromUserId}`)
-          delete peerConnectionsRef.current[fromUserId]
-          fetchViewers()
-        },
-        (err) => console.error(`Error with viewer ${fromUserId}:`, err),
-      )
-      peerConnectionsRef.current[fromUserId] = peer
+  // Monitor audio level
+  const startAudioLevelMonitoring = () => {
+    if (audioLevelIntervalRef.current) {
+      clearInterval(audioLevelIntervalRef.current)
     }
 
-    // Signal the peer
-    peerConnectionsRef.current[fromUserId].signal(signal)
+    audioLevelIntervalRef.current = window.setInterval(() => {
+      if (audioAnalyserRef.current) {
+        const dataArray = new Uint8Array(audioAnalyserRef.current.frequencyBinCount)
+        audioAnalyserRef.current.getByteFrequencyData(dataArray)
+
+        // Calculate average volume
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length
+
+        // Map to 0-100 range
+        const level = Math.min(100, Math.max(0, Math.round((average / 255) * 100)))
+        setAudioLevel(level)
+      }
+    }, 100)
   }
 
-  // Toggle stream status
+  // Toggle live status
   const toggleLiveStatus = async () => {
-    if (!user || !localStreamRef.current) return
+    if (!user || !mediaStreamRef.current) {
+      toast({
+        title: "Error",
+        description: "Media stream not available",
+        variant: "destructive",
+      })
+      return
+    }
 
-    if (isLive) {
-      // End stream
-      try {
-        await endStream(streamId)
-        setIsLive(false)
+    try {
+      if (isLive) {
+        // End the stream
+        await endStream(streamId, user.uid)
 
-        // Destroy all peer connections
-        Object.values(peerConnectionsRef.current).forEach((peer) => {
-          if (peer) peer.destroy()
+        // Stop recording if active
+        if (isRecording) {
+          stopRecording()
+        }
+
+        // Close all peer connections
+        Object.values(peerConnectionsRef.current).forEach((pc) => {
+          pc.close()
         })
         peerConnectionsRef.current = {}
 
+        setIsLive(false)
+        setViewerCount(0)
+
         toast({
-          title: "Stream Ended",
-          description: "Your live stream has ended",
+          title: "Stream ended",
+          description: "Your stream has been ended successfully",
         })
-      } catch (error) {
-        console.error("Error ending stream:", error)
-        toast({
-          title: "Error",
-          description: "Failed to end stream",
-          variant: "destructive",
-        })
-      }
-    } else {
-      // Start stream
-      try {
-        await startStream(streamId)
+      } else {
+        // Start the stream
+        await startStream(streamId, user.uid)
         setIsLive(true)
+
         toast({
-          title: "Stream Started",
+          title: "Stream started",
           description: "You are now live!",
         })
-      } catch (error) {
-        console.error("Error starting stream:", error)
-        toast({
-          title: "Error",
-          description: "Failed to start stream",
-          variant: "destructive",
-        })
       }
+    } catch (error) {
+      console.error("Error toggling stream status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update stream status",
+        variant: "destructive",
+      })
     }
   }
 
   // Toggle microphone
   const toggleMicrophone = () => {
-    if (!localStreamRef.current) return
+    if (!mediaStreamRef.current) return
 
-    const audioTracks = localStreamRef.current.getAudioTracks()
+    const audioTracks = mediaStreamRef.current.getAudioTracks()
     audioTracks.forEach((track) => {
       track.enabled = isMuted
     })
+
     setIsMuted(!isMuted)
   }
 
   // Toggle camera
-  const toggleCamera = async () => {
-    if (!localStreamRef.current) return
+  const toggleCamera = () => {
+    if (!mediaStreamRef.current) return
 
-    if (isVideoEnabled) {
-      // Disable video
-      const videoTracks = localStreamRef.current.getVideoTracks()
-      videoTracks.forEach((track) => {
-        track.stop()
-      })
-      setIsVideoEnabled(false)
-    } else {
-      // Enable video
-      stopMediaStream(localStreamRef.current)
-      const newStream = await getUserMedia(true, !isMuted)
-      if (newStream) {
-        localStreamRef.current = newStream
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = newStream
-        }
-        setIsVideoEnabled(true)
-      }
-    }
+    const videoTracks = mediaStreamRef.current.getVideoTracks()
+    videoTracks.forEach((track) => {
+      track.enabled = !isVideoEnabled
+    })
+
+    setIsVideoEnabled(!isVideoEnabled)
   }
 
   // Toggle screen sharing
   const toggleScreenSharing = async () => {
-    if (!user) return
+    try {
+      if (isScreenSharing) {
+        // Stop screen sharing
+        if (screenStreamRef.current) {
+          screenStreamRef.current.getTracks().forEach((track) => track.stop())
+          screenStreamRef.current = null
+        }
 
-    if (isScreenSharing) {
-      // Stop screen sharing
-      stopMediaStream(screenStreamRef.current)
-      screenStreamRef.current = null
+        // Switch back to camera
+        if (localVideoRef.current && mediaStreamRef.current) {
+          localVideoRef.current.srcObject = mediaStreamRef.current
+        }
 
-      // Switch back to camera
-      if (localVideoRef.current && localStreamRef.current) {
-        localVideoRef.current.srcObject = localStreamRef.current
-      }
-
-      // Update all peer connections to use camera stream
-      if (isLive && localStreamRef.current) {
-        Object.values(peerConnectionsRef.current).forEach((peer) => {
-          if (peer) {
-            peer.removeStream(screenStreamRef.current!)
-            peer.addStream(localStreamRef.current!)
-          }
-        })
-      }
-
-      setIsScreenSharing(false)
-    } else {
-      // Start screen sharing
-      const screenStream = await getDisplayMedia()
-      if (screenStream) {
+        setIsScreenSharing(false)
+      } else {
+        // Start screen sharing
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true })
         screenStreamRef.current = screenStream
 
         // Display screen share in local video
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = screenStream
-        }
-
-        // Update all peer connections to use screen share stream
-        if (isLive) {
-          Object.values(peerConnectionsRef.current).forEach((peer) => {
-            if (peer) {
-              peer.removeStream(localStreamRef.current!)
-              peer.addStream(screenStream)
-            }
-          })
         }
 
         // Handle when user stops screen sharing via browser UI
@@ -257,7 +286,112 @@ export function StreamBroadcaster({ streamId, djId }: StreamBroadcasterProps) {
 
         setIsScreenSharing(true)
       }
+    } catch (error) {
+      console.error("Error toggling screen sharing:", error)
+      toast({
+        title: "Error",
+        description: "Failed to share screen",
+        variant: "destructive",
+      })
     }
+  }
+
+  // Start recording
+  const startRecording = () => {
+    if (!mediaStreamRef.current) return
+
+    try {
+      recordedChunksRef.current = []
+
+      const stream = isScreenSharing && screenStreamRef.current ? screenStreamRef.current : mediaStreamRef.current
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" })
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" })
+        const url = URL.createObjectURL(blob)
+
+        // Create a download link
+        const a = document.createElement("a")
+        a.style.display = "none"
+        a.href = url
+        a.download = `stream-recording-${new Date().toISOString()}.webm`
+        document.body.appendChild(a)
+        a.click()
+
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }, 100)
+      }
+
+      mediaRecorder.start(1000) // Collect data every second
+      mediaRecorderRef.current = mediaRecorder
+      setIsRecording(true)
+
+      toast({
+        title: "Recording started",
+        description: "Your stream is now being recorded",
+      })
+    } catch (error) {
+      console.error("Error starting recording:", error)
+      toast({
+        title: "Error",
+        description: "Failed to start recording",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Stop recording
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+
+      toast({
+        title: "Recording stopped",
+        description: "Your recording has been saved",
+      })
+    }
+  }
+
+  // Toggle recording
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording()
+    } else {
+      startRecording()
+    }
+  }
+
+  // Audio level indicator
+  const AudioLevelIndicator = () => {
+    const levelColors = ["bg-green-500", "bg-green-500", "bg-green-500", "bg-yellow-500", "bg-yellow-500", "bg-red-500"]
+
+    const getColorForLevel = (level: number) => {
+      const index = Math.floor(level / 20)
+      return levelColors[Math.min(index, levelColors.length - 1)]
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <Mic className="h-4 w-4 text-muted-foreground" />
+        <div className="h-2 w-32 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${getColorForLevel(audioLevel)} transition-all duration-100`}
+            style={{ width: `${audioLevel}%` }}
+          />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -272,20 +406,31 @@ export function StreamBroadcaster({ streamId, djId }: StreamBroadcasterProps) {
               muted
               className={`w-full h-full object-cover ${!isVideoEnabled && !isScreenSharing ? "hidden" : ""}`}
             />
+
             {!isVideoEnabled && !isScreenSharing && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <p className="text-white text-lg">Camera is off</p>
               </div>
             )}
+
             {isLive && (
               <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded-md text-sm font-medium flex items-center gap-1">
                 <StopCircle className="w-4 h-4" />
                 LIVE
               </div>
             )}
-            {isLive && viewerCount > 0 && (
-              <div className="absolute top-2 right-2 bg-gray-800 bg-opacity-75 text-white px-2 py-1 rounded-md text-sm">
-                {viewerCount} {viewerCount === 1 ? "viewer" : "viewers"}
+
+            {isRecording && (
+              <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-md text-sm font-medium flex items-center gap-1">
+                <StopCircle className="w-4 h-4" />
+                REC
+              </div>
+            )}
+
+            {isLive && (
+              <div className="absolute bottom-2 right-2 bg-gray-800 bg-opacity-75 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                {viewerCount}
               </div>
             )}
           </div>
@@ -300,6 +445,7 @@ export function StreamBroadcaster({ streamId, djId }: StreamBroadcasterProps) {
               >
                 {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
               </Button>
+
               <Button
                 variant="outline"
                 size="icon"
@@ -308,6 +454,7 @@ export function StreamBroadcaster({ streamId, djId }: StreamBroadcasterProps) {
               >
                 {!isVideoEnabled ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
               </Button>
+
               <Button
                 variant="outline"
                 size="icon"
@@ -316,17 +463,113 @@ export function StreamBroadcaster({ streamId, djId }: StreamBroadcasterProps) {
               >
                 <ScreenShare className="h-5 w-5" />
               </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className={`${isRecording ? "bg-red-900 hover:bg-red-800" : "bg-gray-800 hover:bg-gray-700"}`}
+                onClick={toggleRecording}
+              >
+                <StopCircle className="h-5 w-5" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-gray-800 hover:bg-gray-700"
+                onClick={() => setShowSettings(!showSettings)}
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
             </div>
 
-            <Button
-              className={isLive ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}
-              onClick={toggleLiveStatus}
-            >
-              {isLive ? "End Stream" : "Go Live"}
-            </Button>
+            <div className="flex items-center gap-4">
+              <AudioLevelIndicator />
+
+              <Button
+                className={isLive ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}
+                onClick={toggleLiveStatus}
+              >
+                {isLive ? "End Stream" : "Go Live"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {showSettings && (
+        <Card>
+          <CardContent className="p-4">
+            <Tabs defaultValue="devices">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="devices">Devices</TabsTrigger>
+                <TabsTrigger value="stream">Stream Settings</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="devices" className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="videoDevice">Camera</Label>
+                  <select
+                    id="videoDevice"
+                    className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-700 bg-background"
+                    value={selectedVideoDevice}
+                    onChange={(e) => setSelectedVideoDevice(e.target.value)}
+                  >
+                    {videoDevices.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label || `Camera ${videoDevices.indexOf(device) + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="audioDevice">Microphone</Label>
+                  <select
+                    id="audioDevice"
+                    className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-700 bg-background"
+                    value={selectedAudioDevice}
+                    onChange={(e) => setSelectedAudioDevice(e.target.value)}
+                  >
+                    {audioDevices.map((device) => (
+                      <option key={device.deviceId} value={device.deviceId}>
+                        {device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="stream" className="space-y-4 pt-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="recordStream">Record Stream</Label>
+                  <Switch
+                    id="recordStream"
+                    checked={isRecording}
+                    onCheckedChange={toggleRecording}
+                    disabled={!isLive}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label htmlFor="audioLevel">Microphone Volume</Label>
+                    <span>{audioLevel}%</span>
+                  </div>
+                  <Slider
+                    id="audioLevel"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[audioLevel]}
+                    onValueChange={(value) => setAudioLevel(value[0])}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

@@ -1,123 +1,164 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { supabase } from "@/utils/supabase-client"
 import { useAuth } from "@/hooks/use-auth"
-import { getStreamChatMessages, sendStreamChatMessage, subscribeToStreamChat } from "@/services/stream-service"
-import { supabase } from "@/utils/supabase-client" // Declare the supabase variable
+import { useToast } from "@/hooks/use-toast"
+import {
+  getStreamChatMessages,
+  sendStreamChatMessage,
+  subscribeToStreamChat,
+  deleteChatMessage,
+} from "@/services/stream-service"
 
-interface ChatMessage {
-  id: string
-  stream_id: string
-  user_id: string
-  content: string
-  created_at: string
-  profiles?: {
-    id: string
-    first_name?: string
-    last_name?: string
-    avatar_url?: string
-    username?: string
-  }
-}
-
-export function useStreamChat(streamId: string) {
+export function useStreamChat(streamId: string, isDj = false) {
   const { user } = useAuth()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const { toast } = useToast()
+  const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sending, setSending] = useState(false)
 
-  // Fetch initial messages
-  const fetchMessages = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const fetchedMessages = await getStreamChatMessages(streamId)
-      setMessages(fetchedMessages)
-    } catch (err) {
-      console.error("Error fetching chat messages:", err)
-      setError("Failed to load chat messages. Please try again.")
-    } finally {
-      setLoading(false)
+  // Load initial messages
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!streamId) return
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        const chatMessages = await getStreamChatMessages(streamId)
+
+        // Fetch user profiles for messages
+        const userIds = [...new Set(chatMessages.map((msg) => msg.user_id))]
+
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, first_name, last_name, avatar_url, username")
+            .in("id", userIds)
+
+          // Attach user profiles to messages
+          const messagesWithProfiles = chatMessages.map((message) => {
+            const userProfile = profiles?.find((profile) => profile.id === message.user_id)
+            return {
+              ...message,
+              user: userProfile || null,
+            }
+          })
+
+          setMessages(messagesWithProfiles)
+        } else {
+          setMessages(chatMessages)
+        }
+      } catch (err) {
+        console.error("Error loading chat messages:", err)
+        setError("Failed to load chat messages")
+      } finally {
+        setLoading(false)
+      }
     }
+
+    loadMessages()
   }, [streamId])
 
   // Subscribe to new messages
   useEffect(() => {
-    fetchMessages()
+    if (!streamId) return
 
-    // Set up real-time subscription
-    let unsubscribe: (() => void) | undefined
-
-    const setupSubscription = async () => {
+    const unsubscribe = subscribeToStreamChat(streamId, async (newMessage) => {
       try {
-        unsubscribe = await subscribeToStreamChat(streamId, async (newMessage) => {
-          // Fetch the complete message with profile data
-          const { data } = await supabase
-            .from("stream_chat_messages")
-            .select(
-              `
-              *,
-              profiles(id, first_name, last_name, avatar_url, username)
-            `,
-            )
-            .eq("id", newMessage.id)
-            .single()
+        // Fetch user profile for the new message
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, avatar_url, username")
+          .eq("id", newMessage.user_id)
+          .single()
 
-          if (data) {
-            setMessages((prevMessages) => {
-              // Check if message already exists
-              if (prevMessages.some((msg) => msg.id === data.id)) {
-                return prevMessages
-              }
-              return [...prevMessages, data]
-            })
-          }
-        })
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...newMessage,
+            user: userProfile || null,
+          },
+        ])
       } catch (err) {
-        console.error("Error setting up chat subscription:", err)
+        console.error("Error processing new message:", err)
       }
-    }
-
-    setupSubscription()
+    })
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe()
-      }
+      unsubscribe()
     }
-  }, [streamId, fetchMessages])
+  }, [streamId])
 
-  // Send a message
+  // Send message function
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!user) {
-        throw new Error("You must be logged in to send messages")
-      }
-
-      if (!content.trim()) {
-        throw new Error("Message cannot be empty")
-      }
+      if (!user || !streamId || !content.trim()) return
 
       try {
+        setSending(true)
+        setError(null)
+
         await sendStreamChatMessage(streamId, user.uid, content)
+
+        // Message will be added via subscription
       } catch (err) {
         console.error("Error sending message:", err)
-        throw err
+        setError("Failed to send message")
+        toast({
+          title: "Error",
+          description: err instanceof Error ? err.message : "Failed to send message",
+          variant: "destructive",
+        })
+      } finally {
+        setSending(false)
       }
     },
-    [streamId, user],
+    [streamId, user, toast],
   )
 
-  // Retry loading messages
-  const retry = useCallback(() => {
-    fetchMessages()
-  }, [fetchMessages])
+  // Delete message function (for DJ/moderator)
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      if (!user || !streamId || !messageId) return
+
+      try {
+        setError(null)
+
+        await deleteChatMessage(messageId, user.uid)
+
+        // Update local state
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === messageId ? { ...msg, is_deleted: true, content: "[Message deleted]" } : msg)),
+        )
+
+        toast({
+          title: "Message deleted",
+          description: "The message has been removed",
+        })
+      } catch (err) {
+        console.error("Error deleting message:", err)
+        setError("Failed to delete message")
+        toast({
+          title: "Error",
+          description: err instanceof Error ? err.message : "Failed to delete message",
+          variant: "destructive",
+        })
+      }
+    },
+    [streamId, user, toast],
+  )
 
   return {
     messages,
     loading,
     error,
+    sending,
     sendMessage,
-    retry,
+    deleteMessage,
+    isDj,
   }
 }

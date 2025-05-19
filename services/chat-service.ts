@@ -3,7 +3,10 @@ import type { MatchChatRoom, MatchChatMessage } from "@/types/database"
 import { createNotification } from "./notification-service"
 import { getProfileById } from "./profile-service"
 
+// Get chat room by match ID
 export async function getChatRoomByMatchId(matchId: string): Promise<MatchChatRoom | null> {
+  if (!matchId) return null
+
   // Check if a chat room already exists for this match
   const { data: existingRoom, error: roomError } = await supabase
     .from("match_chat_rooms")
@@ -38,7 +41,10 @@ export async function getChatRoomByMatchId(matchId: string): Promise<MatchChatRo
   return newRoom
 }
 
+// Get chat messages for a room
 export async function getChatMessages(roomId: string): Promise<MatchChatMessage[]> {
+  if (!roomId) return []
+
   const { data, error } = await supabase
     .from("match_chat_messages")
     .select("*")
@@ -53,6 +59,7 @@ export async function getChatMessages(roomId: string): Promise<MatchChatMessage[
   return data || []
 }
 
+// Send a chat message
 export async function sendChatMessage(
   roomId: string,
   senderId: string,
@@ -60,6 +67,8 @@ export async function sendChatMessage(
   attachmentUrl?: string,
   attachmentType?: string,
 ): Promise<MatchChatMessage | null> {
+  if (!roomId || !senderId || !content) return null
+
   // Send the message
   const { data: message, error: messageError } = await supabase
     .from("match_chat_messages")
@@ -123,7 +132,10 @@ export async function sendChatMessage(
   return message
 }
 
+// Mark messages as read
 export async function markMessagesAsRead(roomId: string, userId: string): Promise<boolean> {
+  if (!roomId || !userId) return false
+
   const { error } = await supabase
     .from("match_chat_messages")
     .update({
@@ -141,10 +153,13 @@ export async function markMessagesAsRead(roomId: string, userId: string): Promis
   return true
 }
 
-export async function subscribeToMessages(
-  roomId: string,
-  callback: (message: MatchChatMessage) => void,
-): Promise<() => void> {
+// Subscribe to new messages
+export function subscribeToMessages(roomId: string, callback: (message: MatchChatMessage) => void): () => void {
+  if (!roomId || !callback) {
+    console.error("Invalid parameters for subscribeToMessages")
+    return () => {}
+  }
+
   const subscription = supabase
     .channel(`room:${roomId}`)
     .on(
@@ -165,4 +180,68 @@ export async function subscribeToMessages(
   return () => {
     supabase.removeChannel(subscription)
   }
+}
+
+// Get unread message count
+export async function getUnreadMessageCount(userId: string): Promise<number> {
+  if (!userId) return 0
+
+  const { count, error } = await supabase
+    .from("match_chat_messages")
+    .select("id", { count: "exact", head: true })
+    .neq("sender_id", userId)
+    .eq("is_read", false)
+
+  if (error) {
+    console.error("Error getting unread message count:", error)
+    return 0
+  }
+
+  return count || 0
+}
+
+// Get chat rooms for a user
+export async function getUserChatRooms(userId: string): Promise<any[]> {
+  if (!userId) return []
+
+  // Get all matches for the user
+  const { data: matches, error: matchError } = await supabase
+    .from("matches")
+    .select("id")
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+    .eq("status", "accepted")
+
+  if (matchError) {
+    console.error("Error fetching matches:", matchError)
+    return []
+  }
+
+  if (!matches || matches.length === 0) {
+    return []
+  }
+
+  const matchIds = matches.map((match) => match.id)
+
+  // Get chat rooms for these matches
+  const { data: chatRooms, error: roomError } = await supabase
+    .from("match_chat_rooms")
+    .select(`
+      *,
+      match:match_id(
+        id,
+        user1_id,
+        user2_id,
+        user1:user1_id(id, first_name, last_name, avatar_url),
+        user2:user2_id(id, first_name, last_name, avatar_url)
+      )
+    `)
+    .in("match_id", matchIds)
+    .order("last_message_at", { ascending: false })
+
+  if (roomError) {
+    console.error("Error fetching chat rooms:", roomError)
+    return []
+  }
+
+  return chatRooms || []
 }

@@ -1,169 +1,80 @@
-import { supabase } from "@/lib/supabase-client"
-import SimplePeer from "simple-peer"
+import { supabase } from "@/utils/supabase-client"
 
-// Type definitions
-export type SignalData = {
-  type?: string
-  sdp?: string
-  candidate?: RTCIceCandidate
-}
+// Signal types
+export type SignalData = RTCSessionDescriptionInit | RTCIceCandidateInit
 
-export type PeerConnection = {
-  peer: SimplePeer.Instance
-  userId: string
-  stream?: MediaStream
-}
-
-// ICE servers configuration for WebRTC
-const iceServers = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:global.stun.twilio.com:3478" }],
-}
-
-// Create a new peer connection as initiator (broadcaster)
-export function createBroadcasterPeer(
-  stream: MediaStream,
-  userId: string,
-  onSignal: (signal: SignalData) => void,
-  onConnect: () => void,
-  onClose: () => void,
-  onError: (err: Error) => void,
-): SimplePeer.Instance {
-  const peer = new SimplePeer({
-    initiator: true,
-    trickle: true,
-    stream,
-    config: iceServers,
-  })
-
-  peer.on("signal", (data) => {
-    onSignal(data)
-  })
-
-  peer.on("connect", () => {
-    console.log("Broadcaster connected")
-    onConnect()
-  })
-
-  peer.on("close", () => {
-    console.log("Broadcaster connection closed")
-    onClose()
-  })
-
-  peer.on("error", (err) => {
-    console.error("Broadcaster peer error:", err)
-    onError(err)
-  })
-
-  return peer
-}
-
-// Create a new peer connection as viewer
-export function createViewerPeer(
-  userId: string,
-  onSignal: (signal: SignalData) => void,
-  onStream: (stream: MediaStream) => void,
-  onConnect: () => void,
-  onClose: () => void,
-  onError: (err: Error) => void,
-): SimplePeer.Instance {
-  const peer = new SimplePeer({
-    initiator: false,
-    trickle: true,
-    config: iceServers,
-  })
-
-  peer.on("signal", (data) => {
-    onSignal(data)
-  })
-
-  peer.on("stream", (stream) => {
-    console.log("Received stream from broadcaster")
-    onStream(stream)
-  })
-
-  peer.on("connect", () => {
-    console.log("Viewer connected")
-    onConnect()
-  })
-
-  peer.on("close", () => {
-    console.log("Viewer connection closed")
-    onClose()
-  })
-
-  peer.on("error", (err) => {
-    console.error("Viewer peer error:", err)
-    onError(err)
-  })
-
-  return peer
-}
-
-// Send a signal to a specific user
+// Send a WebRTC signal
 export async function sendSignal(streamId: string, fromUserId: string, toUserId: string, signal: SignalData) {
-  const { error } = await supabase.from("webrtc_signals").insert({
-    stream_id: streamId,
-    sender_id: fromUserId,
-    receiver_id: toUserId,
-    signal,
-    created_at: new Date().toISOString(),
-  })
+  if (!streamId || !fromUserId || !toUserId || !signal) {
+    throw new Error("Missing required parameters for sendSignal")
+  }
 
-  if (error) {
-    console.error("Error sending signal:", error)
+  try {
+    const { error } = await supabase.from("webrtc_signals").insert({
+      stream_id: streamId,
+      sender_id: fromUserId,
+      receiver_id: toUserId,
+      signal_data: signal,
+    })
+
+    if (error) {
+      console.error("Error sending signal:", error)
+      throw new Error(`Failed to send signal: ${error.message}`)
+    }
+  } catch (error) {
+    console.error("Error in sendSignal:", error)
     throw error
   }
 }
 
-// Subscribe to signals for a specific stream and user
+// Subscribe to WebRTC signals
 export function subscribeToSignals(
   streamId: string,
   userId: string,
   onSignal: (fromUserId: string, signal: SignalData) => void,
 ) {
-  const channel = supabase
-    .channel(`webrtc-signals:${streamId}:${userId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "webrtc_signals",
-        filter: `receiver_id=eq.${userId}`,
-      },
-      (payload) => {
-        const { sender_id, signal } = payload.new
-        onSignal(sender_id, signal)
-      },
-    )
-    .subscribe()
+  if (!streamId || !userId || !onSignal) {
+    console.error("Missing required parameters for subscribeToSignals")
+    return () => {}
+  }
 
-  return () => {
-    supabase.removeChannel(channel)
+  try {
+    // Subscribe to new signals
+    const subscription = supabase
+      .channel(`webrtc:${streamId}:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "webrtc_signals",
+          filter: `receiver_id=eq.${userId}`,
+        },
+        (payload) => {
+          const { sender_id, signal_data } = payload.new
+          onSignal(sender_id, signal_data)
+        },
+      )
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") {
+          console.error("Failed to subscribe to signals:", status)
+        }
+      })
+
+    // Return unsubscribe function
+    return () => {
+      supabase.removeChannel(subscription)
+    }
+  } catch (error) {
+    console.error("Error in subscribeToSignals:", error)
+    throw error
   }
 }
 
 // Get user media (camera and microphone)
-export async function getUserMedia(video = true, audio = true): Promise<MediaStream | null> {
+export async function getUserMedia(video: boolean, audio: boolean): Promise<MediaStream | null> {
   try {
-    const constraints = {
-      video: video
-        ? {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 },
-          }
-        : false,
-      audio: audio
-        ? {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          }
-        : false,
-    }
-
-    return await navigator.mediaDevices.getUserMedia(constraints)
+    return await navigator.mediaDevices.getUserMedia({ video, audio })
   } catch (error) {
     console.error("Error getting user media:", error)
     return null
@@ -173,22 +84,214 @@ export async function getUserMedia(video = true, audio = true): Promise<MediaStr
 // Get display media (screen sharing)
 export async function getDisplayMedia(): Promise<MediaStream | null> {
   try {
-    return await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        cursor: "always",
-      },
-      audio: true,
-    })
+    return await navigator.mediaDevices.getDisplayMedia({ video: true })
   } catch (error) {
     console.error("Error getting display media:", error)
     return null
   }
 }
 
-// Stop all tracks in a media stream
-export function stopMediaStream(stream: MediaStream | null) {
+// Stop media stream
+export function stopMediaStream(stream: MediaStream | null): void {
   if (!stream) return
-  stream.getTracks().forEach((track) => {
-    track.stop()
-  })
+  stream.getTracks().forEach((track) => track.stop())
+}
+
+// Create a peer connection for the broadcaster
+export function createBroadcasterPeer(
+  stream: MediaStream,
+  userId: string,
+  onSignal: (signal: SignalData) => void,
+  onConnect: () => void,
+  onDisconnect: () => void,
+  onError: (error: Error) => void,
+) {
+  if (!stream || !userId || !onSignal || !onConnect || !onDisconnect || !onError) {
+    throw new Error("Missing required parameters for createBroadcasterPeer")
+  }
+
+  try {
+    // Create peer connection
+    const peerConnection = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }],
+    })
+
+    // Add tracks to peer connection
+    stream.getTracks().forEach((track) => {
+      peerConnection.addTrack(track, stream)
+    })
+
+    // Handle ICE candidates
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        onSignal({ candidate: event.candidate })
+      }
+    }
+
+    // Handle connection state changes
+    peerConnection.onconnectionstatechange = () => {
+      switch (peerConnection.connectionState) {
+        case "connected":
+          onConnect()
+          break
+        case "disconnected":
+        case "failed":
+        case "closed":
+          onDisconnect()
+          break
+      }
+    }
+
+    // Handle negotiation needed
+    peerConnection.onnegotiationneeded = async () => {
+      try {
+        const offer = await peerConnection.createOffer()
+        await peerConnection.setLocalDescription(offer)
+        onSignal(peerConnection.localDescription!)
+      } catch (error) {
+        console.error("Error creating offer:", error)
+        onError(error as Error)
+      }
+    }
+
+    // Create signal method
+    const signal = async (data: SignalData) => {
+      try {
+        if (data.sdp) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data))
+          if (data.sdp.type === "offer") {
+            const answer = await peerConnection.createAnswer()
+            await peerConnection.setLocalDescription(answer)
+            onSignal(peerConnection.localDescription!)
+          }
+        } else if (data.candidate) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
+        }
+      } catch (error) {
+        console.error("Error handling signal:", error)
+        onError(error as Error)
+      }
+    }
+
+    return {
+      signal,
+      destroy: () => {
+        peerConnection.close()
+      },
+      addStream: (newStream: MediaStream) => {
+        // Remove existing tracks
+        peerConnection.getSenders().forEach((sender) => {
+          peerConnection.removeTrack(sender)
+        })
+        // Add new tracks
+        newStream.getTracks().forEach((track) => {
+          peerConnection.addTrack(track, newStream)
+        })
+      },
+      removeStream: (oldStream: MediaStream) => {
+        oldStream.getTracks().forEach((track) => {
+          const sender = peerConnection.getSenders().find((s) => s.track === track)
+          if (sender) {
+            peerConnection.removeTrack(sender)
+          }
+        })
+      },
+    }
+  } catch (error) {
+    console.error("Error creating broadcaster peer:", error)
+    onError(error as Error)
+    throw error
+  }
+}
+
+// Create a peer connection for the viewer
+export function createViewerPeer(
+  userId: string,
+  onSignal: (signal: SignalData) => void,
+  onStream: (stream: MediaStream) => void,
+  onConnect: () => void,
+  onDisconnect: () => void,
+  onError: (error: Error) => void,
+) {
+  if (!userId || !onSignal || !onStream || !onConnect || !onDisconnect || !onError) {
+    throw new Error("Missing required parameters for createViewerPeer")
+  }
+
+  try {
+    // Create peer connection
+    const peerConnection = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }],
+    })
+
+    // Handle ICE candidates
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        onSignal({ candidate: event.candidate })
+      }
+    }
+
+    // Handle incoming tracks
+    peerConnection.ontrack = (event) => {
+      onStream(event.streams[0])
+    }
+
+    // Handle connection state changes
+    peerConnection.onconnectionstatechange = () => {
+      switch (peerConnection.connectionState) {
+        case "connected":
+          onConnect()
+          break
+        case "disconnected":
+        case "failed":
+        case "closed":
+          onDisconnect()
+          break
+      }
+    }
+
+    // Create offer
+    const createOffer = async () => {
+      try {
+        const offer = await peerConnection.createOffer()
+        await peerConnection.setLocalDescription(offer)
+        onSignal(peerConnection.localDescription!)
+      } catch (error) {
+        console.error("Error creating offer:", error)
+        onError(error as Error)
+      }
+    }
+
+    // Create signal method
+    const signal = async (data: SignalData) => {
+      try {
+        if (data.sdp) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data))
+          if (data.sdp.type === "offer") {
+            const answer = await peerConnection.createAnswer()
+            await peerConnection.setLocalDescription(answer)
+            onSignal(peerConnection.localDescription!)
+          }
+        } else if (data.candidate) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
+        }
+      } catch (error) {
+        console.error("Error handling signal:", error)
+        onError(error as Error)
+      }
+    }
+
+    // Start connection
+    createOffer()
+
+    return {
+      signal,
+      destroy: () => {
+        peerConnection.close()
+      },
+    }
+  } catch (error) {
+    console.error("Error creating viewer peer:", error)
+    onError(error as Error)
+    throw error
+  }
 }

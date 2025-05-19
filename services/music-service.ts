@@ -14,6 +14,8 @@ export async function getAllGenres() {
 
 // Get user's music preferences
 export async function getUserMusicPreferences(userId: string) {
+  if (!userId) return null
+
   const { data, error } = await supabase.from("user_music_preferences").select("*").eq("user_id", userId).single()
 
   if (error && error.code !== "PGRST116") {
@@ -34,6 +36,8 @@ export async function updateUserMusicPreferences(
     chill_vs_energetic?: number
   },
 ) {
+  if (!userId || !preferences) return null
+
   const { data, error } = await supabase
     .from("user_music_preferences")
     .upsert(
@@ -56,6 +60,8 @@ export async function updateUserMusicPreferences(
 
 // Get user's genre preferences
 export async function getUserGenrePreferences(userId: string) {
+  if (!userId) return []
+
   const { data, error } = await supabase
     .from("user_genre_preferences")
     .select("genre_id, music_genres(id, name)")
@@ -71,6 +77,8 @@ export async function getUserGenrePreferences(userId: string) {
 
 // Add a genre preference for a user
 export async function addUserGenrePreference(userId: string, genreId: string) {
+  if (!userId || !genreId) return false
+
   const { error } = await supabase.from("user_genre_preferences").insert({
     user_id: userId,
     genre_id: genreId,
@@ -86,6 +94,8 @@ export async function addUserGenrePreference(userId: string, genreId: string) {
 
 // Remove a genre preference for a user
 export async function removeUserGenrePreference(userId: string, genreId: string) {
+  if (!userId || !genreId) return false
+
   const { error } = await supabase.from("user_genre_preferences").delete().eq("user_id", userId).eq("genre_id", genreId)
 
   if (error) {
@@ -98,6 +108,8 @@ export async function removeUserGenrePreference(userId: string, genreId: string)
 
 // Get user's artist preferences
 export async function getUserArtistPreferences(userId: string) {
+  if (!userId) return []
+
   const { data, error } = await supabase
     .from("user_artist_preferences")
     .select("artist_id, artists(id, name, image_url)")
@@ -113,6 +125,8 @@ export async function getUserArtistPreferences(userId: string) {
 
 // Add an artist preference for a user
 export async function addUserArtistPreference(userId: string, artistId: string) {
+  if (!userId || !artistId) return false
+
   const { error } = await supabase.from("user_artist_preferences").insert({
     user_id: userId,
     artist_id: artistId,
@@ -128,6 +142,8 @@ export async function addUserArtistPreference(userId: string, artistId: string) 
 
 // Remove an artist preference for a user
 export async function removeUserArtistPreference(userId: string, artistId: string) {
+  if (!userId || !artistId) return false
+
   const { error } = await supabase
     .from("user_artist_preferences")
     .delete()
@@ -140,4 +156,68 @@ export async function removeUserArtistPreference(userId: string, artistId: strin
   }
 
   return true
+}
+
+// Get recommended music based on user preferences
+export async function getMusicRecommendations(userId: string, limit = 10) {
+  if (!userId) return []
+
+  try {
+    // Get user's genre preferences
+    const userGenres = await getUserGenrePreferences(userId)
+    const genreIds = userGenres.map((genre) => genre.id)
+
+    if (genreIds.length === 0) {
+      // If user has no genre preferences, return popular tracks
+      return getPopularTracks(limit)
+    }
+
+    // Get tracks in user's preferred genres
+    const { data, error } = await supabase
+      .from("tracks")
+      .select(`
+        *,
+        artists(id, name, image_url),
+        genre_id,
+        music_genres(id, name)
+      `)
+      .in("genre_id", genreIds)
+      .limit(limit)
+
+    if (error) {
+      console.error("Error fetching music recommendations:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Error in getMusicRecommendations:", error)
+    return []
+  }
+}
+
+// Get popular tracks
+export async function getPopularTracks(limit = 10) {
+  try {
+    const { data, error } = await supabase
+      .from("tracks")
+      .select(`
+        *,
+        artists(id, name, image_url),
+        genre_id,
+        music_genres(id, name)
+      `)
+      .order("play_count", { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      console.error("Error fetching popular tracks:", error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Error in getPopularTracks:", error)
+    return []
+  }
 }

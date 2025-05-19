@@ -3,7 +3,10 @@ import type { Match, Profile } from "@/types/database"
 import { createNotification } from "./notification-service"
 import { getUserGenrePreferences } from "./music-service"
 
+// Get all matches for a user
 export async function getMatches(userId: string): Promise<Match[]> {
+  if (!userId) return []
+
   const { data, error } = await supabase
     .from("matches")
     .select("*")
@@ -18,7 +21,10 @@ export async function getMatches(userId: string): Promise<Match[]> {
   return data || []
 }
 
+// Get match by ID
 export async function getMatchById(matchId: string): Promise<Match | null> {
+  if (!matchId) return null
+
   const { data, error } = await supabase.from("matches").select("*").eq("id", matchId).single()
 
   if (error) {
@@ -29,7 +35,10 @@ export async function getMatchById(matchId: string): Promise<Match | null> {
   return data
 }
 
+// Create a new match
 export async function createMatch(user1Id: string, user2Id: string, matchScore: number): Promise<Match | null> {
+  if (!user1Id || !user2Id) return null
+
   // Ensure user1Id is lexicographically smaller than user2Id for consistency
   const [actualUser1Id, actualUser2Id] = user1Id < user2Id ? [user1Id, user2Id] : [user2Id, user1Id]
 
@@ -52,6 +61,7 @@ export async function createMatch(user1Id: string, user2Id: string, matchScore: 
   return data
 }
 
+// Create a match with notifications
 export async function createMatchWithNotification(
   user1Id: string,
   user2Id: string,
@@ -62,8 +72,8 @@ export async function createMatchWithNotification(
 
   if (match) {
     // Get user profiles for notification content
-    const user1Profile = await getProfileById(user1Id)
-    const user2Profile = await getProfileById(user2Id)
+    const { data: user1Profile } = await supabase.from("profiles").select("*").eq("id", user1Id).single()
+    const { data: user2Profile } = await supabase.from("profiles").select("*").eq("id", user2Id).single()
 
     if (user1Profile && user2Profile) {
       // Create notification for user1
@@ -87,7 +97,10 @@ export async function createMatchWithNotification(
   return match
 }
 
+// Update match status
 export async function updateMatchStatus(matchId: string, status: "accepted" | "rejected"): Promise<Match | null> {
+  if (!matchId || !status) return null
+
   const { data, error } = await supabase
     .from("matches")
     .update({
@@ -106,7 +119,10 @@ export async function updateMatchStatus(matchId: string, status: "accepted" | "r
   return data
 }
 
+// Get matched profiles for a user
 export async function getMatchedProfiles(userId: string): Promise<Profile[]> {
+  if (!userId) return []
+
   // Get all accepted matches for the user
   const { data: matches, error: matchError } = await supabase
     .from("matches")
@@ -137,10 +153,13 @@ export async function getMatchedProfiles(userId: string): Promise<Profile[]> {
   return profiles || []
 }
 
+// Get potential matches for a user
 export async function getPotentialMatches(
   userId: string,
   limit = 10,
 ): Promise<{ profile: Profile; matchScore: number }[]> {
+  if (!userId) return []
+
   try {
     // Get user's interests
     const { data: userInterests, error: interestError } = await supabase
@@ -320,7 +339,10 @@ export async function getPotentialMatches(
   }
 }
 
-async function getProfileById(userId: string): Promise<Profile | null> {
+// Get profile by ID (helper function)
+export async function getProfileById(userId: string): Promise<Profile | null> {
+  if (!userId) return null
+
   const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
 
   if (error) {
@@ -329,4 +351,44 @@ async function getProfileById(userId: string): Promise<Profile | null> {
   }
 
   return data
+}
+
+// Check if users are matched
+export async function areUsersMatched(user1Id: string, user2Id: string): Promise<boolean> {
+  if (!user1Id || !user2Id) return false
+
+  // Ensure consistent ordering of user IDs
+  const [smallerId, largerId] = user1Id < user2Id ? [user1Id, user2Id] : [user2Id, user1Id]
+
+  const { data, error } = await supabase
+    .from("matches")
+    .select("id")
+    .eq("user1_id", smallerId)
+    .eq("user2_id", largerId)
+    .eq("status", "accepted")
+    .single()
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Error checking match status:", error)
+  }
+
+  return !!data
+}
+
+// Get match count for a user
+export async function getUserMatchCount(userId: string): Promise<number> {
+  if (!userId) return 0
+
+  const { count, error } = await supabase
+    .from("matches")
+    .select("id", { count: "exact", head: true })
+    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+    .eq("status", "accepted")
+
+  if (error) {
+    console.error("Error getting match count:", error)
+    return 0
+  }
+
+  return count || 0
 }

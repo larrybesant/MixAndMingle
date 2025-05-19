@@ -2,79 +2,53 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Bell, Check, MessageSquare, Users } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, Bell, Check, Trash2 } from "lucide-react"
 import {
-  getNotifications,
+  getUserNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-  subscribeToNotifications,
-  type Notification,
+  deleteNotification,
 } from "@/services/notification-service"
+import { formatDistanceToNow } from "date-fns"
+import Link from "next/link"
 
 export default function NotificationsPage() {
   const { user } = useAuth()
-  const { toast } = useToast()
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("all")
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!user) return
-
-      try {
-        setLoading(true)
-        const data = await getNotifications(user.uid)
-        setNotifications(data)
-      } catch (error) {
-        console.error("Error fetching notifications:", error)
-        // If no notifications exist yet, use empty array
-        setNotifications([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchNotifications()
-
-    // Subscribe to new notifications
     if (user) {
-      const unsubscribe = subscribeToNotifications(user.uid, (newNotification) => {
-        setNotifications((prev) => [newNotification, ...prev])
-
-        // Show toast for new notification
-        toast({
-          title: newNotification.title,
-          description: newNotification.content,
-        })
-      })
-
-      return () => unsubscribe()
+      fetchNotifications()
     }
-  }, [user, toast])
+  }, [user])
 
-  const getNotificationType = (title: string): "match" | "message" | "system" => {
-    if (title.toLowerCase().includes("match")) return "match"
-    if (title.toLowerCase().includes("message")) return "message"
-    return "system"
+  const fetchNotifications = async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+      const data = await getUserNotifications(user.uid, 100)
+      setNotifications(data)
+    } catch (error) {
+      console.error("Error fetching notifications:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleMarkAsRead = async (notificationId: string) => {
-    try {
-      const success = await markNotificationAsRead(notificationId)
+  const handleMarkAsRead = async (notification: any) => {
+    if (!user || notification.is_read) return
 
-      if (success) {
-        // Update local state
-        setNotifications(
-          notifications.map((notification) =>
-            notification.id === notificationId ? { ...notification, is_read: true } : notification,
-          ),
-        )
-      }
+    try {
+      await markNotificationAsRead(notification.id, user.uid)
+      setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n)))
     } catch (error) {
       console.error("Error marking notification as read:", error)
     }
@@ -84,138 +58,221 @@ export default function NotificationsPage() {
     if (!user) return
 
     try {
-      const success = await markAllNotificationsAsRead(user.uid)
-
-      if (success) {
-        // Update local state
-        setNotifications(
-          notifications.map((notification) => ({
-            ...notification,
-            is_read: true,
-          })),
-        )
-
-        toast({
-          title: "All notifications marked as read",
-          description: "All notifications have been marked as read.",
-        })
-      }
+      await markAllNotificationsAsRead(user.uid)
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
     } catch (error) {
       console.error("Error marking all notifications as read:", error)
     }
   }
 
-  const filteredNotifications = notifications.filter((notification) => {
-    if (activeTab === "all") return true
-    if (activeTab === "unread") return !notification.is_read
-    return getNotificationType(notification.title) === activeTab
-  })
+  const handleDeleteNotification = async (notification: any) => {
+    if (!user) return
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "match":
-        return <Users className="h-5 w-5 text-primary" />
-      case "message":
-        return <MessageSquare className="h-5 w-5 text-primary" />
-      default:
-        return <Bell className="h-5 w-5 text-primary" />
+    try {
+      await deleteNotification(notification.id, user.uid)
+      setNotifications((prev) => prev.filter((n) => n.id !== notification.id))
+    } catch (error) {
+      console.error("Error deleting notification:", error)
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  // Filter notifications based on active tab
+  const filteredNotifications = notifications.filter((notification) => {
+    if (activeTab === "unread") {
+      return !notification.is_read
+    }
+    return true
+  })
 
-    if (diffMins < 60) {
-      return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`
-    } else if (diffHours < 24) {
-      return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`
-    } else {
-      return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`
+  // Render notification content based on type
+  const renderNotificationContent = (notification: any) => {
+    const { type, content } = notification
+
+    switch (type) {
+      case "stream_started":
+        return {
+          title: "Stream Started",
+          message: `${content.dj_name} started streaming "${content.stream_title}"`,
+          link: `/streams/${content.stream_id}`,
+          icon: <Bell className="h-5 w-5 text-blue-500" />,
+        }
+      case "new_follower":
+        return {
+          title: "New Follower",
+          message: `${content.follower_name} started following you`,
+          link: `/dj/${content.follower_id}`,
+          icon: <Bell className="h-5 w-5 text-green-500" />,
+        }
+      case "stream_liked":
+        return {
+          title: "Stream Liked",
+          message: `${content.user_name} liked your stream "${content.stream_title}"`,
+          link: `/streams/${content.stream_id}`,
+          icon: <Bell className="h-5 w-5 text-red-500" />,
+        }
+      default:
+        return {
+          title: "Notification",
+          message: "You have a new notification",
+          link: "#",
+          icon: <Bell className="h-5 w-5" />,
+        }
     }
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-8">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Notifications</h2>
+    <div className="container mx-auto py-8 px-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Notifications</CardTitle>
           {notifications.some((n) => !n.is_read) && (
             <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+              <Check className="mr-2 h-4 w-4" />
               Mark all as read
             </Button>
           )}
-        </div>
-        <p className="text-muted-foreground">Stay updated with your activity</p>
-      </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="all">
+                All
+                <Badge variant="secondary" className="ml-2">
+                  {notifications.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="unread">
+                Unread
+                <Badge variant="secondary" className="ml-2">
+                  {notifications.filter((n) => !n.is_read).length}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
 
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="unread">Unread</TabsTrigger>
-          <TabsTrigger value="match">Matches</TabsTrigger>
-          <TabsTrigger value="message">Messages</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="space-y-4">
-          {loading ? (
-            Array(4)
-              .fill(0)
-              .map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      <div className="h-10 w-10 rounded-full bg-muted" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-1/3 bg-muted rounded" />
-                        <div className="h-3 w-2/3 bg-muted rounded" />
+            <TabsContent value="all" className="mt-6">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredNotifications.length === 0 ? (
+                <div className="text-center py-8">
+                  <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium">No notifications</h3>
+                  <p className="text-muted-foreground mt-2">You don't have any notifications yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredNotifications.map((notification) => {
+                    const { title, message, link, icon } = renderNotificationContent(notification)
+                    return (
+                      <div key={notification.id}>
+                        <div
+                          className={`flex items-start justify-between p-4 rounded-lg hover:bg-muted ${
+                            !notification.is_read ? "bg-muted/50" : ""
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="mt-0.5">{icon}</div>
+                            <div>
+                              <Link href={link} onClick={() => handleMarkAsRead(notification)}>
+                                <h4 className={`text-sm font-medium ${!notification.is_read ? "font-semibold" : ""}`}>
+                                  {title}
+                                </h4>
+                                <p className="text-sm text-muted-foreground mt-1">{message}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                </p>
+                              </Link>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {!notification.is_read && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleMarkAsRead(notification)}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => handleDeleteNotification(notification)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <Separator />
                       </div>
-                      <div className="h-8 w-8 bg-muted rounded-full" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-          ) : filteredNotifications.length > 0 ? (
-            filteredNotifications.map((notification) => (
-              <Card key={notification.id} className={`transition-colors ${!notification.is_read ? "bg-muted/30" : ""}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1">{getNotificationIcon(getNotificationType(notification.title))}</div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{notification.title}</h3>
-                      <p className="text-sm text-muted-foreground">{notification.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{formatDate(notification.created_at)}</p>
-                    </div>
-                    {!notification.is_read && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-full"
-                        onClick={() => handleMarkAsRead(notification.id)}
-                      >
-                        <Check className="h-4 w-4" />
-                        <span className="sr-only">Mark as read</span>
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No notifications</h3>
-              <p className="text-muted-foreground">
-                You don't have any {activeTab !== "all" ? activeTab : ""} notifications at the moment.
-              </p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                    )
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="unread" className="mt-6">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredNotifications.length === 0 ? (
+                <div className="text-center py-8">
+                  <Check className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium">All caught up!</h3>
+                  <p className="text-muted-foreground mt-2">You have no unread notifications.</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredNotifications.map((notification) => {
+                    const { title, message, link, icon } = renderNotificationContent(notification)
+                    return (
+                      <div key={notification.id}>
+                        <div className="flex items-start justify-between p-4 rounded-lg hover:bg-muted bg-muted/50">
+                          <div className="flex items-start gap-4">
+                            <div className="mt-0.5">{icon}</div>
+                            <div>
+                              <Link href={link} onClick={() => handleMarkAsRead(notification)}>
+                                <h4 className="text-sm font-semibold">{title}</h4>
+                                <p className="text-sm text-muted-foreground mt-1">{message}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                </p>
+                              </Link>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleMarkAsRead(notification)}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => handleDeleteNotification(notification)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <Separator />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }
