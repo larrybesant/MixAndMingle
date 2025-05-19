@@ -1,16 +1,17 @@
-"use server"
-
+import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-export async function createAccount(email: string, name: string, password?: string) {
+export async function POST(request: Request) {
   try {
+    const { email, name, password } = await request.json()
+
     // Validate inputs
     if (!email || !email.includes("@")) {
-      return { success: false, message: "Invalid email address" }
+      return NextResponse.json({ success: false, message: "Invalid email address" }, { status: 400 })
     }
 
     if (!name || name.trim().length < 2) {
-      return { success: false, message: "Name is required (minimum 2 characters)" }
+      return NextResponse.json({ success: false, message: "Name is required (minimum 2 characters)" }, { status: 400 })
     }
 
     // Generate a random password if none provided
@@ -54,19 +55,22 @@ export async function createAccount(email: string, name: string, password?: stri
 
       if (profileError) throw profileError
 
-      return {
+      return NextResponse.json({
         success: true,
         message: "Account created successfully!",
         password: password ? undefined : finalPassword,
-      }
+      })
     }
 
-    return { success: false, message: "Failed to create user" }
+    return NextResponse.json({ success: false, message: "Failed to create user" }, { status: 500 })
   } catch (error: any) {
     console.error("Error creating account:", error)
-    return {
-      success: false,
-      message: error.message || "An error occurred while creating the account.",
-    }
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "An error occurred while creating the account.",
+      },
+      { status: 500 },
+    )
   }
 }

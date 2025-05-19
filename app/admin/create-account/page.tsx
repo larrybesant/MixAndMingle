@@ -1,46 +1,88 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { createAdminAccount } from "@/app/actions/create-account"
+import type React from "react"
+
+import { useState } from "react"
+import { createClient } from "@supabase/supabase-js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react"
-import { useFormStatus } from "react-dom"
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Creating Account...
-        </>
-      ) : (
-        "Create Account"
-      )}
-    </Button>
-  )
-}
 
 export default function CreateAccountPage() {
+  const [email, setEmail] = useState("larrybesant@gmail.com")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("Larry Besant")
+  const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<{
     success: boolean
     message: string
     password?: string
   } | null>(null)
-  const formRef = useRef<HTMLFormElement>(null)
 
-  async function handleCreateAccount(formData: FormData) {
-    const response = await createAdminAccount(formData)
-    setResult(response)
+  async function handleCreateAccount(e: React.FormEvent) {
+    e.preventDefault()
+    setIsLoading(true)
+    setResult(null)
 
-    if (response.success && formRef.current) {
-      formRef.current.reset()
+    try {
+      // Create a Supabase client with admin privileges
+      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+
+      // Generate a random password if none provided
+      const finalPassword =
+        password || Math.random().toString(36).slice(-8) + Math.random().toString(36).toUpperCase().slice(-4)
+
+      // Create the user with email confirmation disabled
+      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+        email,
+        password: finalPassword,
+        email_confirm: true, // Auto-confirm the email
+        user_metadata: {
+          full_name: name,
+          is_beta_tester: true,
+        },
+      })
+
+      if (userError) throw userError
+
+      if (userData.user) {
+        // Create a profile for the user
+        const { error: profileError } = await supabase.from("profiles").insert([
+          {
+            id: userData.user.id,
+            full_name: name,
+            email: email,
+            is_beta_tester: true,
+            beta_joined_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ])
+
+        if (profileError) throw profileError
+
+        setResult({
+          success: true,
+          message: "Account created successfully!",
+          password: password ? undefined : finalPassword,
+        })
+      }
+    } catch (error: any) {
+      console.error("Error creating account:", error)
+      setResult({
+        success: false,
+        message: error.message || "An error occurred while creating the account.",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -80,22 +122,39 @@ export default function CreateAccountPage() {
             </Alert>
           )}
 
-          <form action={handleCreateAccount} ref={formRef} className="space-y-4">
+          <form onSubmit={handleCreateAccount} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" defaultValue="larrybesant@gmail.com" required />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" name="name" type="text" defaultValue="Larry Besant" required />
+              <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password (optional - will be generated if left blank)</Label>
-              <Input id="password" name="password" type="password" placeholder="Leave blank to generate a password" />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave blank to generate a password"
+              />
             </div>
-            <SubmitButton />
           </form>
         </CardContent>
+        <CardFooter>
+          <Button onClick={handleCreateAccount} disabled={isLoading} className="w-full">
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+        </CardFooter>
       </Card>
 
       {result?.success && (
@@ -114,7 +173,7 @@ export default function CreateAccountPage() {
             <div>
               <h3 className="font-medium">2. Sign in with your credentials</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Use your email and {result.password ? "generated" : "chosen"} password to sign in
+                Use your email and {password ? "chosen" : "generated"} password to sign in
               </p>
             </div>
             <div>
