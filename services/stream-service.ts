@@ -41,6 +41,27 @@ export async function getStreamsByStatus(status: string) {
   return data || []
 }
 
+// Get streams by DJ ID
+export async function getStreamsByDjId(djId: string) {
+  const { data, error } = await supabase
+    .from("live_streams")
+    .select(
+      `
+      *,
+      dj_profiles(id, artist_name, user_id, profiles(id, first_name, last_name, avatar_url))
+    `,
+    )
+    .eq("dj_id", djId)
+    .order("scheduled_start", { ascending: false })
+
+  if (error) {
+    console.error("Error fetching streams by DJ ID:", error)
+    return []
+  }
+
+  return data || []
+}
+
 // Get stream by ID
 export async function getStreamById(streamId: string) {
   const { data, error } = await supabase
@@ -203,6 +224,27 @@ export async function leaveStream(streamId: string, userId: string) {
   return data
 }
 
+// Get stream viewers
+export async function getStreamViewers(streamId: string) {
+  const { data, error } = await supabase
+    .from("stream_viewers")
+    .select(
+      `
+      *,
+      profiles(id, first_name, last_name, avatar_url)
+    `,
+    )
+    .eq("stream_id", streamId)
+    .is("left_at", null)
+
+  if (error) {
+    console.error("Error fetching stream viewers:", error)
+    return []
+  }
+
+  return data || []
+}
+
 // Get stream chat messages
 export async function getStreamChatMessages(streamId: string) {
   const { data, error } = await supabase
@@ -264,20 +306,4 @@ export async function subscribeToStreamChat(streamId: string, callback: (message
   return () => {
     supabase.removeChannel(subscription)
   }
-}
-
-// Get stream viewers
-export async function getStreamViewers(streamId: string): Promise<any[]> {
-  const { data, error } = await supabase
-    .from("stream_viewers")
-    .select(`user_id, profiles(id, first_name, last_name, avatar_url)`)
-    .eq("stream_id", streamId)
-    .is("left_at", null)
-
-  if (error) {
-    console.error("Error fetching stream viewers:", error)
-    return []
-  }
-
-  return data || []
 }

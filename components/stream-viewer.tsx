@@ -1,62 +1,131 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useViewer } from "@/services/webrtc-service"
-import { Volume2, VolumeX, Maximize, Minimize, RefreshCw } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Volume2, VolumeX, Maximize, Minimize } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { createViewerPeer, sendSignal, subscribeToSignals } from "@/services/webrtc-service"
+import { joinStream, leaveStream } from "@/services/stream-service"
 
 interface StreamViewerProps {
   streamId: string
-  broadcasterId: string
-  userId: string
-  title: string
+  djId: string
 }
 
-export function StreamViewer({ streamId, broadcasterId, userId, title }: StreamViewerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+export function StreamViewer({ streamId, djId }: StreamViewerProps) {
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [isConnected, setIsConnected] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const { connectToStream, disconnectFromStream, stream, isConnected, error } = useViewer(
-    streamId,
-    broadcasterId,
-    userId,
-  )
+  const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const peerRef = useRef<any>(null)
+  const signalUnsubscribeRef = useRef<() => void>(() => {})
 
-  // Connect to stream on component mount
-  useEffect(() => {
-    connectToStream()
+  // Connect to stream
+  const connectToStream = async () => {
+    if (!user || isConnecting || isConnected) return
 
-    return () => {
-      disconnectFromStream()
+    try {
+      setIsConnecting(true)
+
+      // Join stream as viewer
+      await joinStream(streamId, user.uid)
+
+      // Create peer connection
+      const peer = createViewerPeer(
+        user.uid,
+        (signal) => sendSignal(streamId, user.uid, djId, signal),
+        (stream) => {
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = stream
+          }
+        },
+        () => {
+          console.log("Connected to broadcaster")
+          setIsConnected(true)
+          setIsConnecting(false)
+        },
+        () => {
+          console.log("Disconnected from broadcaster")
+          setIsConnected(false)
+          setIsConnecting(false)
+        },
+        (err) => {
+          console.error("Error with broadcaster:", err)
+          setIsConnected(false)
+          setIsConnecting(false)
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect to the stream",
+            variant: "destructive",
+          })
+        },
+      )
+
+      peerRef.current = peer
+
+      // Subscribe to signals from broadcaster
+      const unsubscribe = subscribeToSignals(streamId, user.uid, (fromUserId, signal) => {
+        if (fromUserId === djId && peer) {
+          peer.signal(signal)
+        }
+      })
+
+      signalUnsubscribeRef.current = unsubscribe
+    } catch (error) {
+      console.error("Error connecting to stream:", error)
+      setIsConnecting(false)
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to the stream",
+        variant: "destructive",
+      })
     }
-  }, [])
+  }
 
-  // Connect stream to video element when available
-  useEffect(() => {
-    if (stream && videoRef.current) {
-      videoRef.current.srcObject = stream
+  // Disconnect from stream
+  const disconnectFromStream = async () => {
+    if (!user || !isConnected) return
+
+    try {
+      // Leave stream as viewer
+      await leaveStream(streamId, user.uid)
+
+      // Destroy peer connection
+      if (peerRef.current) {
+        peerRef.current.destroy()
+        peerRef.current = null
+      }
+
+      // Unsubscribe from signals
+      signalUnsubscribeRef.current()
+
+      setIsConnected(false)
+    } catch (error) {
+      console.error("Error disconnecting from stream:", error)
     }
-  }, [stream])
+  }
 
-  // Toggle audio
+  // Toggle mute
   const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.muted = !isMuted
       setIsMuted(!isMuted)
     }
   }
 
   // Toggle fullscreen
   const toggleFullscreen = () => {
-    if (!containerRef.current) return
+    if (!remoteVideoRef.current) return
 
     if (!isFullscreen) {
-      if (containerRef.current.requestFullscreen) {
-        containerRef.current.requestFullscreen()
+      if (remoteVideoRef.current.requestFullscreen) {
+        remoteVideoRef.current.requestFullscreen()
       }
     } else {
       if (document.exitFullscreen) {
@@ -65,94 +134,74 @@ export function StreamViewer({ streamId, broadcasterId, userId, title }: StreamV
     }
   }
 
-  // Listen for fullscreen change
+  // Handle fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement)
     }
 
     document.addEventListener("fullscreenchange", handleFullscreenChange)
-
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange)
     }
   }, [])
 
-  // Reconnect to stream
-  const handleReconnect = () => {
-    disconnectFromStream()
-    setTimeout(() => {
-      connectToStream()
-    }, 1000)
-  }
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      disconnectFromStream()
+    }
+  }, [])
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>{title}</CardTitle>
-          {isConnected && (
-            <Badge variant="destructive" className="animate-pulse">
-              LIVE
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div ref={containerRef} className="relative aspect-video bg-black rounded-md overflow-hidden">
-          <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+    <div className="flex flex-col gap-4">
+      <Card className="bg-gray-900 border-gray-800">
+        <CardContent className="p-4">
+          <div className="aspect-video bg-black rounded-md overflow-hidden relative">
+            <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-contain" />
+            {!isConnected && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-white text-lg">
+                  {isConnecting ? "Connecting to stream..." : "Not connected to stream"}
+                </p>
+              </div>
+            )}
+          </div>
 
-          {!isConnected && !stream && !error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white">
-              <p className="text-xl font-semibold">Connecting to stream...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white flex-col gap-4">
-              <p className="text-red-500">{error}</p>
-              <Button onClick={handleReconnect} size="sm">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Reconnect
-              </Button>
-            </div>
-          )}
-
-          {isConnected && (
-            <div className="absolute bottom-2 right-2 flex items-center gap-2">
+          <div className="flex justify-between items-center mt-4">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="icon"
-                className="bg-black/60 border-none hover:bg-black/80 text-white"
+                className={`${isMuted ? "bg-red-900 hover:bg-red-800" : "bg-gray-800 hover:bg-gray-700"}`}
                 onClick={toggleMute}
+                disabled={!isConnected}
               >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </Button>
-
               <Button
                 variant="outline"
                 size="icon"
-                className="bg-black/60 border-none hover:bg-black/80 text-white"
+                className="bg-gray-800 hover:bg-gray-700"
                 onClick={toggleFullscreen}
+                disabled={!isConnected}
               >
-                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
               </Button>
             </div>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <div className="w-full flex justify-between">
-          <Button variant="outline" onClick={handleReconnect}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh Stream
-          </Button>
 
-          <Button variant="destructive" onClick={disconnectFromStream}>
-            Leave Stream
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
+            {isConnected ? (
+              <Button className="bg-red-600 hover:bg-red-700" onClick={disconnectFromStream}>
+                Disconnect
+              </Button>
+            ) : (
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={connectToStream} disabled={isConnecting}>
+                {isConnecting ? "Connecting..." : "Connect to Stream"}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

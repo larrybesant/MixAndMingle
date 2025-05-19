@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getStreamsByStatus } from "@/services/stream-service"
 import { hasDjProfile } from "@/services/dj-service"
+import { StreamList } from "@/components/stream-list"
 
 export default function StreamsPage() {
   const { user } = useAuth()
@@ -112,73 +112,15 @@ export default function StreamsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Live Streams</h1>
-          <p className="text-gray-400">Watch and interact with DJs in real-time</p>
-        </div>
-        {isDj && (
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/dashboard/streams/create")}>
-            Create Stream
-          </Button>
-        )}
-      </div>
-
-      <Tabs defaultValue="live" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-gray-800">
-          <TabsTrigger value="live">Live Now</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="past">Past Streams</TabsTrigger>
-        </TabsList>
-        <TabsContent value="live">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">Loading...</div>
-          ) : liveStreams.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-              {liveStreams.map(renderStreamCard)}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <p className="text-gray-400 mb-4">No live streams at the moment</p>
-              {isDj && (
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => router.push("/dashboard/streams/create")}
-                >
-                  Start Streaming
-                </Button>
-              )}
-            </div>
-          )}
-        </TabsContent>
-        <TabsContent value="upcoming">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">Loading...</div>
-          ) : upcomingStreams.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-              {upcomingStreams.map(renderStreamCard)}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-gray-400">No upcoming streams scheduled</p>
-            </div>
-          )}
-        </TabsContent>
-        <TabsContent value="past">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">Loading...</div>
-          ) : pastStreams.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-              {pastStreams.map(renderStreamCard)}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <p className="text-gray-400">No past streams available</p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">DJ Streams</h1>
+      <StreamList
+        liveStreams={liveStreams}
+        upcomingStreams={upcomingStreams}
+        pastStreams={pastStreams}
+        loading={loading}
+        isDj={isDj}
+      />
     </div>
   )
 }
