@@ -3,14 +3,15 @@ import { getAuth } from "firebase/auth"
 import { getFirestore } from "firebase/firestore"
 import { getStorage } from "firebase/storage"
 
-// Initialize Firebase with error handling
+// Initialize Firebase with hardcoded configuration
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "demo-api-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "demo-app.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-project",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "demo-app.appspot.com",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:123456789:web:abcdef123456",
+  apiKey: "AIzaSyDKMDdDQ1OcJNoznSAMfMtVh9wwtyyFaHc",
+  authDomain: "mixandmingle-1c898.firebaseapp.com",
+  projectId: "mixandmingle-1c898",
+  storageBucket: "mixandmingle-1c898.firebasestorage.app",
+  messagingSenderId: "1099369771281",
+  appId: "1:1099369771281:web:de15fff5a55a2eedb65cb0",
+  measurementId: "G-ZKQ6D7EXYY",
 }
 
 // Check if we're in development mode and use mock Firebase if needed

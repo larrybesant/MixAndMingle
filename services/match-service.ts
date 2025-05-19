@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase-client"
 import type { Match, Profile } from "@/types/database"
 import { createNotification } from "./notification-service"
+import { getUserGenrePreferences } from "./music-service"
 
 export async function getMatches(userId: string): Promise<Match[]> {
   const { data, error } = await supabase
@@ -140,110 +141,183 @@ export async function getPotentialMatches(
   userId: string,
   limit = 10,
 ): Promise<{ profile: Profile; matchScore: number }[]> {
-  // Get user's interests
-  const { data: userInterests, error: interestError } = await supabase
-    .from("user_interests")
-    .select("interest")
-    .eq("user_id", userId)
+  try {
+    // Get user's interests
+    const { data: userInterests, error: interestError } = await supabase
+      .from("user_interests")
+      .select("interest")
+      .eq("user_id", userId)
 
-  if (interestError) {
-    console.error("Error fetching user interests:", interestError)
-    return []
-  }
-
-  const interests = userInterests?.map((item) => item.interest) || []
-
-  if (interests.length === 0) {
-    return []
-  }
-
-  // Get users who share interests with the current user
-  const { data: usersWithSharedInterests, error: userError } = await supabase
-    .from("user_interests")
-    .select("user_id")
-    .in("interest", interests)
-    .neq("user_id", userId)
-
-  if (userError) {
-    console.error("Error fetching users with shared interests:", userError)
-    return []
-  }
-
-  if (!usersWithSharedInterests || usersWithSharedInterests.length === 0) {
-    return []
-  }
-
-  // Get unique user IDs
-  const potentialMatchIds = [...new Set(usersWithSharedInterests.map((item) => item.user_id))]
-
-  // Get existing matches to exclude
-  const { data: existingMatches, error: matchError } = await supabase
-    .from("matches")
-    .select("user1_id, user2_id")
-    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-
-  if (matchError) {
-    console.error("Error fetching existing matches:", matchError)
-    return []
-  }
-
-  // Extract IDs of users already matched with
-  const alreadyMatchedIds = new Set<string>()
-  existingMatches?.forEach((match) => {
-    if (match.user1_id === userId) {
-      alreadyMatchedIds.add(match.user2_id)
-    } else {
-      alreadyMatchedIds.add(match.user1_id)
+    if (interestError) {
+      console.error("Error fetching user interests:", interestError)
+      return []
     }
-  })
 
-  // Filter out users already matched with
-  const filteredPotentialMatchIds = potentialMatchIds.filter((id) => !alreadyMatchedIds.has(id))
+    // Get user's music genre preferences
+    const userGenres = await getUserGenrePreferences(userId)
+    const userGenreIds = userGenres.map((genre) => genre.id)
 
-  if (filteredPotentialMatchIds.length === 0) {
-    return []
-  }
+    // Get user's music preferences
+    const { data: musicPrefs, error: musicError } = await supabase
+      .from("user_music_preferences")
+      .select("*")
+      .eq("user_id", userId)
+      .single()
 
-  // Fetch profiles of potential matches
-  const { data: profiles, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .in("id", filteredPotentialMatchIds)
-    .limit(limit)
+    if (musicError && musicError.code !== "PGRST116") {
+      console.error("Error fetching user music preferences:", musicError)
+    }
 
-  if (profileError) {
-    console.error("Error fetching potential match profiles:", profileError)
-    return []
-  }
+    const interests = userInterests?.map((item) => item.interest) || []
 
-  // Calculate match scores
-  const result = await Promise.all(
-    profiles.map(async (profile) => {
-      const { data: matchInterests, error } = await supabase
-        .from("user_interests")
-        .select("interest")
-        .eq("user_id", profile.id)
+    // Get users who share interests with the current user
+    const { data: usersWithSharedInterests, error: userError } = await supabase
+      .from("user_interests")
+      .select("user_id")
+      .in("interest", interests)
+      .neq("user_id", userId)
 
-      if (error) {
-        console.error("Error fetching match interests:", error)
-        return { profile, matchScore: 0 }
+    if (userError) {
+      console.error("Error fetching users with shared interests:", userError)
+      return []
+    }
+
+    // Get users who share music genres with the current user
+    const { data: usersWithSharedGenres, error: genreError } = await supabase
+      .from("user_genre_preferences")
+      .select("user_id")
+      .in("genre_id", userGenreIds)
+      .neq("user_id", userId)
+
+    if (genreError) {
+      console.error("Error fetching users with shared genres:", genreError)
+      return []
+    }
+
+    // Combine users from both queries
+    const potentialUserIds = new Set([
+      ...(usersWithSharedInterests?.map((item) => item.user_id) || []),
+      ...(usersWithSharedGenres?.map((item) => item.user_id) || []),
+    ])
+
+    if (potentialUserIds.size === 0) {
+      return []
+    }
+
+    // Get existing matches to exclude
+    const { data: existingMatches, error: matchError } = await supabase
+      .from("matches")
+      .select("user1_id, user2_id")
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+
+    if (matchError) {
+      console.error("Error fetching existing matches:", matchError)
+      return []
+    }
+
+    // Extract IDs of users already matched with
+    const alreadyMatchedIds = new Set<string>()
+    existingMatches?.forEach((match) => {
+      if (match.user1_id === userId) {
+        alreadyMatchedIds.add(match.user2_id)
+      } else {
+        alreadyMatchedIds.add(match.user1_id)
       }
+    })
 
-      const matchInterestSet = new Set(matchInterests?.map((item) => item.interest) || [])
-      const userInterestSet = new Set(interests)
+    // Filter out users already matched with
+    const filteredPotentialMatchIds = Array.from(potentialUserIds).filter((id) => !alreadyMatchedIds.has(id))
 
-      // Calculate intersection
-      const intersection = [...userInterestSet].filter((interest) => matchInterestSet.has(interest))
+    if (filteredPotentialMatchIds.length === 0) {
+      return []
+    }
 
-      // Calculate match score as percentage of shared interests
-      const matchScore = intersection.length / Math.max(userInterestSet.size, matchInterestSet.size)
+    // Fetch profiles of potential matches
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", filteredPotentialMatchIds)
+      .limit(limit)
 
-      return { profile, matchScore }
-    }),
-  )
+    if (profileError) {
+      console.error("Error fetching potential match profiles:", profileError)
+      return []
+    }
 
-  // Sort by match score (highest first)
-  return result.sort((a, b) => b.matchScore - a.matchScore)
+    // Calculate match scores
+    const result = await Promise.all(
+      profiles.map(async (profile) => {
+        // Calculate interest match score
+        const { data: matchInterests, error } = await supabase
+          .from("user_interests")
+          .select("interest")
+          .eq("user_id", profile.id)
+
+        if (error) {
+          console.error("Error fetching match interests:", error)
+          return { profile, matchScore: 0 }
+        }
+
+        const matchInterestSet = new Set(matchInterests?.map((item) => item.interest) || [])
+        const userInterestSet = new Set(interests)
+
+        // Calculate interest intersection
+        const interestIntersection = [...userInterestSet].filter((interest) => matchInterestSet.has(interest))
+        const interestScore = interestIntersection.length / Math.max(userInterestSet.size, matchInterestSet.size)
+
+        // Calculate music genre match score
+        const { data: matchGenres, error: genreError } = await supabase
+          .from("user_genre_preferences")
+          .select("genre_id")
+          .eq("user_id", profile.id)
+
+        if (genreError) {
+          console.error("Error fetching match genres:", genreError)
+          return { profile, matchScore: interestScore }
+        }
+
+        const matchGenreSet = new Set(matchGenres?.map((item) => item.genre_id) || [])
+        const userGenreSet = new Set(userGenreIds)
+
+        // Calculate genre intersection
+        const genreIntersection = [...userGenreSet].filter((genreId) => matchGenreSet.has(genreId))
+        const genreScore =
+          userGenreSet.size > 0 ? genreIntersection.length / Math.max(userGenreSet.size, matchGenreSet.size) : 0
+
+        // Get match's music preferences
+        const { data: matchMusicPrefs, error: matchMusicError } = await supabase
+          .from("user_music_preferences")
+          .select("*")
+          .eq("user_id", profile.id)
+          .single()
+
+        // Calculate music preference compatibility
+        let musicPrefScore = 0.5 // Default middle score
+        if (musicPrefs && matchMusicPrefs) {
+          // Calculate similarity in music preferences (0-1 scale)
+          const mainstreamDiff =
+            Math.abs(musicPrefs.mainstream_vs_underground - matchMusicPrefs.mainstream_vs_underground) / 100
+          const familiarDiff = Math.abs(musicPrefs.familiar_vs_discover - matchMusicPrefs.familiar_vs_discover) / 100
+          const energyDiff = Math.abs(musicPrefs.chill_vs_energetic - matchMusicPrefs.chill_vs_energetic) / 100
+
+          // Average the differences and invert (1 - avg) to get similarity score
+          musicPrefScore = 1 - (mainstreamDiff + familiarDiff + energyDiff) / 3
+        }
+
+        // Combine scores with weights
+        // 40% interests, 40% music genres, 20% music preferences
+        const combinedScore = interestScore * 0.4 + genreScore * 0.4 + musicPrefScore * 0.2
+
+        return { profile, matchScore: combinedScore }
+      }),
+    )
+
+    // Sort by match score (highest first)
+    return result.sort((a, b) => b.matchScore - a.matchScore)
+  } catch (error) {
+    console.error("Error in getPotentialMatches:", error)
+    return []
+  }
 }
 
 async function getProfileById(userId: string): Promise<Profile | null> {

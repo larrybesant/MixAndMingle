@@ -10,13 +10,17 @@ import Link from "next/link"
 import { getMatches, getMatchedProfiles } from "@/services/match-service"
 import { getChatRoomByMatchId, getChatMessages } from "@/services/chat-service"
 import { getUserInterests } from "@/services/interest-service"
-import { seedNotifications, seedDatabase } from "@/app/actions/seed-actions"
+import { seedNotifications, seedHybridData } from "@/app/actions/seed-actions"
 import { toast } from "@/components/ui/use-toast"
+import { getStreamsByStatus } from "@/services/stream-service"
+import { Music, Radio, MessageSquare, Users } from "lucide-react"
 
 export default function DashboardPage() {
   const { user } = useAuth()
   const [recentMatches, setRecentMatches] = useState<any[]>([])
   const [recentMessages, setRecentMessages] = useState<any[]>([])
+  const [liveStreams, setLiveStreams] = useState<any[]>([])
+  const [upcomingStreams, setUpcomingStreams] = useState<any[]>([])
   const [stats, setStats] = useState({
     totalMatches: 0,
     activeChats: 0,
@@ -97,6 +101,14 @@ export default function DashboardPage() {
 
         setRecentMessages(recentChats.filter(Boolean))
 
+        // Fetch live streams
+        const liveStreamsData = await getStreamsByStatus("live")
+        setLiveStreams(liveStreamsData.slice(0, 3))
+
+        // Fetch upcoming streams
+        const upcomingStreamsData = await getStreamsByStatus("scheduled")
+        setUpcomingStreams(upcomingStreamsData.slice(0, 3))
+
         // Calculate stats
         setStats({
           totalMatches: acceptedMatches.length,
@@ -141,167 +153,209 @@ export default function DashboardPage() {
     }
   }
 
+  const handleSeedHybridData = async () => {
+    try {
+      const result = await seedHybridData()
+      if (result.success) {
+        toast({
+          title: "Hybrid Data Seeded",
+          description: result.message,
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error seeding hybrid data:", error)
+      toast({
+        title: "Error",
+        description: "Failed to seed hybrid data",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-white">Dashboard</h2>
           <p className="text-muted-foreground">Welcome to Mix-and-Mingle, {user?.displayName || "User"}!</p>
         </div>
-        <form action={seedDatabase}>
-          <Button type="submit" variant="outline">
-            Seed Database
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-blue-600 text-blue-500 hover:bg-blue-950"
+            onClick={handleSeedHybridData}
+          >
+            Seed Hybrid Data
           </Button>
-        </form>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Matches</CardTitle>
-            <CardDescription>Your current matches</CardDescription>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-white">Matches</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.totalMatches}</div>
+            <div className="text-3xl font-bold text-white">{stats.totalMatches}</div>
             <p className="text-xs text-muted-foreground">+2 since last week</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Messages</CardTitle>
-            <CardDescription>Your active conversations</CardDescription>
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-white">Active Chats</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.activeChats}</div>
+            <div className="text-3xl font-bold text-white">{stats.activeChats}</div>
             <p className="text-xs text-muted-foreground">+3 since last week</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Profile Views</CardTitle>
-            <CardDescription>How many people viewed your profile</CardDescription>
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-white">Live Streams</CardTitle>
+            <Radio className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.profileViews}</div>
-            <p className="text-xs text-muted-foreground">+10 since last week</p>
+            <div className="text-3xl font-bold text-white">{liveStreams.length}</div>
+            <p className="text-xs text-muted-foreground">Happening now</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-white">Music Match</CardTitle>
+            <Music className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-white">{stats.interestMatchRate}%</div>
+            <p className="text-xs text-muted-foreground">Based on your music taste</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle>Recent Matches</CardTitle>
-            <CardDescription>Your most recent connections</CardDescription>
+            <CardTitle className="text-white">Recent Matches</CardTitle>
+            <CardDescription className="text-gray-400">Your most recent connections</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
-              Array(3)
-                .fill(0)
-                .map((_, i) => (
-                  <Card key={i} className="overflow-hidden">
-                    <div className="h-40 bg-muted animate-pulse" />
-                    <CardContent className="p-4">
-                      <div className="h-4 w-3/4 bg-muted animate-pulse rounded mb-2" />
-                      <div className="h-3 bg-muted animate-pulse rounded mb-4" />
-                      <div className="flex gap-1">
-                        {Array(3)
-                          .fill(0)
-                          .map((_, j) => (
-                            <div key={j} className="h-6 w-16 bg-muted animate-pulse rounded" />
-                          ))}
+              <div className="space-y-4">
+                {Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-gray-800 animate-pulse" />
+                      <div className="space-y-2">
+                        <div className="h-4 w-24 bg-gray-800 animate-pulse rounded" />
+                        <div className="h-3 w-32 bg-gray-800 animate-pulse rounded" />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
+                    </div>
+                  ))}
+              </div>
             ) : recentMatches.length > 0 ? (
-              recentMatches.map((match) => (
-                <Card key={match.id} className="overflow-hidden">
-                  <div className="relative h-40 bg-gradient-to-r from-primary/20 to-primary/10">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Avatar className="h-24 w-24 border-4 border-background">
-                        <AvatarImage src={match.otherUser.photoURL || "/placeholder.svg"} />
-                        <AvatarFallback>{match.otherUser.displayName?.charAt(0)}</AvatarFallback>
-                      </Avatar>
+              <div className="space-y-4">
+                {recentMatches.map((match) => (
+                  <div key={match.id} className="flex items-center gap-4">
+                    <Avatar>
+                      <AvatarImage src={match.otherUser.photoURL || "/placeholder.svg"} />
+                      <AvatarFallback>{match.otherUser.displayName?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{match.otherUser.displayName}</p>
+                      <p className="text-sm text-gray-400">Matched {new Date(match.createdAt).toLocaleDateString()}</p>
                     </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg">{match.otherUser.displayName}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Matched {new Date(match.createdAt).toLocaleDateString()}
-                    </p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {match.otherUser.interests?.slice(0, 3).map((interest: string) => (
-                        <Badge key={interest} variant="secondary">
-                          {interest}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Button className="w-full mt-4" size="sm" asChild>
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" asChild>
                       <Link href={`/dashboard/messages/${match.id}`}>Message</Link>
                     </Button>
-                  </CardContent>
-                </Card>
-              ))
+                  </div>
+                ))}
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No matches yet. Start exploring to find connections!</p>
+              <p className="text-sm text-gray-400">No matches yet. Start exploring to find connections!</p>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle>Recent Messages</CardTitle>
-            <CardDescription>Your most recent conversations</CardDescription>
+            <CardTitle className="text-white">Live & Upcoming Streams</CardTitle>
+            <CardDescription className="text-gray-400">Join live DJ sets or set reminders</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
-              Array(3)
-                .fill(0)
-                .map((_, i) => (
-                  <Card key={i}>
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
-                      <div className="flex-1">
-                        <div className="h-4 w-1/4 bg-muted animate-pulse rounded mb-2" />
-                        <div className="h-3 w-3/4 bg-muted animate-pulse rounded" />
+              <div className="space-y-4">
+                {Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded bg-gray-800 animate-pulse" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 w-24 bg-gray-800 animate-pulse rounded" />
+                        <div className="h-3 w-32 bg-gray-800 animate-pulse rounded" />
                       </div>
-                      <div className="h-3 w-16 bg-muted animate-pulse rounded" />
-                    </CardContent>
-                  </Card>
-                ))
-            ) : recentMessages.length > 0 ? (
-              recentMessages.map((chat) => (
-                <Link key={chat.id} href={`/dashboard/messages/${chat.matchId}`}>
-                  <Card className="hover:bg-muted/50 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <Avatar>
-                          <AvatarImage src={chat.otherUser.photoURL || "/placeholder.svg"} />
-                          <AvatarFallback>{chat.otherUser.displayName?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{chat.otherUser.displayName}</h3>
-                          <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {chat.lastMessageTime
-                            ? new Date(chat.lastMessageTime).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : ""}
-                        </div>
-                        {chat.unreadCount > 0 && <Badge className="ml-auto">{chat.unreadCount}</Badge>}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
+                    </div>
+                  ))}
+              </div>
+            ) : liveStreams.length > 0 || upcomingStreams.length > 0 ? (
+              <div className="space-y-4">
+                {liveStreams.map((stream) => (
+                  <div key={stream.id} className="flex items-center gap-4">
+                    <div className="relative h-12 w-12 rounded overflow-hidden">
+                      <img
+                        src={stream.thumbnail_url || "/placeholder.svg?height=48&width=48&query=dj"}
+                        alt={stream.title}
+                        className="object-cover h-full w-full"
+                      />
+                      <Badge className="absolute top-0 left-0 bg-red-600 text-xs">LIVE</Badge>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{stream.title}</p>
+                      <p className="text-sm text-gray-400">by {stream.dj_profiles.artist_name}</p>
+                    </div>
+                    <Button size="sm" className="bg-red-600 hover:bg-red-700" asChild>
+                      <Link href={`/dashboard/streams/${stream.id}`}>Join</Link>
+                    </Button>
+                  </div>
+                ))}
+                {upcomingStreams.slice(0, 3 - liveStreams.length).map((stream) => (
+                  <div key={stream.id} className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded overflow-hidden">
+                      <img
+                        src={stream.thumbnail_url || "/placeholder.svg?height=48&width=48&query=dj"}
+                        alt={stream.title}
+                        className="object-cover h-full w-full"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{stream.title}</p>
+                      <p className="text-sm text-gray-400">
+                        {new Date(stream.scheduled_start).toLocaleDateString()} at{" "}
+                        {new Date(stream.scheduled_start).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" asChild>
+                      <Link href={`/dashboard/streams/${stream.id}`}>Remind</Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No messages yet. Start a conversation with your matches!</p>
+              <p className="text-sm text-gray-400">No streams available. Check back later!</p>
             )}
           </CardContent>
         </Card>
