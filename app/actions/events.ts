@@ -6,6 +6,7 @@ import { cookies } from "next/headers"
 import { validateData, eventSchema } from "@/lib/validation"
 import { checkDuplicateEventTitle, checkSchedulingConflicts } from "@/lib/business-logic"
 import { logger, logDbOperation } from "@/lib/logging"
+import { createNotification, notifyEventAttendees } from "./notifications"
 
 export async function createEvent(formData: FormData) {
   const cookieStore = cookies()
@@ -143,6 +144,16 @@ export async function createEvent(formData: FormData) {
     resource: "events",
     resourceId: data.id,
     details: { title },
+  })
+
+  // Send notification to the creator
+  await createNotification({
+    userId: user.id,
+    title: "Event Created",
+    content: `You've successfully created the event "${title}"`,
+    type: "system",
+    relatedId: data.id,
+    relatedType: "event",
   })
 
   // Automatically RSVP the creator
@@ -288,6 +299,9 @@ export async function updateEvent(eventId: string, formData: FormData) {
     resourceId: eventId,
     details: { title },
   })
+
+  // Notify attendees about the update
+  await notifyEventAttendees(eventId, "Event Updated", `The event "${title}" has been updated`, "event_reminder")
 
   revalidatePath("/events")
   revalidatePath(`/events/${eventId}`)

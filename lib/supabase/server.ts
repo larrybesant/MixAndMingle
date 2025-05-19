@@ -1,28 +1,35 @@
-import { createServerClient as supabaseCreateServerClient, type CookieOptions } from "@supabase/ssr"
-import type { Database } from "@/types/supabase"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 
-export function createServerClient(cookieStore: any) {
-  // Check for required environment variables
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("Missing Supabase environment variables")
-    throw new Error("Missing Supabase environment variables. Please check your .env file.")
+export function createServerClient(cookieStore: ReturnType<typeof cookies>) {
+  return createServerComponentClient({
+    cookies: () => cookieStore,
+  })
+}
+
+export async function checkSupabaseConnection() {
+  try {
+    const cookieStore = cookies()
+    const supabase = createServerClient(cookieStore)
+
+    // Try a simple query to check connection
+    const { data, error } = await supabase.from("profiles").select("count").limit(1)
+
+    if (error) {
+      return {
+        connected: false,
+        error: error.message,
+      }
+    }
+
+    return {
+      connected: true,
+      data,
+    }
+  } catch (err) {
+    return {
+      connected: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    }
   }
-
-  return supabaseCreateServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.delete({ name, ...options })
-        },
-      },
-    },
-  )
 }

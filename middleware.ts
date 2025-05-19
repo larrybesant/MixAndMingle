@@ -1,92 +1,91 @@
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// In-memory store for rate limiting
-// In production, use Redis or another distributed store
-const rateLimitStore: Record<string, { count: number; timestamp: number }> = {}
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
 
-// Rate limit configuration
-const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute in milliseconds
-const RATE_LIMIT_MAX = 100 // Maximum requests per window
-const API_RATE_LIMIT_MAX = 50 // Stricter limit for API routes
+  // Refresh session if expired
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+  // Protected routes that require authentication
+  const protectedRoutes = [
+    "/dashboard",
+    "/events/new",
+    "/dj-profile",
+    "/streams/new",
+    "/profile",
+    "/settings",
+    "/my-events",
+    "/friends",
+    "/chat-rooms",
+  ]
 
-  // Get client IP
-  const ip = request.ip || "anonymous"
-  const path = request.nextUrl.pathname
+  const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
 
-  // Skip rate limiting for static assets
-  if (
-    path.startsWith("/_next/") ||
-    path.startsWith("/static/") ||
-    path.endsWith(".ico") ||
-    path.endsWith(".png") ||
-    path.endsWith(".jpg") ||
-    path.endsWith(".svg")
-  ) {
-    return response
+  // Admin routes that require admin privileges
+  const adminRoutes = ["/admin"]
+  const isAdminRoute = adminRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
+
+  // If accessing a protected route without a session, redirect to login
+  if (isProtectedRoute && !session) {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = "/signin"
+    redirectUrl.searchParams.set("callbackUrl", req.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
-  // Determine if this is an API route
-  const isApiRoute = path.startsWith("/api/")
-  const maxRequests = isApiRoute ? API_RATE_LIMIT_MAX : RATE_LIMIT_MAX
+  // If accessing admin routes, check if user is admin
+  if (isAdminRoute && session) {
+    try {
+      const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", session.user.id).single()
 
-  // Get current timestamp
-  const now = Date.now()
+      // For debugging purposes, log the admin status
+      console.log("Admin check for user:", session.user.id, "is_admin:", profile?.is_admin)
 
-  // Initialize or update rate limit data for this IP
-  if (!rateLimitStore[ip] || now - rateLimitStore[ip].timestamp > RATE_LIMIT_WINDOW) {
-    rateLimitStore[ip] = { count: 1, timestamp: now }
-  } else {
-    rateLimitStore[ip].count++
-  }
-
-  // Add rate limit headers
-  response.headers.set("X-RateLimit-Limit", maxRequests.toString())
-  response.headers.set("X-RateLimit-Remaining", Math.max(0, maxRequests - rateLimitStore[ip].count).toString())
-  response.headers.set(
-    "X-RateLimit-Reset",
-    Math.ceil((rateLimitStore[ip].timestamp + RATE_LIMIT_WINDOW) / 1000).toString(),
-  )
-
-  // Check if rate limit exceeded
-  if (rateLimitStore[ip].count > maxRequests) {
-    // Clean up old entries periodically
-    if (now % (RATE_LIMIT_WINDOW * 10) < 1000) {
-      Object.keys(rateLimitStore).forEach((key) => {
-        if (now - rateLimitStore[key].timestamp > RATE_LIMIT_WINDOW) {
-          delete rateLimitStore[key]
-        }
-      })
+      if (!profile?.is_admin) {
+        // Redirect non-admin users to dashboard
+        const redirectUrl = req.nextUrl.clone()
+        redirectUrl.pathname = "/dashboard"
+        return NextResponse.redirect(redirectUrl)
+      }
+    } catch (error) {
+      console.error("Error checking admin status:", error)
+      // Continue anyway for now to help with debugging
     }
-
-    // Return rate limit exceeded response
-    return new NextResponse(
-      JSON.stringify({
-        error: "Too many requests",
-        message: "Rate limit exceeded. Please try again later.",
-      }),
-      {
-        status: 429,
-        headers: {
-          "Content-Type": "application/json",
-          "Retry-After": "60",
-          "X-RateLimit-Limit": maxRequests.toString(),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": Math.ceil((rateLimitStore[ip].timestamp + RATE_LIMIT_WINDOW) / 1000).toString(),
-        },
-      },
-    )
   }
 
-  return response
+  // If accessing auth pages with a session, redirect to dashboard
+  const authRoutes = ["/signin", "/signup"]
+  const isAuthRoute = authRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
+
+  if (isAuthRoute && session) {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = "/dashboard"
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  return res
 }
 
 export const config = {
   matcher: [
-    // Apply to all routes except static assets
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/dashboard/:path*",
+    "/events/new",
+    "/dj-profile/:path*",
+    "/streams/:path*",
+    "/profile/:path*",
+    "/settings/:path*",
+    "/admin/:path*",
+    "/admin-test",
+    "/signin",
+    "/signup",
+    "/my-events/:path*",
+    "/friends/:path*",
+    "/chat-rooms/:path*",
+    "/api/:path*",
   ],
 }

@@ -173,37 +173,37 @@ export interface Database {
       }
       dj_profiles: {
         Row: {
-          artist_name: string | null
-          bio: string | null
-          created_at: string | null
-          experience_years: number | null
-          genre: string[] | null
-          hourly_rate: number | null
           id: string
-          portfolio_links: string[] | null
-          updated_at: string | null
+          artist_name: string
+          bio: string | null
+          genre: string[]
+          experience_years: number
+          hourly_rate: number
+          portfolio_links: string[]
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          artist_name?: string | null
-          bio?: string | null
-          created_at?: string | null
-          experience_years?: number | null
-          genre?: string[] | null
-          hourly_rate?: number | null
           id: string
-          portfolio_links?: string[] | null
-          updated_at?: string | null
+          artist_name: string
+          bio?: string | null
+          genre?: string[]
+          experience_years?: number
+          hourly_rate?: number
+          portfolio_links?: string[]
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          artist_name?: string | null
-          bio?: string | null
-          created_at?: string | null
-          experience_years?: number | null
-          genre?: string[] | null
-          hourly_rate?: number | null
           id?: string
-          portfolio_links?: string[] | null
-          updated_at?: string | null
+          artist_name?: string
+          bio?: string | null
+          genre?: string[]
+          experience_years?: number
+          hourly_rate?: number
+          portfolio_links?: string[]
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -216,34 +216,43 @@ export interface Database {
       }
       events: {
         Row: {
-          created_at: string | null
-          creator_id: string | null
-          description: string | null
-          end_time: string | null
           id: string
-          location: string | null
-          start_time: string | null
-          title: string | null
+          title: string
+          description: string | null
+          location: string
+          start_time: string
+          end_time: string
+          creator_id: string
+          capacity: number
+          dj_id: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
-          creator_id?: string | null
-          description?: string | null
-          end_time?: string | null
           id?: string
-          location?: string | null
-          start_time?: string | null
-          title?: string | null
+          title: string
+          description?: string | null
+          location: string
+          start_time: string
+          end_time: string
+          creator_id: string
+          capacity?: number
+          dj_id?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
-          creator_id?: string | null
-          description?: string | null
-          end_time?: string | null
           id?: string
-          location?: string | null
-          start_time?: string | null
-          title?: string | null
+          title?: string
+          description?: string | null
+          location?: string
+          start_time?: string
+          end_time?: string
+          creator_id?: string
+          capacity?: number
+          dj_id?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -321,45 +330,27 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          first_name: string | null
-          last_name: string | null
-          avatar_url: string | null
-          bio: string | null
-          location: string | null
-          created_at: string | null
-          updated_at: string | null
-          email: string | null
-          is_dj: boolean
-          is_beta_tester: boolean
-          beta_joined_at: string | null
+          first_name: string
+          last_name: string
+          email: string
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id: string
-          first_name?: string | null
-          last_name?: string | null
-          avatar_url?: string | null
-          bio?: string | null
-          location?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          email?: string | null
-          is_dj?: boolean
-          is_beta_tester?: boolean
-          beta_joined_at?: string | null
+          first_name: string
+          last_name: string
+          email: string
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          first_name?: string | null
-          last_name?: string | null
-          avatar_url?: string | null
-          bio?: string | null
-          location?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          email?: string | null
-          is_dj?: boolean
-          is_beta_tester?: boolean
-          beta_joined_at?: string | null
+          first_name?: string
+          last_name?: string
+          email?: string
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -577,11 +568,32 @@ export interface Database {
       }
       decrement_viewer_count: {
         Args: { stream_id: string }
-        Returns: undefined
+        Returns: void
       }
       increment_viewer_count: {
         Args: { stream_id: string }
-        Returns: undefined
+        Returns: void
+      }
+      get_user_upcoming_events: {
+        Args: { user_id: string }
+        Returns: {
+          id: string
+          title: string
+          location: string
+          start_time: string
+          end_time: string
+          rsvp_status: string
+        }[]
+      }
+      get_dj_events: {
+        Args: { dj_id: string }
+        Returns: {
+          id: string
+          title: string
+          location: string
+          start_time: string
+          end_time: string
+        }[]
       }
     }
     Enums: {

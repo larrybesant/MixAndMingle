@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import crypto from "crypto"
+import { createNotification } from "../actions/notifications"
 
 // Generate a unique stream key
 function generateStreamKey() {
@@ -63,6 +64,16 @@ export async function createLiveStream(formData: FormData) {
     return { error: "Failed to create live stream" }
   }
 
+  // Send notification to the DJ
+  await createNotification({
+    userId: user.id,
+    title: "Stream Scheduled",
+    content: `You've scheduled a new stream: "${title}"`,
+    type: "system",
+    relatedId: data.id,
+    relatedType: "stream",
+  })
+
   revalidatePath("/dj/streams")
   return { success: true, streamId: data.id, streamKey }
 }
@@ -103,6 +114,31 @@ export async function updateStreamStatus(streamId: string, status: "scheduled" |
   if (error) {
     console.error("Error updating stream status:", error)
     return { error: "Failed to update stream status" }
+  }
+
+  // If going live, notify followers
+  if (status === "live") {
+    // Get DJ name
+    const { data: djProfile } = await supabase.from("dj_profiles").select("artist_name").eq("id", user.id).single()
+
+    const djName = djProfile?.artist_name || "A DJ"
+
+    // Get followers
+    const { data: followers } = await supabase.from("dj_followers").select("user_id").eq("dj_id", user.id)
+
+    if (followers && followers.length > 0) {
+      // Send notifications to followers
+      for (const follower of followers) {
+        await createNotification({
+          userId: follower.user_id,
+          title: "Live Stream Starting",
+          content: `${djName} is going live`,
+          type: "stream_starting",
+          relatedId: streamId,
+          relatedType: "stream",
+        })
+      }
+    }
   }
 
   revalidatePath("/dj/streams")
