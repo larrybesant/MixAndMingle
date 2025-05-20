@@ -1,25 +1,22 @@
 import { NextResponse } from "next/server"
-import { getMessaging } from "firebase-admin/messaging"
-import { db } from "@/lib/firebase-admin"
-import { initAdmin } from "@/lib/firebase-admin"
-
-// Initialize Firebase Admin
-initAdmin()
+import { db } from "@/lib/firebase-admin-safe"
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await request.json()
+    const { userId, token } = await request.json()
 
     if (!userId) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 })
     }
 
-    // Get the FCM instance
-    const messaging = getMessaging()
+    if (!token) {
+      return NextResponse.json({ error: "Missing token" }, { status: 400 })
+    }
 
-    // Generate a registration token
-    // This is a server-side operation that uses the VAPID key securely
-    const token = await messaging.createRegistrationToken()
+    // In a build environment, just return success
+    if (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL) {
+      return NextResponse.json({ success: true, message: "Build-time mock response" })
+    }
 
     // Save token to user's document
     const userRef = db.collection("users").doc(userId)
@@ -44,7 +41,7 @@ export async function POST(request: Request) {
       )
     }
 
-    return NextResponse.json({ success: true, token })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error registering FCM token:", error)
 

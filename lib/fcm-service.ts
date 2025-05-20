@@ -1,11 +1,11 @@
 import { db } from "@/lib/firebase"
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
-import { getMessaging, onMessage } from "firebase/messaging"
-import { audioService } from "@/lib/audio-service"
+import { getMessaging, onMessage, getToken } from "firebase/messaging"
 
 class FCMService {
   messaging: any
   initialized = false
+  vapidKey: string | null = null
 
   // Initialize Firebase Cloud Messaging
   async initialize() {
@@ -28,9 +28,10 @@ class FCMService {
 
           // Play sound based on notification type - audioService will check if this type is enabled
           if (payload.data?.type) {
-            audioService.playSound(payload.data.type)
-          } else {
-            audioService.playSound("system")
+            // If audioService is available
+            if (typeof window !== "undefined" && (window as any).audioService) {
+              ;(window as any).audioService.playSound(payload.data.type)
+            }
           }
 
           this.showNotification(payload)
@@ -38,6 +39,25 @@ class FCMService {
       }
     } catch (error) {
       console.error("Failed to initialize FCM:", error)
+    }
+  }
+
+  // Fetch VAPID key from server
+  async getVapidKey(): Promise<string | null> {
+    if (this.vapidKey) return this.vapidKey
+
+    try {
+      const response = await fetch("/api/config/vapid-key")
+      if (!response.ok) {
+        throw new Error("Failed to fetch VAPID key")
+      }
+
+      const data = await response.json()
+      this.vapidKey = data.vapidKey
+      return this.vapidKey
+    } catch (error) {
+      console.error("Error fetching VAPID key:", error)
+      return null
     }
   }
 
@@ -51,23 +71,23 @@ class FCMService {
       const permission = await Notification.requestPermission()
 
       if (permission === "granted") {
-        // Get token via server API instead of directly
-        const response = await fetch("/api/notifications/register-token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ userId }),
-        })
+        // Get VAPID key from server
+        const vapidKey = await this.getVapidKey()
 
-        if (!response.ok) {
-          throw new Error("Failed to register FCM token")
+        if (!vapidKey) {
+          console.error("VAPID key not available")
+          return null
         }
 
-        const data = await response.json()
+        // Get token with VAPID key
+        const token = await getToken(this.messaging, {
+          vapidKey,
+          serviceWorkerRegistration: await navigator.serviceWorker.getRegistration(),
+        })
 
-        if (data.token) {
-          return data.token
+        if (token) {
+          await this.saveTokenToDatabase(userId, token)
+          return token
         }
       }
 
@@ -136,8 +156,10 @@ class FCMService {
       const { title, body, image } = payload.notification
       const notificationType = payload.data?.type || "system"
 
-      // Play notification sound - audioService will check if this type is enabled
-      audioService.playSound(notificationType)
+      // Play notification sound - if audioService is available
+      if (typeof window !== "undefined" && (window as any).audioService) {
+        ;(window as any).audioService.playSound(notificationType)
+      }
 
       const options = {
         body,

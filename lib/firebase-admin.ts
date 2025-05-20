@@ -1,103 +1,138 @@
-import { initializeApp, getApps, cert } from "firebase-admin/app"
-import { getFirestore } from "firebase-admin/firestore"
-import { getAuth } from "firebase-admin/auth"
-import { getStorage } from "firebase-admin/storage"
-import { getMessaging } from "firebase-admin/messaging"
+import { initializeApp, getApps, cert, type App } from "firebase-admin/app"
+import { getFirestore as _getFirestore, type Firestore } from "firebase-admin/firestore"
+import { getAuth as _getAuth, type Auth } from "firebase-admin/auth"
+import { getStorage as _getStorage, type Storage } from "firebase-admin/storage"
+import { getMessaging as _getMessaging, type Messaging } from "firebase-admin/messaging"
+import { env } from "./env"
 
-// Function to properly format the private key
-function formatPrivateKey(key: string | undefined): string {
-  if (!key) {
-    throw new Error("FIREBASE_PRIVATE_KEY is not defined")
-  }
+// Re-export the original functions from Firebase Admin SDK
+export { _getFirestore as getFirestore } from "firebase-admin/firestore"
+export { _getAuth as getAuth } from "firebase-admin/auth"
+export { _getStorage as getStorage } from "firebase-admin/storage"
+export { _getMessaging as getMessaging } from "firebase-admin/messaging"
 
-  // If the key already contains newlines, it's already properly formatted
-  if (key.includes("-----BEGIN PRIVATE KEY-----") && key.includes("\n")) {
-    return key
-  }
-
-  // Handle the case where the key is provided as a string with escaped newlines
-  if (key.includes("\\n")) {
-    return key.replace(/\\n/g, "\n")
-  }
-
-  // Handle the case where the key is provided without proper PEM formatting
-  if (!key.includes("-----BEGIN PRIVATE KEY-----")) {
-    return `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----\n`
-  }
-
-  return key
+// Interface for admin services
+interface AdminServices {
+  db: Firestore
+  auth: Auth
+  storage: Storage
+  messaging: Messaging
+  app: App
 }
 
-// Initialize Firebase Admin SDK function
-export function initAdmin() {
-  if (getApps().length === 0) {
-    try {
-      const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY)
+// Mock services for build time or when Firebase isn't available
+const mockServices: AdminServices = {
+  db: {} as Firestore,
+  auth: {} as Auth,
+  storage: {} as Storage,
+  messaging: {} as Messaging,
+  app: {} as App,
+}
 
-      initializeApp({
+// Global variable to track initialization status
+let isInitialized = false
+let adminServices: AdminServices | null = null
+
+/**
+ * Initialize Firebase Admin SDK
+ * This function handles initialization with proper error handling
+ */
+export function initAdmin(): AdminServices {
+  // If already initialized, return the existing services
+  if (isInitialized && adminServices) {
+    return adminServices
+  }
+
+  // If we're in a build environment (no actual Firebase needed)
+  if (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV === "preview") {
+    console.log("Build environment detected, using mock Firebase Admin")
+    return mockServices
+  }
+
+  try {
+    // Check if we have the necessary environment variables
+    if (!env.firebase.projectId || !env.firebase.clientEmail) {
+      console.error("Missing required Firebase Admin environment variables")
+      throw new Error("Missing required Firebase Admin environment variables")
+    }
+
+    // Only initialize if not already initialized
+    if (getApps().length === 0) {
+      // Get the private key from our environment handler
+      const privateKey = env.firebase.privateKey
+
+      // Initialize the app
+      const app = initializeApp({
         credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          projectId: env.firebase.projectId,
+          clientEmail: env.firebase.clientEmail,
           privateKey,
         }),
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        storageBucket: env.firebase.storageBucket,
       })
 
-      console.log("Firebase Admin SDK initialized successfully")
-    } catch (error) {
-      console.error("Error initializing Firebase Admin SDK:", error)
-      throw error
-    }
-  }
+      // Create and store the services
+      adminServices = {
+        db: _getFirestore(app),
+        auth: _getAuth(app),
+        storage: _getStorage(app),
+        messaging: _getMessaging(app),
+        app,
+      }
 
-  return {
-    db: getFirestore(),
-    auth: getAuth(),
-    storage: getStorage(),
-    messaging: getMessaging(),
+      isInitialized = true
+      console.log("Firebase Admin SDK initialized successfully")
+    } else {
+      // If already initialized, get the existing app
+      const app = getApps()[0]
+
+      // Create services from the existing app
+      adminServices = {
+        db: _getFirestore(app),
+        auth: _getAuth(app),
+        storage: _getStorage(app),
+        messaging: _getMessaging(app),
+        app,
+      }
+
+      isInitialized = true
+    }
+
+    return adminServices
+  } catch (error) {
+    console.error("Error initializing Firebase Admin SDK:", error)
+
+    // In development, we can use mock services to prevent crashes
+    if (env.isDevelopment) {
+      console.warn("Using mock Firebase Admin services in development")
+      return mockServices
+    }
+
+    // In production, we should throw the error
+    throw error
   }
 }
 
-// Auto-initialize for direct exports
-let isInitialized = false
-
+// Try to initialize Firebase Admin
 try {
-  if (getApps().length === 0) {
-    const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY)
-
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey,
-      }),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    })
-
-    isInitialized = true
-    console.log("Firebase Admin SDK auto-initialized successfully")
-  }
+  adminServices = initAdmin()
 } catch (error) {
-  console.error("Error during Firebase Admin SDK auto-initialization:", error)
+  console.error("Failed to initialize Firebase Admin on startup:", error)
   // Don't throw here to prevent app from crashing during build
 }
 
-// Direct exports for backward compatibility
-export const db = isInitialized ? getFirestore() : null
-export const auth = isInitialized ? getAuth() : null
-export const storage = isInitialized ? getStorage() : null
-export const messaging = isInitialized ? getMessaging() : null
+// Export individual services
+export const db = adminServices?.db
+export const auth = adminServices?.auth
+export const storage = adminServices?.storage
+export const messaging = adminServices?.messaging
 
-// Helper function to get Firebase Admin instances (new pattern)
-export function getAdmin() {
-  if (!isInitialized) {
+// Helper function to get Firebase Admin instances (safe version)
+export function getAdmin(): AdminServices {
+  // If not initialized or initialization failed, try again
+  if (!isInitialized || !adminServices) {
     return initAdmin()
   }
 
-  return {
-    db: getFirestore(),
-    auth: getAuth(),
-    storage: getStorage(),
-    messaging: getMessaging(),
-  }
+  return adminServices
 }

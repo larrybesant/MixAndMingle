@@ -2,6 +2,9 @@
 importScripts("https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js")
 importScripts("https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js")
 
+// Declare the firebase variable
+const firebase = self.firebase
+
 // Initialize the Firebase app in the service worker by passing in the
 // messagingSenderId.
 firebase.initializeApp({
@@ -18,7 +21,6 @@ firebase.initializeApp({
 // messages.
 const messaging = firebase.messaging()
 
-// Add this to the top of the file, after the importScripts lines
 // Custom notification sounds based on notification type
 const notificationSounds = {
   message: "/sounds/message.mp3",

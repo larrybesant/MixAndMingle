@@ -1,4 +1,4 @@
-import { db, messaging, getAdmin } from "@/lib/firebase-admin"
+import { getFirestore, getMessaging } from "@/lib/firebase-admin"
 import type { MulticastMessage } from "firebase-admin/messaging"
 
 // Notification types
@@ -16,19 +16,6 @@ export interface NotificationData {
 
 // Server-side notification service
 export class ServerNotificationService {
-  private ensureFirebaseAdmin() {
-    // If the auto-initialization failed, try to initialize again
-    if (!db || !messaging) {
-      const admin = getAdmin()
-      return {
-        db: admin.db,
-        messaging: admin.messaging,
-      }
-    }
-
-    return { db, messaging }
-  }
-
   // Create a notification in Firestore
   async createNotification(
     userId: string,
@@ -39,7 +26,7 @@ export class ServerNotificationService {
     image?: string,
   ) {
     try {
-      const { db } = this.ensureFirebaseAdmin()
+      const db = getFirestore()
 
       // Create notification document
       const notificationRef = db.collection("notifications").doc()
@@ -65,7 +52,8 @@ export class ServerNotificationService {
   // Send push notification to a user
   async sendPushNotification(userId: string, title: string, body: string, data?: NotificationData, image?: string) {
     try {
-      const { db, messaging } = this.ensureFirebaseAdmin()
+      const db = getFirestore()
+      const messaging = getMessaging()
 
       // Get user's FCM tokens
       const userDoc = await db.collection("users").doc(userId).get()
