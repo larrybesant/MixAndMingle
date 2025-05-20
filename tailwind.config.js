@@ -1,17 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-const defaultConfig = require("shadcn/ui/tailwind.config")
-
 module.exports = {
-  ...defaultConfig,
+  darkMode: ["class"],
   content: [
-    ...defaultConfig.content,
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    ...defaultConfig.theme,
     container: {
       center: true,
       padding: "2rem",
@@ -20,33 +17,39 @@ module.exports = {
       },
     },
     extend: {
-      ...defaultConfig.theme.extend,
       colors: {
-        ...defaultConfig.theme.extend.colors,
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          ...defaultConfig.theme.extend.colors.primary,
           DEFAULT: "hsl(252 100% 64%)",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          ...defaultConfig.theme.extend.colors.secondary,
           DEFAULT: "hsl(15 100% 60%)",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         accent: {
-          ...defaultConfig.theme.extend.colors.accent,
           DEFAULT: "hsl(280 100% 60%)",
+          foreground: "hsl(var(--accent-foreground))",
         },
         destructive: {
-          ...defaultConfig.theme.extend.colors.destructive,
           DEFAULT: "hsl(0 62.8% 30.6%)",
+          foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          ...defaultConfig.theme.extend.colors.muted,
           DEFAULT: "hsl(240 5% 15%)",
           foreground: "hsl(240 5% 65%)",
         },
         card: {
-          ...defaultConfig.theme.extend.colors.card,
+          DEFAULT: "hsl(var(--card))",
           foreground: "hsl(0 0% 98%)",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
       },
       boxShadow: {
@@ -59,7 +62,26 @@ module.exports = {
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
         "dark-gradient": "linear-gradient(to bottom, #0A0A12, #12121C)",
       },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
     },
   },
-  plugins: [...defaultConfig.plugins, require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate")],
 }
