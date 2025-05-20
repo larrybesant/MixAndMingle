@@ -1,8 +1,17 @@
 import * as functions from "firebase-functions"
 import * as admin from "firebase-admin"
+import { dailyAchievementBadgeCheck } from "./check-achievement-badges"
 
 // Initialize Firebase Admin
-admin.initializeApp()
+if (!admin.apps.length) {
+  admin.initializeApp()
+}
+
+// Export all functions
+export { dailyAchievementBadgeCheck }
+
+// Export existing functions
+export * from "./beta-reports"
 
 // Trigger when a new notification is created in Firestore
 export const onNotificationCreated = functions.firestore

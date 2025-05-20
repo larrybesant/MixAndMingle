@@ -4,6 +4,10 @@ import { getAuth as _getAuth } from "firebase-admin/auth"
 import { getStorage as _getStorage } from "firebase-admin/storage"
 import { getMessaging as _getMessaging } from "firebase-admin/messaging"
 import { getPrivateKey, isBuildEnvironment } from "./private-key-handler"
+import { Timestamp, FieldValue } from "firebase-admin/firestore"
+
+// Re-export Firestore types
+export { Timestamp, FieldValue }
 
 // Re-export the original functions from Firebase Admin SDK
 export { getFirestore } from "firebase-admin/firestore"
