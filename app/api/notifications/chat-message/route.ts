@@ -4,84 +4,46 @@ import { getAdmin } from "@/lib/firebase-admin"
 
 export async function POST(request: Request) {
   try {
+    const { db } = getAdmin()
     const body = await request.json()
-    const { roomId, messageId, senderId, senderName, messageText, excludeUserIds = [] } = body
+    const { roomId, messageId, senderId, recipientId, messageText } = body
 
-    // Validate required fields
-    if (!roomId || !messageId || !senderId || !senderName || !messageText) {
+    if (!roomId || !messageId || !senderId || !recipientId || !messageText) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const { db } = getAdmin()
-
-    // Get room details
-    const roomDoc = await db.collection("rooms").doc(roomId).get()
-
-    if (!roomDoc.exists) {
-      return NextResponse.json({ error: "Room not found" }, { status: 404 })
-    }
-
-    const roomData = roomDoc.data()
-    const roomName = roomData?.name || "Chat Room"
-
-    // Get sender details
+    // Get sender information
     const senderDoc = await db.collection("users").doc(senderId).get()
-
     if (!senderDoc.exists) {
       return NextResponse.json({ error: "Sender not found" }, { status: 404 })
     }
-
     const senderData = senderDoc.data()
+    const senderName = senderData?.displayName || "A user"
     const senderImage = senderData?.photoURL || null
 
-    // Get room members
-    const membersQuery = await db.collection("roomMembers").where("roomId", "==", roomId).get()
-
-    const memberIds: string[] = []
-
-    membersQuery.forEach((doc) => {
-      const memberId = doc.data().userId
-
-      // Exclude sender and any other excluded users
-      if (memberId !== senderId && !excludeUserIds.includes(memberId)) {
-        memberIds.push(memberId)
-      }
-    })
-
-    if (memberIds.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: "No members to notify",
-      })
+    // Get room information
+    const roomDoc = await db.collection("chatRooms").doc(roomId).get()
+    if (!roomDoc.exists) {
+      return NextResponse.json({ error: "Chat room not found" }, { status: 404 })
     }
+    const roomData = roomDoc.data()
+    const roomName = roomData?.name || "a chat room"
 
-    // Send notifications to all members
-    const results = await Promise.all(
-      memberIds.map((userId) =>
-        serverNotificationService.sendChatMessageNotification(
-          userId,
-          senderName,
-          senderImage,
-          roomName,
-          messageText,
-          roomId,
-          messageId,
-          senderId,
-        ),
-      ),
+    // Send notification
+    const result = await serverNotificationService.sendChatMessageNotification(
+      recipientId,
+      senderName,
+      senderImage,
+      roomName,
+      messageText,
+      roomId,
+      messageId,
+      senderId,
     )
 
-    return NextResponse.json({
-      success: true,
-      notifiedUsers: memberIds.length,
-      results,
-    })
+    return NextResponse.json({ success: true, result })
   } catch (error) {
-    console.error("Error sending chat message notifications:", error)
-
-    return NextResponse.json(
-      { error: "Failed to send notifications", details: (error as Error).message },
-      { status: 500 },
-    )
+    console.error("Error sending chat message notification:", error)
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 })
   }
 }
