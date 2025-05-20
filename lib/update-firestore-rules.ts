@@ -25,4 +25,10 @@
     allow read, write: if isSignedIn() && (!get(/databases/$(database)/documents/rooms/$(roomId)).data.isPrivate || 
                                           isRoomMember(get(/databases/$(database)/documents/rooms/$(roomId)).data));
   }
+
+  // For userSettings collection
+  match /userSettings/{userId} {
+    allow read: if request.auth != null && request.auth.uid == userId;
+    allow write: if request.auth != null && request.auth.uid == userId;
+  }
 */

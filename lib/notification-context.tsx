@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { notificationService, type Notification } from "@/lib/notification-service"
 import { fcmService } from "@/lib/fcm-service"
 import { useToast } from "@/hooks/use-toast"
+import { audioService } from "@/lib/audio-service"
 
 interface NotificationContextType {
   notifications: Notification[]
@@ -40,17 +41,41 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     const unsubscribe = notificationService.subscribeToUserNotifications(user.uid, (newNotifications) => {
+      // Check if there are any new notifications compared to the current state
+      if (notifications.length > 0 && newNotifications.length > notifications.length) {
+        // Get the newest notification (assuming they're sorted by createdAt desc)
+        const newestNotification = newNotifications[0]
+
+        // Play the appropriate sound based on notification type
+        // The audioService will handle checking if this type is enabled
+        audioService.playSound(newestNotification.type)
+      }
+
       setNotifications(newNotifications)
       setUnreadCount(newNotifications.filter((notification) => !notification.read).length)
     })
 
     return () => unsubscribe()
-  }, [user])
+  }, [user, notifications.length])
 
   // Initialize FCM
   useEffect(() => {
     fcmService.initialize()
   }, [])
+
+  // Initialize audio service
+  useEffect(() => {
+    audioService.initialize()
+
+    // Initialize with user when available
+    if (user) {
+      audioService.initializeWithUser(user.uid)
+    }
+
+    return () => {
+      audioService.cleanup()
+    }
+  }, [user])
 
   // Mark a notification as read
   const markAsRead = async (notificationId: string) => {

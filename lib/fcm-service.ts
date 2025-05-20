@@ -1,6 +1,7 @@
 import { db } from "@/lib/firebase"
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
 import { getMessaging, onMessage } from "firebase/messaging"
+import { audioService } from "@/lib/audio-service"
 
 class FCMService {
   messaging: any
@@ -24,6 +25,14 @@ class FCMService {
         // Set up message listener
         onMessage(this.messaging, (payload) => {
           console.log("Message received:", payload)
+
+          // Play sound based on notification type - audioService will check if this type is enabled
+          if (payload.data?.type) {
+            audioService.playSound(payload.data.type)
+          } else {
+            audioService.playSound("system")
+          }
+
           this.showNotification(payload)
         })
       }
@@ -125,12 +134,17 @@ class FCMService {
   showNotification(payload: any) {
     if (Notification.permission === "granted" && payload.notification) {
       const { title, body, image } = payload.notification
+      const notificationType = payload.data?.type || "system"
+
+      // Play notification sound - audioService will check if this type is enabled
+      audioService.playSound(notificationType)
 
       const options = {
         body,
         icon: image || "/logo.png",
         badge: "/badge.png",
         data: payload.data,
+        silent: false, // We'll handle the sound ourselves
       }
 
       navigator.serviceWorker.ready.then((registration) => {
