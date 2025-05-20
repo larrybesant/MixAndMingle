@@ -1,51 +1,52 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { onAuthStateChanged, type User } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase-client"
-import type { AuthUser } from "./use-auth"
+import { auth, db } from "@/lib/firebase-browser"
 
-interface UseAuthStateReturn {
-  user: AuthUser | null
-  loading: boolean
+export interface AuthUser extends User {
+  customData?: Record<string, any>
 }
 
-export function useAuthState(): UseAuthStateReturn {
+export function useAuthState() {
   const [user, setUser] = useState<AuthUser | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
-      if (authUser) {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (authUser) => {
         try {
-          // Get additional user data from Firestore
-          const userDoc = await getDoc(doc(db, "users", authUser.uid))
+          if (authUser) {
+            // Fetch additional user data from Firestore
+            const userDoc = await getDoc(doc(db, "users", authUser.uid))
+            const customData = userDoc.exists() ? userDoc.data() : {}
 
-          if (userDoc.exists()) {
-            const userData = userDoc.data()
-            // Merge auth user with Firestore data
-            setUser({
-              ...authUser,
-              isPremium: userData.isPremium,
-              isVIP: userData.isVIP,
-              role: userData.role,
-              customData: userData,
-            })
+            const enhancedUser = authUser as AuthUser
+            enhancedUser.customData = customData
+
+            setUser(enhancedUser)
           } else {
-            setUser(authUser)
+            setUser(null)
           }
-        } catch (error) {
-          console.error("Error fetching user data:", error)
-          setUser(authUser)
+        } catch (err) {
+          console.error("Error in auth state change:", err)
+          setError(err instanceof Error ? err : new Error("An unknown error occurred"))
+        } finally {
+          setLoading(false)
         }
-      } else {
-        setUser(null)
-      }
-      setLoading(false)
-    })
+      },
+      (err) => {
+        console.error("Auth state error:", err)
+        setError(err)
+        setLoading(false)
+      },
+    )
 
     return () => unsubscribe()
   }, [])
 
-  return { user, loading }
+  return { user, loading, error }
 }

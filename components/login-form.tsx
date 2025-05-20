@@ -3,35 +3,66 @@
 import type React from "react"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, Info } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const router = useRouter()
   const { signInWithEmail, signInWithGoogle, signInWithFacebook } = useAuth()
   const { toast } = useToast()
+
+  // Check Firebase configuration on component mount
+  useEffect(() => {
+    const checkFirebaseConfig = () => {
+      const requiredVars = [
+        "NEXT_PUBLIC_FIREBASE_API_KEY",
+        "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+        "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+        "NEXT_PUBLIC_FIREBASE_APP_ID",
+      ]
+
+      const missingVars = requiredVars.filter((varName) => !process.env[varName])
+
+      if (missingVars.length > 0) {
+        setDebugInfo(`Missing environment variables: ${missingVars.join(", ")}`)
+        return false
+      }
+
+      return true
+    }
+
+    checkFirebaseConfig()
+  }, [])
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
     setError(null)
+    setDebugInfo(null)
 
     const formData = new FormData(event.currentTarget)
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
     try {
-      await signInWithEmail(email, password)
+      if (!email || !password) {
+        throw new Error("Email and password are required")
+      }
+
+      console.log("Attempting to sign in with email:", email)
+      const result = await signInWithEmail(email, password)
+      console.log("Sign in successful, user:", result?.user?.uid)
 
       toast({
         title: "Login successful!",
@@ -43,13 +74,18 @@ export function LoginForm() {
     } catch (error: any) {
       console.error("Login error:", error)
 
+      // Detailed error logging
+      setDebugInfo(`Error type: ${error.name}, Code: ${error.code}, Message: ${error.message}`)
+
       // More user-friendly error messages
       if (error.code === "auth/invalid-api-key") {
-        setError("Firebase configuration error. Please make sure Firebase is properly set up.")
+        setError("Firebase configuration error. Please contact support.")
       } else if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
         setError("Invalid email or password. Please try again.")
       } else if (error.code === "auth/too-many-requests") {
         setError("Too many failed login attempts. Please try again later.")
+      } else if (error.code === "auth/network-request-failed") {
+        setError("Network error. Please check your internet connection.")
       } else {
         setError(error.message || "Something went wrong. Please try again.")
       }
@@ -68,11 +104,15 @@ export function LoginForm() {
     try {
       setIsLoading(true)
       setError(null)
+      setDebugInfo(null)
+
+      console.log("Attempting to sign in with Google")
       await signInWithGoogle()
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Google login error:", error)
       setError("Failed to sign in with Google. Please try again.")
+      setDebugInfo(`Google sign-in error: ${error.message}`)
     } finally {
       setIsLoading(false)
     }
@@ -82,11 +122,15 @@ export function LoginForm() {
     try {
       setIsLoading(true)
       setError(null)
+      setDebugInfo(null)
+
+      console.log("Attempting to sign in with Facebook")
       await signInWithFacebook()
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Facebook login error:", error)
       setError("Failed to sign in with Facebook. Please try again.")
+      setDebugInfo(`Facebook sign-in error: ${error.message}`)
     } finally {
       setIsLoading(false)
     }
@@ -98,6 +142,14 @@ export function LoginForm() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {debugInfo && process.env.NODE_ENV !== "production" && (
+        <Alert variant="default" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Debug Information</AlertTitle>
+          <AlertDescription className="font-mono text-xs break-all">{debugInfo}</AlertDescription>
         </Alert>
       )}
 
@@ -154,6 +206,13 @@ export function LoginForm() {
           </svg>
           Facebook
         </Button>
+      </div>
+
+      <div className="text-center text-sm text-muted-foreground mt-4">
+        Don't have an account?{" "}
+        <Link href="/signup" className="text-primary hover:underline">
+          Sign up
+        </Link>
       </div>
     </div>
   )

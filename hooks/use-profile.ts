@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { updateProfile as updateFirebaseProfile } from "firebase/auth"
-import { doc, updateDoc, getDoc } from "firebase/firestore"
+import { doc, updateDoc, getDoc, setDoc, serverTimestamp } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { db, storage } from "@/lib/firebase-client"
+import { db, storage } from "@/lib/firebase-browser"
 import { useAuthState } from "./use-auth-state"
 
 interface ProfileData {
@@ -14,6 +14,8 @@ interface ProfileData {
   location?: string
   website?: string
   interests?: string[]
+  createdAt?: any
+  updatedAt?: any
   [key: string]: any
 }
 
@@ -24,6 +26,7 @@ interface UseProfileReturn {
   updateProfile: (data: Partial<ProfileData>) => Promise<void>
   uploadProfileImage: (file: File) => Promise<string>
   fetchProfile: () => Promise<ProfileData | null>
+  createProfile: (data: Partial<ProfileData>) => Promise<void>
 }
 
 export function useProfile(): UseProfileReturn {
@@ -56,6 +59,38 @@ export function useProfile(): UseProfileReturn {
     }
   }, [user])
 
+  const createProfile = useCallback(
+    async (data: Partial<ProfileData>) => {
+      if (!user) throw new Error("No user is signed in")
+
+      setLoading(true)
+      setError(null)
+
+      try {
+        const profileData: ProfileData = {
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          email: user.email || "",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          ...data,
+        }
+
+        // Create the user document in Firestore
+        await setDoc(doc(db, "users", user.uid), profileData)
+
+        // Update local profile state
+        setProfile(profileData)
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Failed to create profile"))
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [user],
+  )
+
   const updateProfile = useCallback(
     async (data: Partial<ProfileData>) => {
       if (!user) throw new Error("No user is signed in")
@@ -75,7 +110,7 @@ export function useProfile(): UseProfileReturn {
         // Update Firestore user document
         await updateDoc(doc(db, "users", user.uid), {
           ...data,
-          updatedAt: new Date().toISOString(),
+          updatedAt: serverTimestamp(),
         })
 
         // Update local profile state
@@ -122,11 +157,11 @@ export function useProfile(): UseProfileReturn {
   )
 
   // Fetch profile on mount
-  useState(() => {
+  useEffect(() => {
     if (user && !profile) {
       fetchProfile().catch(console.error)
     }
-  })
+  }, [user, profile, fetchProfile])
 
   return {
     loading,
@@ -135,5 +170,6 @@ export function useProfile(): UseProfileReturn {
     updateProfile,
     uploadProfileImage,
     fetchProfile,
+    createProfile,
   }
 }

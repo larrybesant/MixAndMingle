@@ -1,0 +1,113 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+        exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    
+    function isChatRoomMember(roomId) {
+      return isSignedIn() && 
+        exists(/databases/(default)/documents/chatRooms/$(roomId)/members/$(request.auth.uid));
+    }
+    
+    function isVideoRoomMember(roomId) {
+      return isSignedIn() && 
+        exists(/databases/(default)/documents/videoRooms/$(roomId)/members/$(request.auth.uid));
+    }
+    
+    function isBetaTester() {
+      return isSignedIn() && 
+        exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+        get(/databases/(default)/documents/users/$(request.auth.uid)).data.isBetaTester == true;
+    }
+    
+    // File size limits
+    function isValidFileSize(maxSizeMB) {
+      return request.resource.size <= maxSizeMB * 1024 * 1024;
+    }
+    
+    // File type validation
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isVideo() {
+      return request.resource.contentType.matches('video/.*');
+    }
+    
+    function isAudio() {
+      return request.resource.contentType.matches('audio/.*');
+    }
+    
+    function isDocument() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('application/msword') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*');
+    }
+    
+    // User profile images
+    match /users/{userId}/profile/{fileName} {
+      // Anyone can view profile images
+      allow read: if true;
+      
+      // Only the user can upload their own profile image
+      allow write: if isOwner(userId) && isImage() && isValidFileSize(5);
+    }
+    
+    // User private files
+    match /users/{userId}/private/{fileName} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+    
+    // Chat room media
+    match /chatRooms/{roomId}/{fileName} {
+      // Only room members can view chat media
+      allow read: if isChatRoomMember(roomId) || isAdmin();
+      
+      // Only room members can upload media to the chat
+      allow write: if isChatRoomMember(roomId) && 
+                    (isImage() || isAudio() || isDocument()) && 
+                    isValidFileSize(20);
+    }
+    
+    // Video room recordings
+    match /videoRooms/{roomId}/recordings/{fileName} {
+      allow read: if isVideoRoomMember(roomId) || isAdmin();
+      allow write: if isVideoRoomMember(roomId) && isVideo() && isValidFileSize(100);
+    }
+    
+    // Gift images
+    match /gifts/{fileName} {
+      allow read: if true; // Gift images are public
+      allow write: if isAdmin(); // Only admins can upload gift images
+    }
+    
+    // Beta program assets
+    match /beta/{fileName} {
+      allow read: if isBetaTester() || isAdmin();
+      allow write: if isAdmin();
+    }
+    
+    // Public assets
+    match /public/{fileName=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Temporary uploads (for processing)
+    match /temp/{userId}/{fileName} {
+      allow read, write: if isOwner(userId);
+      // Auto-delete after 24 hours handled by Cloud Functions
+    }
+  }
+}

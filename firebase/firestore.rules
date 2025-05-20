@@ -1,0 +1,213 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    function isBetaTester() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBetaTester == true;
+    }
+    
+    function isChatRoomMember(roomId) {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/chatRooms/$(roomId)/members/$(request.auth.uid));
+    }
+    
+    function isVideoRoomMember(roomId) {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/videoRooms/$(roomId)/members/$(request.auth.uid));
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read basic profile info
+      allow read: if true;
+      
+      // Only the owner can write their profile
+      allow write: if isOwner(userId) || isAdmin();
+      
+      // Private user data
+      match /private/{document=**} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      // User notifications
+      match /notifications/{notificationId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isSignedIn(); // Allow other users to create notifications
+      }
+      
+      // User badges
+      match /badges/{badgeId} {
+        allow read: if true; // Badges are public
+        allow write: if isAdmin() || 
+          (isSignedIn() && request.resource.data.autoAwarded == true); // System can auto-award badges
+      }
+      
+      // User subscription data
+      match /subscriptions/{subscriptionId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isAdmin(); // Only admins can modify subscription data
+      }
+    }
+    
+    // Chat rooms
+    match /chatRooms/{roomId} {
+      // Public rooms can be read by anyone, private rooms only by members
+      allow read: if resource.data.isPublic == true || isChatRoomMember(roomId) || isAdmin();
+      
+      // Only signed-in users can create rooms
+      allow create: if isSignedIn();
+      
+      // Only room creator or admin can update/delete room
+      allow update, delete: if isSignedIn() && 
+        (resource.data.createdBy == request.auth.uid || isAdmin());
+      
+      // Room members
+      match /members/{userId} {
+        allow read: if isChatRoomMember(roomId) || isAdmin();
+        allow write: if isOwner(userId) || 
+          (isChatRoomMember(roomId) && resource.data.isAdmin == true) || 
+          isAdmin();
+      }
+      
+      // Room messages
+      match /messages/{messageId} {
+        allow read: if isChatRoomMember(roomId) || isAdmin();
+        allow create: if isChatRoomMember(roomId) && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isSignedIn() && 
+          (resource.data.senderId == request.auth.uid || isAdmin());
+      }
+    }
+    
+    // Video rooms
+    match /videoRooms/{roomId} {
+      allow read: if resource.data.isPublic == true || isVideoRoomMember(roomId) || isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && 
+        (resource.data.createdBy == request.auth.uid || isAdmin());
+      
+      // Room members
+      match /members/{userId} {
+        allow read: if isVideoRoomMember(roomId) || isAdmin();
+        allow write: if isOwner(userId) || 
+          (isVideoRoomMember(roomId) && resource.data.isAdmin == true) || 
+          isAdmin();
+      }
+    }
+    
+    // Virtual gifts
+    match /gifts/{giftId} {
+      allow read: if true; // Gift catalog is public
+      allow write: if isAdmin(); // Only admins can modify gift catalog
+      
+      // Gift transactions
+      match /transactions/{transactionId} {
+        allow read: if isSignedIn() && 
+          (resource.data.senderId == request.auth.uid || 
+           resource.data.recipientId == request.auth.uid || 
+           isAdmin());
+        allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isAdmin(); // Only admins can modify transactions
+      }
+    }
+    
+    // Beta program
+    match /beta/{document=**} {
+      // Beta program data
+      allow read: if isBetaTester() || isAdmin();
+      allow write: if isAdmin();
+      
+      // Beta feedback
+      match /feedback/{feedbackId} {
+        allow read: if isBetaTester() || isAdmin();
+        allow create: if isBetaTester() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isSignedIn() && 
+          (resource.data.userId == request.auth.uid || isAdmin());
+      }
+      
+      // Beta challenges
+      match /challenges/{challengeId} {
+        allow read: if isBetaTester() || isAdmin();
+        allow write: if isAdmin();
+        
+        // Challenge completions
+        match /completions/{userId} {
+          allow read: if isBetaTester() || isAdmin();
+          allow create, update: if isOwner(userId) || isAdmin();
+          allow delete: if isAdmin();
+        }
+      }
+    }
+    
+    // A/B testing
+    match /abTests/{testId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+      
+      // Test variants
+      match /variants/{variantId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+      
+      // User assignments
+      match /assignments/{userId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isAdmin() || 
+          (isOwner(userId) && !exists(/databases/$(database)/documents/abTests/$(testId)/assignments/$(userId)));
+      }
+      
+      // Test results
+      match /results/{resultId} {
+        allow read: if isAdmin();
+        allow create: if isSignedIn();
+        allow update, delete: if isAdmin();
+      }
+    }
+    
+    // Roadmap
+    match /roadmap/{itemId} {
+      allow read: if true; // Roadmap is public
+      allow write: if isAdmin();
+      
+      // Votes
+      match /votes/{userId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+      
+      // Comments
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isSignedIn() && 
+          (resource.data.userId == request.auth.uid || isAdmin());
+      }
+    }
+    
+    // Admin collection
+    match /admins/{userId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+    
+    // System settings
+    match /settings/{settingId} {
+      allow read: if true; // Public settings
+      allow write: if isAdmin();
+    }
+  }
+}

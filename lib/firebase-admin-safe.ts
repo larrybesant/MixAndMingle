@@ -1,14 +1,9 @@
+// This file should only be imported in server components or API routes
 import { initializeApp, getApps, cert } from "firebase-admin/app"
 import { getFirestore } from "firebase-admin/firestore"
 import { getAuth } from "firebase-admin/auth"
 import { getStorage } from "firebase-admin/storage"
 import { getMessaging } from "firebase-admin/messaging"
-
-// Re-export the original functions from Firebase Admin SDK
-export { getFirestore } from "firebase-admin/firestore"
-export { getAuth } from "firebase-admin/auth"
-export { getStorage } from "firebase-admin/storage"
-export { getMessaging } from "firebase-admin/messaging"
 
 // Mock services for when Firebase isn't available
 const mockDb = {
@@ -49,62 +44,87 @@ const mockMessaging = {
   sendMulticast: async () => ({ successCount: 1, failureCount: 0 }),
 }
 
-// Check if we're in a build environment
-const isBuildEnvironment = process.env.NODE_ENV === "production" && !process.env.VERCEL_URL
-
 // Initialize Firebase Admin or use mocks
 let isInitialized = false
-const firestoreInstance = null
-const authInstance = null
-const storageInstance = null
-const messagingInstance = null
+let firestoreInstance = null
+let authInstance = null
+let storageInstance = null
+let messagingInstance = null
 
-try {
-  // Only try to initialize if we're not in a build environment
-  if (!isBuildEnvironment && getApps().length === 0) {
-    // Get the private key - try multiple approaches
-    let privateKey = process.env.FIREBASE_PRIVATE_KEY
+// Skip initialization during build or on client
+if (typeof window !== "undefined") {
+  console.log("Client environment detected, using mock Firebase services")
+  firestoreInstance = mockDb
+  authInstance = mockAuth
+  storageInstance = mockStorage
+  messagingInstance = mockMessaging
+} else {
+  try {
+    if (getApps().length === 0) {
+      // Initialize the app with environment variables
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+        : undefined
 
-    // Try base64 decode if available
-    if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
-      try {
-        privateKey = Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, "base64").toString("utf8")
-        console.log("Successfully decoded private key from base64")
-      } catch (e) {
-        console.error("Failed to decode base64 private key:", e)
-      }
+      initializeApp({
+        credential: cert({
+          projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey,
+        }),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      })
+
+      console.log("Firebase Admin SDK initialized successfully")
+      isInitialized = true
+    } else {
+      console.log("Firebase Admin SDK already initialized")
+      isInitialized = true
     }
-
-    // Initialize the app
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey,
-      }),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    })
-
-    console.log("Firebase Admin SDK initialized successfully")
-    isInitialized = true
+  } catch (error) {
+    console.error("Error initializing Firebase Admin SDK:", error)
+    // Don't throw here to prevent app from crashing
   }
-} catch (error) {
-  console.error("Error initializing Firebase Admin SDK:", error)
-  // Don't throw here to prevent app from crashing during build
+
+  // Initialize services if Firebase is initialized
+  if (isInitialized) {
+    try {
+      firestoreInstance = getFirestore()
+      authInstance = getAuth()
+      storageInstance = getStorage()
+      messagingInstance = getMessaging()
+    } catch (error) {
+      console.error("Error initializing Firebase services:", error)
+      // Fall back to mocks if service initialization fails
+      firestoreInstance = mockDb
+      authInstance = mockAuth
+      storageInstance = mockStorage
+      messagingInstance = mockMessaging
+    }
+  } else {
+    // Use mocks if Firebase isn't initialized
+    firestoreInstance = mockDb
+    authInstance = mockAuth
+    storageInstance = mockStorage
+    messagingInstance = mockMessaging
+  }
 }
 
 // Export safe versions of the services
-export const db = isInitialized ? getFirestore() : mockDb
-export const auth = isInitialized ? getAuth() : mockAuth
-export const storage = isInitialized ? getStorage() : mockStorage
-export const messaging = isInitialized ? getMessaging() : mockMessaging
+export const db = firestoreInstance || mockDb
+export const auth = authInstance || mockAuth
+export const storage = storageInstance || mockStorage
+export const messaging = messagingInstance || mockMessaging
 
 // Helper function to get Firebase Admin instances (safe version)
 export function getAdmin() {
   return {
-    db: isInitialized ? getFirestore() : mockDb,
-    auth: isInitialized ? getAuth() : mockAuth,
-    storage: isInitialized ? getStorage() : mockStorage,
-    messaging: isInitialized ? getMessaging() : mockMessaging,
+    db: firestoreInstance || mockDb,
+    auth: authInstance || mockAuth,
+    storage: storageInstance || mockStorage,
+    messaging: messagingInstance || mockMessaging,
   }
 }
+
+// Re-export Firestore types
+export { Timestamp, FieldValue } from "firebase-admin/firestore"

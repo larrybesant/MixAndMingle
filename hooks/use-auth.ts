@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import {
-  type User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
@@ -10,386 +9,307 @@ import {
   FacebookAuthProvider,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
+  confirmPasswordReset,
   updateProfile,
-  updateEmail,
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  sendEmailVerification,
+  type User,
   type UserCredential,
 } from "firebase/auth"
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase-client"
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { auth, db } from "@/lib/firebase-browser"
 
+// Types
 export interface AuthUser extends User {
-  isPremium?: boolean
-  isVIP?: boolean
-  role?: string
-  customData?: any
+  customData?: Record<string, any>
 }
 
-interface UseAuthReturn {
+interface AuthState {
   user: AuthUser | null
   loading: boolean
   error: Error | null
+}
+
+interface AuthActions {
   signInWithEmail: (email: string, password: string) => Promise<UserCredential>
-  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<UserCredential>
   signInWithGoogle: () => Promise<UserCredential>
   signInWithFacebook: () => Promise<UserCredential>
+  signUp: (email: string, password: string, displayName: string) => Promise<UserCredential>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
-  updateUserProfile: (data: Partial<UserProfile>) => Promise<void>
-  updateUserEmail: (newEmail: string, password: string) => Promise<void>
-  updateUserPassword: (currentPassword: string, newPassword: string) => Promise<void>
-  sendVerificationEmail: () => Promise<void>
-  isEmailVerified: boolean
+  confirmReset: (code: string, newPassword: string) => Promise<void>
+  updateUserProfile: (data: { displayName?: string; photoURL?: string }) => Promise<void>
 }
 
-interface UserProfile {
-  displayName?: string
-  photoURL?: string
-  bio?: string
-  favoriteGenres?: string[]
-}
+export type UseAuthReturn = AuthState & AuthActions
 
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<Error | null>(null)
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    loading: true,
+    error: null,
+  })
 
-  // Listen to the Firebase Auth state and set the local state.
+  // Listen to auth state changes
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (authUser) => {
-      try {
-        if (authUser) {
-          // Get additional user data from Firestore
-          const userDoc = await getDoc(doc(db, "users", authUser.uid))
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // Fetch additional user data from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid))
+          const customData = userDoc.exists() ? userDoc.data() : {}
 
-          if (userDoc.exists()) {
-            const userData = userDoc.data()
-            // Merge auth user with Firestore data
-            setUser({
-              ...authUser,
-              isPremium: userData.isPremium,
-              isVIP: userData.isVIP,
-              role: userData.role,
-              customData: userData,
-            })
+          const authUser: AuthUser = user
+          authUser.customData = customData
 
-            // Update online status
-            await updateDoc(doc(db, "users", authUser.uid), {
-              onlineStatus: "online",
-              lastActive: new Date().toISOString(),
-            })
-          } else {
-            setUser(authUser)
-          }
-        } else {
-          setUser(null)
+          setState({
+            user: authUser,
+            loading: false,
+            error: null,
+          })
+        } catch (error) {
+          console.error("Error fetching user data:", error)
+          setState({
+            user,
+            loading: false,
+            error: error instanceof Error ? error : new Error(String(error)),
+          })
         }
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("An unknown error occurred"))
-        console.error("Error in auth state change:", err)
-      } finally {
-        setLoading(false)
+      } else {
+        setState({
+          user: null,
+          loading: false,
+          error: null,
+        })
       }
     })
 
-    // Set up online/offline detection
-    const handleOnlineStatusChange = async () => {
-      if (user) {
-        try {
-          await updateDoc(doc(db, "users", user.uid), {
-            onlineStatus: navigator.onLine ? "online" : "offline",
-            lastActive: new Date().toISOString(),
-          })
-        } catch (err) {
-          console.error("Error updating online status:", err)
-        }
-      }
-    }
-
-    window.addEventListener("online", handleOnlineStatusChange)
-    window.addEventListener("offline", handleOnlineStatusChange)
-
-    // Cleanup subscription on unmount
-    return () => {
-      unsubscribe()
-      window.removeEventListener("online", handleOnlineStatusChange)
-      window.removeEventListener("offline", handleOnlineStatusChange)
-    }
-  }, [user])
-
-  // Update user's last active timestamp periodically
-  useEffect(() => {
-    if (!user) return
-
-    const interval = setInterval(
-      async () => {
-        try {
-          await updateDoc(doc(db, "users", user.uid), {
-            lastActive: new Date().toISOString(),
-          })
-        } catch (err) {
-          console.error("Error updating last active timestamp:", err)
-        }
-      },
-      5 * 60 * 1000, // Every 5 minutes
-    )
-
-    return () => clearInterval(interval)
-  }, [user])
+    return () => unsubscribe()
+  }, [])
 
   // Sign in with email and password
   const signInWithEmail = useCallback(async (email: string, password: string) => {
-    setError(null)
     try {
-      return await signInWithEmailAndPassword(auth, email, password)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to sign in"))
-      throw err
-    }
-  }, [])
+      setState((prev) => ({ ...prev, loading: true, error: null }))
+      const result = await signInWithEmailAndPassword(auth, email, password)
 
-  // Sign up with email and password
-  const signUpWithEmail = useCallback(async (email: string, password: string, displayName: string) => {
-    setError(null)
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-
-      // Update profile with display name
-      await updateProfile(userCredential.user, {
-        displayName,
+      // Update last login timestamp
+      await updateDoc(doc(db, "users", result.user.uid), {
+        lastLogin: serverTimestamp(),
       })
 
-      // Create user document in Firestore
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email,
-        displayName,
-        photoURL: null,
-        createdAt: new Date().toISOString(),
-        isPremium: false,
-        isVIP: false,
-        role: "user",
-        onlineStatus: "online",
-        lastActive: new Date().toISOString(),
-      })
-
-      return userCredential
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to sign up"))
-      throw err
+      return result
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      }))
+      throw error
     }
   }, [])
 
   // Sign in with Google
   const signInWithGoogle = useCallback(async () => {
-    setError(null)
     try {
+      setState((prev) => ({ ...prev, loading: true, error: null }))
       const provider = new GoogleAuthProvider()
-      const userCredential = await signInWithPopup(auth, provider)
+      const result = await signInWithPopup(auth, provider)
 
-      // Check if user document exists, if not create it
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid))
+      // Check if this is a new user
+      const userDoc = await getDoc(doc(db, "users", result.user.uid))
 
       if (!userDoc.exists()) {
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          uid: userCredential.user.uid,
-          email: userCredential.user.email,
-          displayName: userCredential.user.displayName,
-          photoURL: userCredential.user.photoURL,
-          createdAt: new Date().toISOString(),
-          isPremium: false,
-          isVIP: false,
-          role: "user",
-          onlineStatus: "online",
-          lastActive: new Date().toISOString(),
+        // Create a new user document
+        await setDoc(doc(db, "users", result.user.uid), {
+          displayName: result.user.displayName,
+          email: result.user.email,
+          photoURL: result.user.photoURL,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+          provider: "google",
         })
       } else {
-        // Update last active and online status
-        await updateDoc(doc(db, "users", userCredential.user.uid), {
-          onlineStatus: "online",
-          lastActive: new Date().toISOString(),
+        // Update last login timestamp
+        await updateDoc(doc(db, "users", result.user.uid), {
+          lastLogin: serverTimestamp(),
         })
       }
 
-      return userCredential
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to sign in with Google"))
-      throw err
+      return result
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      }))
+      throw error
     }
   }, [])
 
   // Sign in with Facebook
   const signInWithFacebook = useCallback(async () => {
-    setError(null)
     try {
+      setState((prev) => ({ ...prev, loading: true, error: null }))
       const provider = new FacebookAuthProvider()
-      const userCredential = await signInWithPopup(auth, provider)
+      const result = await signInWithPopup(auth, provider)
 
-      // Check if user document exists, if not create it
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid))
+      // Check if this is a new user
+      const userDoc = await getDoc(doc(db, "users", result.user.uid))
 
       if (!userDoc.exists()) {
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          uid: userCredential.user.uid,
-          email: userCredential.user.email,
-          displayName: userCredential.user.displayName,
-          photoURL: userCredential.user.photoURL,
-          createdAt: new Date().toISOString(),
-          isPremium: false,
-          isVIP: false,
-          role: "user",
-          onlineStatus: "online",
-          lastActive: new Date().toISOString(),
+        // Create a new user document
+        await setDoc(doc(db, "users", result.user.uid), {
+          displayName: result.user.displayName,
+          email: result.user.email,
+          photoURL: result.user.photoURL,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+          provider: "facebook",
         })
       } else {
-        // Update last active and online status
-        await updateDoc(doc(db, "users", userCredential.user.uid), {
-          onlineStatus: "online",
-          lastActive: new Date().toISOString(),
+        // Update last login timestamp
+        await updateDoc(doc(db, "users", result.user.uid), {
+          lastLogin: serverTimestamp(),
         })
       }
 
-      return userCredential
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to sign in with Facebook"))
-      throw err
+      return result
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      }))
+      throw error
+    }
+  }, [])
+
+  // Sign up with email and password
+  const signUp = useCallback(async (email: string, password: string, displayName: string) => {
+    try {
+      setState((prev) => ({ ...prev, loading: true, error: null }))
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+
+      // Update profile with display name
+      await updateProfile(result.user, { displayName })
+
+      // Create a new user document
+      await setDoc(doc(db, "users", result.user.uid), {
+        displayName,
+        email: result.user.email,
+        photoURL: result.user.photoURL,
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
+        provider: "email",
+      })
+
+      return result
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      }))
+      throw error
     }
   }, [])
 
   // Sign out
   const signOut = useCallback(async () => {
-    setError(null)
     try {
+      setState((prev) => ({ ...prev, loading: true, error: null }))
+
       // Update online status before signing out
-      if (user) {
-        await updateDoc(doc(db, "users", user.uid), {
-          onlineStatus: "offline",
-          lastActive: new Date().toISOString(),
+      if (state.user) {
+        await updateDoc(doc(db, "users", state.user.uid), {
+          online: false,
+          lastSeen: serverTimestamp(),
         })
       }
 
       await firebaseSignOut(auth)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to sign out"))
-      throw err
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      }))
+      throw error
     }
-  }, [user])
+  }, [state.user])
 
   // Reset password
   const resetPassword = useCallback(async (email: string) => {
-    setError(null)
     try {
+      setState((prev) => ({ ...prev, loading: true, error: null }))
       await sendPasswordResetEmail(auth, email)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to send password reset email"))
-      throw err
+      setState((prev) => ({ ...prev, loading: false }))
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      }))
+      throw error
+    }
+  }, [])
+
+  // Confirm password reset
+  const confirmReset = useCallback(async (code: string, newPassword: string) => {
+    try {
+      setState((prev) => ({ ...prev, loading: true, error: null }))
+      await confirmPasswordReset(auth, code, newPassword)
+      setState((prev) => ({ ...prev, loading: false }))
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error : new Error(String(error)),
+      }))
+      throw error
     }
   }, [])
 
   // Update user profile
   const updateUserProfile = useCallback(
-    async (data: Partial<UserProfile>) => {
-      setError(null)
+    async (data: { displayName?: string; photoURL?: string }) => {
       try {
-        if (!user) throw new Error("No user is signed in")
+        setState((prev) => ({ ...prev, loading: true, error: null }))
 
-        // Update Firebase Auth profile if displayName or photoURL is provided
-        if (data.displayName || data.photoURL) {
-          await updateProfile(user, {
-            displayName: data.displayName || user.displayName,
-            photoURL: data.photoURL || user.photoURL,
-          })
+        if (!state.user) {
+          throw new Error("No user is logged in")
         }
 
+        // Update Firebase Auth profile
+        await updateProfile(state.user, data)
+
         // Update Firestore user document
-        await updateDoc(doc(db, "users", user.uid), {
+        await updateDoc(doc(db, "users", state.user.uid), {
           ...data,
-          updatedAt: new Date().toISOString(),
+          updatedAt: serverTimestamp(),
         })
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to update profile"))
-        throw err
+
+        setState((prev) => ({ ...prev, loading: false }))
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error : new Error(String(error)),
+        }))
+        throw error
       }
     },
-    [user],
+    [state.user],
   )
-
-  // Update user email
-  const updateUserEmail = useCallback(
-    async (newEmail: string, password: string) => {
-      setError(null)
-      try {
-        if (!user) throw new Error("No user is signed in")
-
-        // Re-authenticate user before changing email
-        const credential = EmailAuthProvider.credential(user.email!, password)
-
-        await reauthenticateWithCredential(user, credential)
-        await updateEmail(user, newEmail)
-
-        // Update email in Firestore
-        await updateDoc(doc(db, "users", user.uid), {
-          email: newEmail,
-          updatedAt: new Date().toISOString(),
-        })
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to update email"))
-        throw err
-      }
-    },
-    [user],
-  )
-
-  // Update user password
-  const updateUserPassword = useCallback(
-    async (currentPassword: string, newPassword: string) => {
-      setError(null)
-      try {
-        if (!user) throw new Error("No user is signed in")
-        if (!user.email) throw new Error("User has no email")
-
-        // Re-authenticate user before changing password
-        const credential = EmailAuthProvider.credential(user.email, currentPassword)
-
-        await reauthenticateWithCredential(user, credential)
-        await updatePassword(user, newPassword)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to update password"))
-        throw err
-      }
-    },
-    [user],
-  )
-
-  // Send verification email
-  const sendVerificationEmail = useCallback(async () => {
-    setError(null)
-    try {
-      if (!user) throw new Error("No user is signed in")
-      await sendEmailVerification(user)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to send verification email"))
-      throw err
-    }
-  }, [user])
 
   return {
-    user,
-    loading,
-    error,
+    ...state,
     signInWithEmail,
-    signUpWithEmail,
     signInWithGoogle,
     signInWithFacebook,
+    signUp,
     signOut,
     resetPassword,
+    confirmReset,
     updateUserProfile,
-    updateUserEmail,
-    updateUserPassword,
-    sendVerificationEmail,
-    isEmailVerified: user?.emailVerified ?? false,
   }
 }
