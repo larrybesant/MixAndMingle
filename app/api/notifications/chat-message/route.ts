@@ -1,23 +1,24 @@
 import { NextResponse } from "next/server"
-import { db } from "@/lib/firebase-admin-safe"
+import { db } from "@/lib/firebase-admin"
+import { isBuildEnvironment } from "@/lib/private-key-handler"
 
 export async function POST(request: Request) {
   try {
+    // Skip actual processing during build
+    if (isBuildEnvironment()) {
+      console.log("Build environment detected, returning mock response")
+      return NextResponse.json({
+        success: true,
+        message: "Build-time mock response",
+      })
+    }
+
     const body = await request.json()
     const { roomId, messageId, senderId, senderName, messageText, excludeUserIds = [] } = body
 
     // Validate required fields
     if (!roomId || !messageId || !senderId || !senderName || !messageText) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
-    }
-
-    // In a real request, we would get room details and send notifications
-    // For the build process, we'll just return a success response
-    if (process.env.NODE_ENV === "production" && !process.env.VERCEL_URL) {
-      return NextResponse.json({
-        success: true,
-        message: "Build-time mock response",
-      })
     }
 
     // Get room details
