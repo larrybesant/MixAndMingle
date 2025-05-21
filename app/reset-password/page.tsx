@@ -5,13 +5,13 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { usePasswordReset } from "@/hooks/use-password-reset"
+import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth"
+import { auth } from "@/lib/firebase-client-safe"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle, ArrowLeft } from "lucide-react"
-import { Logo } from "@/components/Logo"
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")
@@ -22,16 +22,19 @@ export default function ResetPasswordPage() {
   const [oobCode, setOobCode] = useState("")
   const [isValidCode, setIsValidCode] = useState(false)
   const [isVerifying, setIsVerifying] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { confirmReset, verifyResetCode, loading, error } = usePasswordReset()
 
   useEffect(() => {
     const code = searchParams.get("oobCode")
+    console.log("Reset password page loaded with oobCode:", code ? "present" : "missing")
 
     if (!code) {
       setIsVerifying(false)
+      setError("Missing reset code. Please use the link from your email.")
       return
     }
 
@@ -39,11 +42,14 @@ export default function ResetPasswordPage() {
 
     const verifyCode = async () => {
       try {
-        const email = await verifyResetCode(code)
+        console.log("Verifying reset code...")
+        const email = await verifyPasswordResetCode(auth, code)
+        console.log("Code verified for email:", email)
         setEmail(email)
         setIsValidCode(true)
-      } catch (error) {
-        console.error("Invalid or expired code:", error)
+      } catch (err: any) {
+        console.error("Invalid or expired code:", err)
+        setError(err?.message || "Invalid or expired reset code")
         setIsValidCode(false)
       } finally {
         setIsVerifying(false)
@@ -51,11 +57,12 @@ export default function ResetPasswordPage() {
     }
 
     verifyCode()
-  }, [searchParams, verifyResetCode])
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setValidationError("")
+    setError(null)
 
     if (password !== confirmPassword) {
       setValidationError("Passwords do not match")
@@ -67,16 +74,23 @@ export default function ResetPasswordPage() {
       return
     }
 
+    setIsLoading(true)
+
     try {
-      await confirmReset(oobCode, password)
+      console.log("Resetting password with code...")
+      await confirmPasswordReset(auth, oobCode, password)
+      console.log("Password reset successful")
       setIsSuccess(true)
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
         router.push("/login")
       }, 3000)
-    } catch (error) {
-      console.error("Error resetting password:", error)
+    } catch (err: any) {
+      console.error("Error resetting password:", err)
+      setError(err?.message || "Failed to reset password")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -84,9 +98,6 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-950 to-black flex flex-col items-center justify-center p-4">
         <div className="max-w-md w-full bg-black/30 backdrop-blur-sm p-8 rounded-xl border border-indigo-900/50">
-          <div className="flex justify-center mb-6">
-            <Logo />
-          </div>
           <h1 className="text-2xl font-bold mb-6 text-center text-white">Verifying Reset Link</h1>
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
@@ -101,13 +112,10 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-indigo-950 to-black flex flex-col items-center justify-center p-4">
         <div className="max-w-md w-full bg-black/30 backdrop-blur-sm p-8 rounded-xl border border-indigo-900/50">
-          <div className="flex justify-center mb-6">
-            <Logo />
-          </div>
           <h1 className="text-2xl font-bold mb-6 text-center text-white">Invalid Reset Link</h1>
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>This password reset link is invalid or has expired.</AlertDescription>
+            <AlertDescription>{error || "This password reset link is invalid or has expired."}</AlertDescription>
           </Alert>
           <div className="mt-6">
             <Link href="/forgot-password">
@@ -122,11 +130,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-950 to-black flex flex-col">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center mb-8">
-          <Logo />
-        </div>
-
-        <div className="max-w-md mx-auto bg-black/30 backdrop-blur-sm p-8 rounded-xl border border-indigo-900/50">
+        <div className="max-w-md mx-auto bg-black/30 backdrop-blur-sm p-8 rounded-xl border border-indigo-900/50 mt-12">
           <div className="mb-6">
             <Link href="/login" className="text-indigo-400 hover:text-indigo-300 inline-flex items-center">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -154,7 +158,7 @@ export default function ResetPasswordPage() {
               {error && (
                 <Alert variant="destructive" className="mb-6">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error.message}</AlertDescription>
+                  <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
@@ -200,8 +204,8 @@ export default function ResetPasswordPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
-                  {loading ? "Resetting..." : "Reset Password"}
+                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
+                  {isLoading ? "Resetting..." : "Reset Password"}
                 </Button>
               </form>
             </>

@@ -1,75 +1,31 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { initializeApp } from "firebase/app"
-import { getAuth, signInAnonymously } from "firebase/auth"
+import FirebasePolyfillTest from "@/components/firebase-polyfill-test"
+import FirebaseConfigChecker from "@/components/firebase-config-checker"
 
 export default function FirebaseTestPage() {
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    async function testFirebase() {
-      try {
-        // Log environment variables (safely)
-        console.log("Firebase config check:", {
-          apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "Set" : "Missing",
-          authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "Set" : "Missing",
-          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "Set" : "Missing",
-        })
-
-        // Initialize Firebase
-        const app = initializeApp({
-          apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-          authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-          storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-          messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-          appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-        })
-
-        // Test authentication
-        const auth = getAuth(app)
-        const result = await signInAnonymously(auth)
-
-        setUser({
-          uid: result.user.uid,
-          isAnonymous: result.user.isAnonymous,
-        })
-
-        setStatus("success")
-      } catch (err: any) {
-        console.error("Firebase test error:", err)
-        setError(err.message)
-        setStatus("error")
-      }
-    }
-
-    testFirebase()
-  }, [])
-
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Firebase Test Page</h1>
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-6">Firebase Functionality Test</h1>
+      <p className="mb-8">
+        This page tests whether Firebase is working correctly with the Node.js polyfills. First, check your Firebase
+        configuration status, then run the tests to verify functionality.
+      </p>
 
-      {status === "loading" && <p>Testing Firebase connection...</p>}
+      <div className="mb-8">
+        <FirebaseConfigChecker />
+      </div>
 
-      {status === "success" && (
-        <div className="p-4 bg-green-100 rounded">
-          <p className="text-green-800 font-medium">Firebase initialized successfully!</p>
-          {user && (
-            <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">{JSON.stringify(user, null, 2)}</pre>
-          )}
-        </div>
-      )}
+      <FirebasePolyfillTest />
 
-      {status === "error" && (
-        <div className="p-4 bg-red-100 rounded">
-          <p className="text-red-800 font-medium">Firebase initialization failed</p>
-          {error && <p className="mt-2 text-sm">{error}</p>}
-        </div>
-      )}
+      <div className="mt-12 bg-gray-100 p-6 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">Troubleshooting Tips</h2>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>If authentication tests fail, check that your Firebase project has anonymous auth enabled.</li>
+          <li>If Firestore tests fail, verify that your Firestore security rules allow test operations.</li>
+          <li>If Storage tests fail, check your Storage security rules and CORS configuration.</li>
+          <li>Check the browser console for additional error details.</li>
+          <li>Ensure all required Node.js polyfills are properly configured in next.config.js.</li>
+        </ul>
+      </div>
     </div>
   )
 }

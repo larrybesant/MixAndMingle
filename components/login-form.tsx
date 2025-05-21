@@ -178,7 +178,7 @@ export function LoginForm() {
           <Input id="password" name="password" type="password" placeholder="Enter your password" required />
         </div>
         <div className="flex items-center justify-end">
-          <Link href="/forgot-password" className="text-sm underline">
+          <Link href="/forgot-password" className="text-sm text-indigo-400 hover:text-indigo-300">
             Forgot password?
           </Link>
         </div>

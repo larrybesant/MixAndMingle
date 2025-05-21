@@ -9,20 +9,19 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // ⚠️ Dangerous! Only use this for testing, fix type errors for production
     ignoreBuildErrors: true,
   },
   images: {
     domains: ["firebasestorage.googleapis.com", "lh3.googleusercontent.com"],
     unoptimized: true,
   },
-  // Comprehensive webpack configuration for Node.js polyfills
+  // Enhanced webpack configuration for Node.js polyfills
   webpack: (config, { isServer }) => {
     // Only apply these changes for client-side bundles
     if (!isServer) {
       // Provide fallbacks for Node.js core modules
       config.resolve.fallback = {
-        // Crypto and related modules
+        // Crypto and security modules
         crypto: require.resolve("crypto-browserify"),
         stream: require.resolve("stream-browserify"),
         buffer: require.resolve("buffer"),
@@ -36,6 +35,8 @@ const nextConfig = {
         https: require.resolve("https-browserify"),
         net: false,
         tls: false,
+        dgram: false,
+        dns: false,
 
         // Process and OS modules
         process: require.resolve("process/browser"),
@@ -48,10 +49,16 @@ const nextConfig = {
         zlib: require.resolve("browserify-zlib"),
         querystring: require.resolve("querystring-es3"),
 
-        // Other Node.js modules (set to false if not needed)
+        // Additional modules
+        constants: require.resolve("constants-browserify"),
+        timers: require.resolve("timers-browserify"),
+        domain: require.resolve("domain-browser"),
+        string_decoder: require.resolve("string_decoder/"),
+        punycode: require.resolve("punycode/"),
+        events: require.resolve("events/"),
+
+        // Modules that should be set to false (not needed in browser)
         child_process: false,
-        dns: false,
-        dgram: false,
         cluster: false,
         module: false,
         perf_hooks: false,
@@ -62,15 +69,8 @@ const nextConfig = {
         inspector: false,
         readline: false,
         repl: false,
-        constants: false,
         diagnostics_channel: false,
-        domain: false,
-        events: require.resolve("events/"),
-        punycode: false,
-        string_decoder: false,
         sys: false,
-        timers: false,
-        tty: false,
         wasi: false,
       }
 

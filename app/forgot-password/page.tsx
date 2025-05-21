@@ -4,40 +4,50 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePasswordReset } from "@/hooks/use-password-reset"
+import { sendPasswordResetEmail } from "firebase/auth"
+import { auth } from "@/lib/firebase-client-safe"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, ArrowLeft, CheckCircle } from "lucide-react"
-import { Logo } from "@/components/Logo"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const { sendResetEmail, loading, error } = usePasswordReset()
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-
-    if (!email) return
+    setIsLoading(true)
+    setError(null)
 
     try {
-      await sendResetEmail(email)
+      // Get the current origin for the redirect URL
+      const origin = typeof window !== "undefined" ? window.location.origin : ""
+
+      // Log for debugging
+      console.log(`Sending password reset email to ${email} with redirect URL: ${origin}/auth/action`)
+
+      await sendPasswordResetEmail(auth, email, {
+        url: `${origin}/auth/action`,
+        handleCodeInApp: false,
+      })
+
       setIsSubmitted(true)
-    } catch (error) {
-      console.error("Error sending password reset:", error)
+    } catch (err: any) {
+      console.error("Password reset error:", err)
+      setError(err?.message || "Failed to send password reset email")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-indigo-950 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-950 to-black flex flex-col">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center mb-8">
-          <Logo />
-        </div>
-
-        <div className="max-w-md mx-auto bg-black/30 backdrop-blur-sm p-8 rounded-xl border border-indigo-900/50">
+        <div className="max-w-md mx-auto bg-black/30 backdrop-blur-sm p-8 rounded-xl border border-indigo-900/50 mt-12">
           <div className="mb-6">
             <Link href="/login" className="text-indigo-400 hover:text-indigo-300 inline-flex items-center">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -71,7 +81,7 @@ export default function ForgotPasswordPage() {
               {error && (
                 <Alert variant="destructive" className="mb-6">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error.message}</AlertDescription>
+                  <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
@@ -95,8 +105,8 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
-                  {loading ? "Sending..." : "Send Reset Link"}
+                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
+                  {isLoading ? "Sending..." : "Send Reset Link"}
                 </Button>
               </form>
             </>

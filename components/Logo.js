@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Music } from "lucide-react"
 
-export default function Logo({ size = "default" }) {
+export const Logo = ({ size = "default" }) => {
   const sizeClasses = {
     small: "text-xl",
     default: "text-2xl md:text-3xl",
@@ -18,3 +18,6 @@ export default function Logo({ size = "default" }) {
     </Link>
   )
 }
+
+// Keep the default export for backward compatibility
+export default Logo

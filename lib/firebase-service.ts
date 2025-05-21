@@ -461,22 +461,36 @@ export const messagingService = {
   },
 
   /**
-   * Request permission for notifications
+   * Request permission for notifications and get FCM token
    */
   requestPermission: async () => {
     if (typeof window !== "undefined") {
       try {
+        // First, request notification permission
+        const permission = await Notification.requestPermission()
+        if (permission !== "granted") {
+          throw new Error("Notification permission denied")
+        }
+
+        // Fetch the VAPID key from the server
+        const response = await fetch("/api/config/vapid-key")
+        if (!response.ok) {
+          throw new Error("Failed to fetch VAPID key from server")
+        }
+
+        const data = await response.json()
+        if (!data.vapidKey) {
+          throw new Error("VAPID key not available")
+        }
+
+        // Now get the FCM token with the VAPID key from the server
         const { getMessaging, getToken } = await import("firebase/messaging")
         const messaging = getMessaging(firebaseApp)
+        const token = await getToken(messaging, {
+          vapidKey: data.vapidKey,
+        })
 
-        const permission = await Notification.requestPermission()
-        if (permission === "granted") {
-          const token = await getToken(messaging, {
-            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-          })
-          return token
-        }
-        throw new Error("Notification permission denied")
+        return token
       } catch (error) {
         console.error("Error requesting notification permission:", error)
         throw error
