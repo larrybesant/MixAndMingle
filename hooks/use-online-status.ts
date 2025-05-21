@@ -1,70 +1,101 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { goOnline, goOffline } from "@/lib/firebase-client-safe"
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { db } from "@/lib/firebase-client-safe"
+import { useAuth } from "@/lib/auth-context"
 
-interface UseOnlineStatusReturn {
-  isOnline: boolean
-  lastOnline: Date | null
-  setOfflineManually: () => Promise<void>
-  setOnlineManually: () => Promise<void>
-}
-
-export function useOnlineStatus(): UseOnlineStatusReturn {
-  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true)
-  const [lastOnline, setLastOnline] = useState<Date | null>(null)
+export function useOnlineStatus() {
+  const { user } = useAuth()
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine)
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      goOnline().catch(console.error)
+    // Update online status when the page is loaded
+    if (user) {
+      updateOnlineStatus(true)
     }
 
-    const handleOffline = () => {
-      setIsOnline(false)
-      setLastOnline(new Date())
-      // No need to call goOffline() here as Firebase will detect this automatically
-    }
-
-    if (typeof window !== "undefined") {
-      window.addEventListener("online", handleOnline)
-      window.addEventListener("offline", handleOffline)
-
-      // Set initial state
-      setIsOnline(navigator.onLine)
-    }
-
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("online", handleOnline)
-        window.removeEventListener("offline", handleOffline)
+    // Update online status when the window gains focus
+    const handleFocus = () => {
+      if (user) {
+        updateOnlineStatus(true)
       }
     }
-  }, [])
 
-  const setOfflineManually = async () => {
-    try {
-      await goOffline()
-      setIsOnline(false)
-      setLastOnline(new Date())
-    } catch (error) {
-      console.error("Error setting offline mode:", error)
+    // Update online status when the window loses focus
+    const handleBlur = () => {
+      if (user) {
+        updateOnlineStatus(false)
+      }
     }
-  }
 
-  const setOnlineManually = async () => {
-    try {
-      await goOnline()
+    // Update online status when the user goes online
+    const handleOnline = () => {
       setIsOnline(true)
+      if (user) {
+        updateOnlineStatus(true)
+      }
+    }
+
+    // Update online status when the user goes offline
+    const handleOffline = () => {
+      setIsOnline(false)
+      if (user) {
+        updateOnlineStatus(false)
+      }
+    }
+
+    // Set up event listeners
+    window.addEventListener("focus", handleFocus)
+    window.addEventListener("blur", handleBlur)
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    // Set up beforeunload event to update status when the user leaves
+    window.addEventListener("beforeunload", () => {
+      if (user) {
+        updateOnlineStatus(false, true)
+      }
+    })
+
+    // Clean up event listeners
+    return () => {
+      window.removeEventListener("focus", handleFocus)
+      window.removeEventListener("blur", handleBlur)
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+
+      // Update online status when the component unmounts
+      if (user) {
+        updateOnlineStatus(false)
+      }
+    }
+  }, [user])
+
+  // Function to update online status in Firestore
+  const updateOnlineStatus = async (status: boolean, immediate = false) => {
+    if (!user) return
+
+    try {
+      const userDocRef = doc(db, "users", user.uid)
+
+      if (immediate) {
+        // Use a synchronous approach for beforeunload
+        const xhr = new XMLHttpRequest()
+        xhr.open("POST", "/api/update-online-status", false) // false makes it synchronous
+        xhr.setRequestHeader("Content-Type", "application/json")
+        xhr.send(JSON.stringify({ userId: user.uid, isOnline: status }))
+      } else {
+        // Use normal async approach
+        await updateDoc(userDocRef, {
+          isOnline: status,
+          lastSeen: serverTimestamp(),
+        })
+      }
     } catch (error) {
-      console.error("Error setting online mode:", error)
+      console.error("Error updating online status:", error)
     }
   }
 
-  return {
-    isOnline,
-    lastOnline,
-    setOfflineManually,
-    setOnlineManually,
-  }
+  return { isOnline }
 }

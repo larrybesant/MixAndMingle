@@ -1,47 +1,51 @@
-"use client"
+import { ProfileView } from "@/components/profile/profile-view"
+import { Suspense } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { auth } from "@/lib/firebase-admin"
+import { redirect } from "next/navigation"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { ProfileView } from "@/components/profile-view"
-import { ProfileEditor } from "@/components/profile-editor"
-import { useAuthState } from "@/hooks/use-auth-state"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+export default async function MyProfilePage() {
+  // This is a server component, so we can use the Firebase Admin SDK
+  try {
+    const session = await auth.currentUser
 
-export default function ProfilePage() {
-  const { user } = useAuthState()
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("view")
+    if (!session) {
+      redirect("/login")
+    }
 
-  if (!user) {
     return (
-      <div className="container py-8">
-        <div className="bg-muted p-4 rounded-md">
-          <p className="text-muted-foreground">Please sign in to view your profile</p>
-        </div>
+      <div className="container max-w-4xl py-10">
+        <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+        <Suspense fallback={<ProfileSkeleton />}>
+          <ProfileView userId={session.uid} />
+        </Suspense>
       </div>
     )
+  } catch (error) {
+    console.error("Error getting current user:", error)
+    redirect("/login")
   }
+}
 
-  const handleEditClick = () => {
-    setActiveTab("edit")
-  }
-
+function ProfileSkeleton() {
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-2xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="view">View Profile</TabsTrigger>
-          <TabsTrigger value="edit">Edit Profile</TabsTrigger>
-        </TabsList>
-        <TabsContent value="view" className="mt-6">
-          <ProfileView userId={user.uid} onEditClick={handleEditClick} />
-        </TabsContent>
-        <TabsContent value="edit" className="mt-6">
-          <ProfileEditor />
-        </TabsContent>
-      </Tabs>
+    <div className="space-y-4">
+      <div className="flex items-start gap-4">
+        <Skeleton className="h-24 w-24 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      <Skeleton className="h-24 w-full" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-32" />
+        <div className="flex gap-2">
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+      </div>
     </div>
   )
 }

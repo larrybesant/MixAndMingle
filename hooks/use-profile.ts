@@ -1,175 +1,156 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import { updateProfile as updateFirebaseProfile } from "firebase/auth"
-import { doc, updateDoc, getDoc, setDoc, serverTimestamp } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { db, storage } from "@/lib/firebase-client-safe"
-import { useAuthState } from "./use-auth-state"
+import { useState, useEffect } from "react"
+import { doc, getDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore"
+import { updateProfile as updateAuthProfile } from "firebase/auth"
+import { db } from "@/lib/firebase-client-safe"
+import type { UserProfile, ProfileFormData } from "@/types/user-profile"
+import { useAuth } from "@/lib/auth-context"
 
-interface ProfileData {
-  displayName?: string
-  photoURL?: string
-  bio?: string
-  location?: string
-  website?: string
-  interests?: string[]
-  createdAt?: any
-  updatedAt?: any
-  [key: string]: any
-}
-
-interface UseProfileReturn {
-  loading: boolean
-  error: Error | null
-  profile: ProfileData | null
-  updateProfile: (data: Partial<ProfileData>) => Promise<void>
-  uploadProfileImage: (file: File) => Promise<string>
-  fetchProfile: () => Promise<ProfileData | null>
-  createProfile: (data: Partial<ProfileData>) => Promise<void>
-}
-
-export function useProfile(): UseProfileReturn {
-  const [loading, setLoading] = useState<boolean>(false)
+export function useProfile(userId?: string) {
+  const { user: authUser } = useAuth()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
-  const [profile, setProfile] = useState<ProfileData | null>(null)
-  const { user } = useAuthState()
 
-  const fetchProfile = useCallback(async () => {
-    if (!user) return null
+  // Use the authenticated user's ID if no userId is provided
+  const targetUserId = userId || authUser?.uid
 
-    setLoading(true)
-    setError(null)
+  // Fetch user profile
+  useEffect(() => {
+    if (!targetUserId) {
+      setLoading(false)
+      return
+    }
+
+    const fetchProfile = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const userDocRef = doc(db, "users", targetUserId)
+        const userDoc = await getDoc(userDocRef)
+
+        if (userDoc.exists()) {
+          setProfile(userDoc.data() as UserProfile)
+        } else if (targetUserId === authUser?.uid) {
+          // If it's the current user and no profile exists, create a basic one
+          const newProfile: UserProfile = {
+            uid: authUser.uid,
+            displayName: authUser.displayName || "New User",
+            email: authUser.email || "",
+            photoURL: authUser.photoURL || "",
+            createdAt: new Date().toISOString(),
+            isOnline: true,
+            role: "user",
+          }
+
+          await setDoc(userDocRef, {
+            ...newProfile,
+            createdAt: serverTimestamp(),
+          })
+
+          setProfile(newProfile)
+        } else {
+          setProfile(null)
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err)
+        setError(err instanceof Error ? err : new Error("Failed to fetch profile"))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [targetUserId, authUser])
+
+  // Update user profile
+  const updateProfile = async (data: ProfileFormData) => {
+    if (!authUser || !targetUserId) {
+      throw new Error("User not authenticated")
+    }
+
+    if (authUser.uid !== targetUserId) {
+      throw new Error("Cannot update another user's profile")
+    }
 
     try {
-      const userDoc = await getDoc(doc(db, "users", user.uid))
+      setLoading(true)
+      setError(null)
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as ProfileData
-        setProfile(userData)
-        return userData
-      }
+      const userDocRef = doc(db, "users", authUser.uid)
 
-      return null
+      // Update Firestore document
+      await updateDoc(userDocRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+      })
+
+      // Update Auth profile for basic fields
+      await updateAuthProfile(authUser, {
+        displayName: data.displayName,
+      })
+
+      // Refresh profile data
+      const updatedDoc = await getDoc(userDocRef)
+      setProfile(updatedDoc.data() as UserProfile)
+
+      return true
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch profile"))
+      console.error("Error updating profile:", err)
+      setError(err instanceof Error ? err : new Error("Failed to update profile"))
       throw err
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }
 
-  const createProfile = useCallback(
-    async (data: Partial<ProfileData>) => {
-      if (!user) throw new Error("No user is signed in")
-
-      setLoading(true)
-      setError(null)
-
-      try {
-        const profileData: ProfileData = {
-          displayName: user.displayName || "",
-          photoURL: user.photoURL || "",
-          email: user.email || "",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          ...data,
-        }
-
-        // Create the user document in Firestore
-        await setDoc(doc(db, "users", user.uid), profileData)
-
-        // Update local profile state
-        setProfile(profileData)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to create profile"))
-        throw err
-      } finally {
-        setLoading(false)
-      }
-    },
-    [user],
-  )
-
-  const updateProfile = useCallback(
-    async (data: Partial<ProfileData>) => {
-      if (!user) throw new Error("No user is signed in")
-
-      setLoading(true)
-      setError(null)
-
-      try {
-        // Update Firebase Auth profile if displayName or photoURL is provided
-        if (data.displayName || data.photoURL) {
-          await updateFirebaseProfile(user, {
-            displayName: data.displayName || user.displayName,
-            photoURL: data.photoURL || user.photoURL,
-          })
-        }
-
-        // Update Firestore user document
-        await updateDoc(doc(db, "users", user.uid), {
-          ...data,
-          updatedAt: serverTimestamp(),
-        })
-
-        // Update local profile state
-        setProfile((prev) => (prev ? { ...prev, ...data } : null))
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to update profile"))
-        throw err
-      } finally {
-        setLoading(false)
-      }
-    },
-    [user],
-  )
-
-  const uploadProfileImage = useCallback(
-    async (file: File) => {
-      if (!user) throw new Error("No user is signed in")
-
-      setLoading(true)
-      setError(null)
-
-      try {
-        // Create a storage reference
-        const storageRef = ref(storage, `profile_images/${user.uid}/${Date.now()}_${file.name}`)
-
-        // Upload the file
-        await uploadBytes(storageRef, file)
-
-        // Get the download URL
-        const downloadURL = await getDownloadURL(storageRef)
-
-        // Update the user's profile with the new photo URL
-        await updateProfile({ photoURL: downloadURL })
-
-        return downloadURL
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to upload profile image"))
-        throw err
-      } finally {
-        setLoading(false)
-      }
-    },
-    [user, updateProfile],
-  )
-
-  // Fetch profile on mount
-  useEffect(() => {
-    if (user && !profile) {
-      fetchProfile().catch(console.error)
+  // Update profile photo
+  const updateProfilePhoto = async (photoURL: string) => {
+    if (!authUser || !targetUserId) {
+      throw new Error("User not authenticated")
     }
-  }, [user, profile, fetchProfile])
+
+    if (authUser.uid !== targetUserId) {
+      throw new Error("Cannot update another user's profile")
+    }
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      const userDocRef = doc(db, "users", authUser.uid)
+
+      // Update Firestore document
+      await updateDoc(userDocRef, {
+        photoURL,
+        updatedAt: serverTimestamp(),
+      })
+
+      // Update Auth profile
+      await updateAuthProfile(authUser, { photoURL })
+
+      // Refresh profile data
+      const updatedDoc = await getDoc(userDocRef)
+      setProfile(updatedDoc.data() as UserProfile)
+
+      return true
+    } catch (err) {
+      console.error("Error updating profile photo:", err)
+      setError(err instanceof Error ? err : new Error("Failed to update profile photo"))
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return {
+    profile,
     loading,
     error,
-    profile,
     updateProfile,
-    uploadProfileImage,
-    fetchProfile,
-    createProfile,
+    updateProfilePhoto,
+    isCurrentUser: authUser?.uid === targetUserId,
   }
 }
