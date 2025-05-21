@@ -1,32 +1,29 @@
-import type { Metadata } from "next"
-import Link from "next/link"
-import { LoginForm } from "@/components/login-form"
-import { Logo } from "@/components/logo"
-import { AuthDiagnostics } from "@/components/auth-diagnostics"
+"use client"
 
-export const metadata: Metadata = {
-  title: "Login | Mix & Mingle",
-  description: "Login to your Mix & Mingle account",
-}
+import { LoginForm } from "@/components/login-form"
+import Logo from "@/components/Logo"
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="px-4 lg:px-6 h-14 flex items-center">
-        <Link href="/" className="flex items-center justify-center">
+    <div className="min-h-screen bg-dark-gradient flex flex-col">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center mb-8">
           <Logo />
-        </Link>
-      </header>
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6">
-          <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">Welcome back</h1>
-            <p className="text-muted-foreground">Enter your credentials to sign in to your account</p>
-          </div>
+        </div>
+
+        <div className="max-w-md mx-auto bg-muted/30 backdrop-blur-sm p-8 rounded-xl border border-border">
+          <h1 className="text-2xl font-bold mb-6 text-center">Welcome Back</h1>
           <LoginForm />
         </div>
-      </main>
-      <AuthDiagnostics />
+      </div>
+
+      <footer className="mt-auto border-t border-border/40 py-6">
+        <div className="container mx-auto px-4">
+          <p className="text-center text-sm text-foreground/60">
+            © {new Date().getFullYear()} Mix & Mingle. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth"
-import { auth } from "@/lib/firebase-client"
+import { auth } from "@/lib/firebase-client-safe"
 
 interface UsePasswordResetReturn {
   loading: boolean
@@ -20,7 +20,10 @@ export function usePasswordReset(): UsePasswordResetReturn {
     setLoading(true)
     setError(null)
     try {
-      await sendPasswordResetEmail(auth, email)
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/login`, // Redirect URL after password reset
+        handleCodeInApp: false,
+      })
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to send password reset email"))
       throw err
