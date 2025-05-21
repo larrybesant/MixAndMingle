@@ -28,10 +28,22 @@
   --destructive-foreground: 0 0% 98%;
 
   --ring: 240 5% 65%;
+
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-rgb: 10, 10, 10;
+  }
 }
 
 body {
   @apply bg-background text-foreground;
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 

@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect, useRef } from "react"
-import { db } from "@/lib/firebase"
+import { db } from "@/lib/firebase-client-safe"
 import { doc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
 import { useAuth } from "@/lib/auth-context"
 
@@ -394,9 +394,10 @@ export function WebRTCProvider({ children }: { children: React.ReactNode }) {
       })
 
       // Close all peer connections
-      peerConnections.current.forEach((pc, participantId) => {
-        cleanupPeerConnection(participantId)
-      })
+      peerConnections.current.forEach((pc) => pc.close())
+      peerConnections.current.clear()
+      dataChannels.current.forEach((dc) => dc.close())
+      dataChannels.current.clear()
 
       setRemoteStreams(new Map())
       setCurrentRoomId(null)

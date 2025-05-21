@@ -14,7 +14,7 @@ import {
   setDoc,
   serverTimestamp,
 } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db } from "@/lib/firebase-client-safe"
 import { useAuth } from "@/lib/auth-context"
 import { useWebRTC } from "@/lib/webrtc-context"
 import { Button } from "@/components/ui/button"

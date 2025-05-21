@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { SignupForm } from "@/components/signup-form"
+import { FirebaseConnectionTest } from "@/components/firebase-connection-test"
 
 export default function SignupPage() {
   return (
@@ -17,6 +18,13 @@ export default function SignupPage() {
               Login
             </Link>
           </div>
+
+          {/* Only show in development */}
+          {process.env.NODE_ENV !== "production" && (
+            <div className="mt-8">
+              <FirebaseConnectionTest />
+            </div>
+          )}
         </div>
       </div>
     </div>

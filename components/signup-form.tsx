@@ -4,26 +4,27 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, Info } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const router = useRouter()
+  const { signUp } = useAuth()
   const { toast } = useToast()
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
     setError(null)
+    setDebugInfo(null)
 
     const formData = new FormData(event.currentTarget)
     const name = formData.get("name") as string
@@ -31,26 +32,11 @@ export function SignupForm() {
     const password = formData.get("password") as string
 
     try {
-      // Create user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      const user = userCredential.user
+      console.log("Starting signup process for:", email)
 
-      // Update user profile with name
-      await updateProfile(user, {
-        displayName: name,
-      })
-
-      // Create user document in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        displayName: name,
-        email: email,
-        photoURL: null,
-        bio: "",
-        createdAt: new Date().toISOString(),
-        isPremium: false,
-        isVIP: false,
-      })
+      // Create user using the auth context
+      const result = await signUp(email, password, name)
+      console.log("User created successfully:", result.user.uid)
 
       toast({
         title: "Account created!",
@@ -61,6 +47,7 @@ export function SignupForm() {
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Signup error:", error)
+      setDebugInfo(`Error type: ${error.name}, Code: ${error.code}, Message: ${error.message}`)
 
       // More user-friendly error messages
       if (error.code === "auth/invalid-api-key") {
@@ -69,6 +56,8 @@ export function SignupForm() {
         setError("This email is already in use. Try logging in instead.")
       } else if (error.code === "auth/weak-password") {
         setError("Password is too weak. Please choose a stronger password.")
+      } else if (error.code === "auth/network-request-failed") {
+        setError("Network error. Please check your internet connection.")
       } else {
         setError(error.message || "Something went wrong. Please try again.")
       }
@@ -91,6 +80,15 @@ export function SignupForm() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+      {debugInfo && process.env.NODE_ENV !== "production" && (
+        <Alert variant="default" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Debug Information</AlertTitle>
+          <AlertDescription className="font-mono text-xs break-all">{debugInfo}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="name">Full Name</Label>
         <Input id="name" name="name" placeholder="Enter your name" required />

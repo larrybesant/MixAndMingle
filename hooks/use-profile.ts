@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 import { updateProfile as updateFirebaseProfile } from "firebase/auth"
 import { doc, updateDoc, getDoc, setDoc, serverTimestamp } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { db, storage } from "@/lib/firebase-browser"
+import { db, storage } from "@/lib/firebase-client-safe"
 import { useAuthState } from "./use-auth-state"
 
 interface ProfileData {

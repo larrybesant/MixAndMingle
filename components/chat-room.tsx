@@ -19,7 +19,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { db, storage } from "@/lib/firebase" // Import storage from firebase
+import { db, storage } from "@/lib/firebase-client-safe" // Import storage from firebase
 import { useAuth } from "@/lib/auth-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"

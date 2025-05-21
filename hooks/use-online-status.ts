@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { goOnline, goOffline } from "@/lib/firebase-browser"
+import { goOnline, goOffline } from "@/lib/firebase-client-safe"
 
 interface UseOnlineStatusReturn {
   isOnline: boolean

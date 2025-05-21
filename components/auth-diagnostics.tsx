@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle, AlertTriangle, Info } from "lucide-react"
-import { auth } from "@/lib/firebase-client"
+import { auth } from "@/lib/firebase-client-safe"
 
 export function AuthDiagnostics() {
   const [isOpen, setIsOpen] = useState(false)

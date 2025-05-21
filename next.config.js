@@ -5,29 +5,46 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
+    // ⚠️ Dangerous! Only use this for testing, fix type errors for production
     ignoreBuildErrors: true,
   },
   images: {
     domains: ["firebasestorage.googleapis.com", "lh3.googleusercontent.com"],
     unoptimized: true,
   },
-  // Add webpack configuration to handle Node.js modules
+  // Comprehensive webpack configuration for Node.js polyfills
   webpack: (config, { isServer }) => {
-    // If client-side, add fallbacks for Node.js modules
+    // Only apply these changes for client-side bundles
     if (!isServer) {
+      // Provide fallbacks for Node.js core modules
       config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        http2: false,
+        // Crypto and related modules
         crypto: require.resolve("crypto-browserify"),
         stream: require.resolve("stream-browserify"),
-        http: false,
-        https: false,
-        zlib: false,
-        path: false,
-        os: false,
+        buffer: require.resolve("buffer"),
+
+        // File system and path modules
+        fs: false, // Set to false to ignore (not used in browser)
+        path: require.resolve("path-browserify"),
+
+        // Network-related modules
+        http: require.resolve("stream-http"),
+        https: require.resolve("https-browserify"),
+        net: false,
+        tls: false,
+
+        // Process and OS modules
+        process: require.resolve("process/browser"),
+        os: require.resolve("os-browserify/browser"),
+
+        // Utility modules
+        util: require.resolve("util/"),
+        assert: require.resolve("assert/"),
+        url: require.resolve("url/"),
+        zlib: require.resolve("browserify-zlib"),
+        querystring: require.resolve("querystring-es3"),
+
+        // Other Node.js modules (set to false if not needed)
         child_process: false,
         dns: false,
         dgram: false,
@@ -46,20 +63,14 @@ const nextConfig = {
         domain: false,
         events: require.resolve("events/"),
         punycode: false,
-        querystring: false,
         string_decoder: false,
         sys: false,
         timers: false,
         tty: false,
-        url: false,
-        util: false,
         wasi: false,
-        assert: false,
-        buffer: require.resolve("buffer/"),
-        process: require.resolve("process/browser"),
       }
 
-      // Add polyfills
+      // Provide global variables that some modules expect
       config.plugins.push(
         new config.webpack.ProvidePlugin({
           process: "process/browser",
@@ -67,6 +78,7 @@ const nextConfig = {
         }),
       )
     }
+
     return config
   },
 }

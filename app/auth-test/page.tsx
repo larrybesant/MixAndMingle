@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { auth } from "@/lib/firebase-client"
+import { auth } from "@/lib/firebase-client-safe" // Updated import
 import { signInWithEmailAndPassword, signInAnonymously, signOut } from "firebase/auth"
+import { GoogleAuthTest } from "@/components/google-auth-test"
 
 export default function AuthTestPage() {
   const [email, setEmail] = useState("")
@@ -72,16 +73,51 @@ export default function AuthTestPage() {
             uid: auth.currentUser.uid,
             email: auth.currentUser.email,
             displayName: auth.currentUser.displayName,
+            isAnonymous: auth.currentUser.isAnonymous,
           }
         : null,
     })
   }
 
   return (
-    <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-6">Firebase Authentication Test</h1>
+    <div className="container mx-auto py-10 space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">Authentication Test Page</h1>
+        <p className="text-muted-foreground mt-2">Use this page to test various authentication methods</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Environment Variables</CardTitle>
+            <CardDescription>Check if required environment variables are set</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              <li>
+                <span className="font-medium">NEXT_PUBLIC_FIREBASE_API_KEY:</span>{" "}
+                {process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "✅ Set" : "❌ Missing"}
+              </li>
+              <li>
+                <span className="font-medium">NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:</span>{" "}
+                {process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "✅ Set" : "❌ Missing"}
+              </li>
+              <li>
+                <span className="font-medium">GOOGLE_CLIENT_ID:</span>{" "}
+                {process.env.GOOGLE_CLIENT_ID ? "✅ Set" : "❌ Missing"}
+              </li>
+              <li>
+                <span className="font-medium">GOOGLE_CLIENT_SECRET:</span>{" "}
+                {process.env.GOOGLE_CLIENT_SECRET ? "✅ Set" : "❌ Missing"}
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <GoogleAuthTest />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         <Card>
           <CardHeader>
             <CardTitle>Email Sign In</CardTitle>
@@ -171,29 +207,6 @@ export default function AuthTestPage() {
           </CardContent>
         </Card>
       )}
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Firebase Config</CardTitle>
-          <CardDescription>Current Firebase configuration (API keys redacted)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-muted p-4 rounded text-xs overflow-auto">
-            {JSON.stringify(
-              {
-                apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "✓ Set" : "✗ Missing",
-                authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? "✓ Set" : "✗ Missing",
-                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? "✓ Set" : "✗ Missing",
-                storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ? "✓ Set" : "✗ Missing",
-                messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ? "✓ Set" : "✗ Missing",
-                appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ? "✓ Set" : "✗ Missing",
-              },
-              null,
-              2,
-            )}
-          </pre>
-        </CardContent>
-      </Card>
     </div>
   )
 }

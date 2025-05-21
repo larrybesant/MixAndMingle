@@ -3,18 +3,18 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import {
-  onAuthStateChanged,
+  GoogleAuthProvider,
+  FacebookAuthProvider,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
-  GoogleAuthProvider,
-  FacebookAuthProvider,
-  signOut,
-  updateProfile,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
   type User,
+  updateProfile,
 } from "firebase/auth"
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase-client"
+import { auth, db } from "@/lib/firebase-client-safe"
 
 interface AuthContextType {
   user: User | null
@@ -110,6 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const provider = new GoogleAuthProvider()
+      provider.addScope("profile")
+      provider.addScope("email")
+      provider.setCustomParameters({
+        prompt: "select_account",
+      })
       const result = await signInWithPopup(auth, provider)
 
       // Create or update user document
@@ -213,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Authentication not initialized")
       }
 
+      // Create user with email and password
       const result = await createUserWithEmailAndPassword(auth, email, password)
 
       // Update profile with display name
@@ -267,7 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      await signOut(auth)
+      await firebaseSignOut(auth)
     } catch (error) {
       console.error("Sign-out error:", error)
       setError(error instanceof Error ? error : new Error(String(error)))

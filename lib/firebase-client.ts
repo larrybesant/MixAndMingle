@@ -53,10 +53,10 @@ try {
 
   // Connect to emulators in development
   if (process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true") {
+    console.log("🔥 Using Firebase Emulators")
     connectAuthEmulator(auth, "http://localhost:9099")
     connectFirestoreEmulator(db, "localhost", 8080)
     connectStorageEmulator(storage, "localhost", 9199)
-    console.log("Connected to Firebase emulators")
   }
 } catch (error) {
   console.error("Firebase initialization error:", error)

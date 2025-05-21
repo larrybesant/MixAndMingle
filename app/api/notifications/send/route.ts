@@ -1,30 +1,52 @@
 import { NextResponse } from "next/server"
-import { serverNotificationService } from "@/lib/server/notification-service"
+import { auth, messaging } from "@/lib/firebase-admin-safe" // Updated import
+import { db } from "@/lib/firebase-admin-safe" // Declared db variable
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { userId, type, title, body: notificationBody, data, image } = body
+    const { userId, title, body: notificationBody, data, image } = body
 
     // Validate required fields
-    if (!userId || !type || !title || !notificationBody) {
+    if (!userId || !title || !notificationBody) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Send notification
-    const result = await serverNotificationService.createAndSendNotification(
-      userId,
-      type,
-      title,
-      notificationBody,
-      data,
-      image,
-    )
+    // Get user
+    const user = await auth.getUser(userId)
 
-    return NextResponse.json({ success: true, result })
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    // Get FCM tokens
+    const userDoc = await db.collection("users").doc(userId).get()
+    const fcmTokens = userDoc.data()?.fcmTokens || []
+
+    if (fcmTokens.length === 0) {
+      return NextResponse.json({ error: "No FCM tokens found for user" }, { status: 404 })
+    }
+
+    // Send notification
+    const message = {
+      notification: {
+        title,
+        body: notificationBody,
+        imageUrl: image,
+      },
+      data: data || {},
+      tokens: fcmTokens,
+    }
+
+    const response = await messaging.sendMulticast(message)
+
+    return NextResponse.json({
+      success: true,
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+    })
   } catch (error) {
     console.error("Error sending notification:", error)
-
     return NextResponse.json(
       { error: "Failed to send notification", details: (error as Error).message },
       { status: 500 },

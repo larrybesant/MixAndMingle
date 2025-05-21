@@ -1,4 +1,4 @@
-import { db, storage } from "@/lib/firebase"
+import { db, storage } from "@/lib/firebase-client-safe"
 import {
   collection,
   doc,

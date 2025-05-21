@@ -1,4 +1,4 @@
-import { db } from "@/lib/firebase"
+import { db } from "@/lib/firebase-client-safe"
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
 import { getMessaging, onMessage, getToken } from "firebase/messaging"
 
@@ -13,7 +13,8 @@ class FCMService {
 
     try {
       if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-        const firebaseApp = (await import("@/lib/firebase")).default
+        const { getFirebaseApp } = await import("@/lib/firebase-client-safe")
+        const firebaseApp = getFirebaseApp()
 
         this.messaging = getMessaging(firebaseApp)
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useOnlineStatus } from "@/hooks/use-online-status"
-import { db } from "@/lib/firebase-browser"
+import { db } from "@/lib/firebase-client-safe"
 import { collection, addDoc, doc, writeBatch, serverTimestamp } from "firebase/firestore"
 import { AlertCircle, CheckCircle2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"

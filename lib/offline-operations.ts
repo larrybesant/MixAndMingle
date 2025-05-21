@@ -1,4 +1,4 @@
-import { db } from "@/lib/firebase-browser"
+import { db } from "@/lib/firebase-client-safe"
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore"
 
 // Check if we're online

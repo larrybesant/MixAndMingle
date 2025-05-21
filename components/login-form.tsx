@@ -107,12 +107,39 @@ export function LoginForm() {
       setDebugInfo(null)
 
       console.log("Attempting to sign in with Google")
-      await signInWithGoogle()
+      const result = await signInWithGoogle()
+
+      // Log successful authentication
+      console.log("Google sign-in successful:", result?.user?.uid)
+
+      toast({
+        title: "Google login successful!",
+        description: "Welcome to Mix & Mingle.",
+      })
+
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Google login error:", error)
-      setError("Failed to sign in with Google. Please try again.")
-      setDebugInfo(`Google sign-in error: ${error.message}`)
+
+      // Detailed error logging
+      setDebugInfo(`Google sign-in error: ${error.code || ""} - ${error.message}`)
+
+      // User-friendly error messages
+      if (error.code === "auth/popup-closed-by-user") {
+        setError("Login canceled. Please try again.")
+      } else if (error.code === "auth/popup-blocked") {
+        setError("Login popup was blocked. Please allow popups for this site.")
+      } else if (error.code === "auth/account-exists-with-different-credential") {
+        setError("An account already exists with the same email address but different sign-in credentials.")
+      } else {
+        setError("Failed to sign in with Google. Please try again.")
+      }
+
+      toast({
+        variant: "destructive",
+        title: "Google login failed",
+        description: "Please try again or use email login.",
+      })
     } finally {
       setIsLoading(false)
     }
