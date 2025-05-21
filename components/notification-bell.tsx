@@ -33,6 +33,14 @@ export function NotificationBell() {
       router.push(`/dashboard/friends`)
     } else if (notification.type === "gift") {
       router.push(`/dashboard/gifts`)
+    } else if (notification.type === "like" || notification.type === "comment" || notification.type === "share") {
+      if (notification.data?.postId) {
+        router.push(`/dashboard/feed/post/${notification.data.postId}`)
+      }
+    } else if (notification.type === "follow") {
+      if (notification.data?.senderId) {
+        router.push(`/profile/${notification.data.senderId}`)
+      }
     }
 
     setOpen(false)

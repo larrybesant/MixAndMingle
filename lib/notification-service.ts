@@ -19,7 +19,17 @@ import {
 export interface Notification {
   id: string
   userId: string
-  type: "message" | "mention" | "roomInvite" | "friendRequest" | "gift" | "system"
+  type:
+    | "message"
+    | "mention"
+    | "roomInvite"
+    | "friendRequest"
+    | "gift"
+    | "system"
+    | "like"
+    | "comment"
+    | "follow"
+    | "share"
   title: string
   body: string
   image?: string
@@ -30,6 +40,9 @@ export interface Notification {
     senderId?: string
     senderName?: string
     giftId?: string
+    postId?: string
+    commentId?: string
+    [key: string]: any
   }
   createdAt: Timestamp | Date
 }
@@ -250,6 +263,98 @@ class NotificationService {
       title,
       body,
       image,
+    })
+  }
+
+  // Create a like notification
+  async createLikeNotification(
+    userId: string,
+    senderName: string,
+    senderImage: string | null,
+    postId: string,
+    senderId: string,
+    postPreview: string,
+  ): Promise<string> {
+    return this.createNotification({
+      userId,
+      type: "like",
+      title: `New Like`,
+      body: `${senderName} liked your post: "${postPreview.length > 30 ? postPreview.substring(0, 30) + "..." : postPreview}"`,
+      image: senderImage || undefined,
+      data: {
+        postId,
+        senderId,
+        senderName,
+      },
+    })
+  }
+
+  // Create a comment notification
+  async createCommentNotification(
+    userId: string,
+    senderName: string,
+    senderImage: string | null,
+    postId: string,
+    commentId: string,
+    senderId: string,
+    commentText: string,
+    postPreview: string,
+  ): Promise<string> {
+    return this.createNotification({
+      userId,
+      type: "comment",
+      title: `New Comment`,
+      body: `${senderName} commented on your post: "${commentText.length > 30 ? commentText.substring(0, 30) + "..." : commentText}"`,
+      image: senderImage || undefined,
+      data: {
+        postId,
+        commentId,
+        senderId,
+        senderName,
+      },
+    })
+  }
+
+  // Create a follow notification
+  async createFollowNotification(
+    userId: string,
+    senderName: string,
+    senderImage: string | null,
+    senderId: string,
+  ): Promise<string> {
+    return this.createNotification({
+      userId,
+      type: "follow",
+      title: `New Follower`,
+      body: `${senderName} started following you`,
+      image: senderImage || undefined,
+      data: {
+        senderId,
+        senderName,
+      },
+    })
+  }
+
+  // Create a share notification
+  async createShareNotification(
+    userId: string,
+    senderName: string,
+    senderImage: string | null,
+    postId: string,
+    senderId: string,
+    postPreview: string,
+  ): Promise<string> {
+    return this.createNotification({
+      userId,
+      type: "share",
+      title: `Post Shared`,
+      body: `${senderName} shared your post: "${postPreview.length > 30 ? postPreview.substring(0, 30) + "..." : postPreview}"`,
+      image: senderImage || undefined,
+      data: {
+        postId,
+        senderId,
+        senderName,
+      },
     })
   }
 }
