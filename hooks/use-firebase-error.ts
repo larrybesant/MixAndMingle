@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { type FirebaseError, handleFirebaseError, ErrorContext } from "@/lib/firebase-error-handler"
+import { type FirebaseError, handleFirebaseError, type ErrorContext } from "@/lib/firebase-error-handler"
 import { useToast } from "@/hooks/use-toast"
 
 interface UseFirebaseErrorOptions {
@@ -51,31 +51,29 @@ export function useFirebaseError(options: UseFirebaseErrorOptions = {}) {
     setError(null)
   }, [])
 
-  const wrapAsync = useCallback(async <T>(\
-    asyncFn: () => Promise<T>,\
-    context?: ErrorContext\
-  ): Promise<T> => {\
-    setLoading(true);
-  clearError()
+  // Fixed wrapAsync implementation
+  const wrapAsync = useCallback(
+    async <T,>(asyncFn: () => Promise<T>, context?: ErrorContext): Promise<T> => {
+      setLoading(true)
+      clearError()
 
-  try {
-    return await asyncFn()
-  } catch (err) {
-    handleError(err, context)
-    throw err
-  } finally {
-    setLoading(false)
-  }
-  \
-}
-, [handleError, clearError])
+      try {
+        return await asyncFn()
+      } catch (err) {
+        handleError(err, context)
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [handleError, clearError],
+  )
 
-return {
+  return {
     error,
     loading,
     handleError,
     clearError,
-    wrapAsync
-  };
-\
+    wrapAsync,
+  }
 }
