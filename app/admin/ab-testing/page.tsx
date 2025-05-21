@@ -113,6 +113,11 @@ export default function ABTestingAdminPage() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">A/B Testing Dashboard</h1>
+        <div className="flex flex-col sm:flex-row gap-2 mb-6">
+          <Link href="/admin/ab-testing/onboarding">
+            <Button variant="outline">Onboarding Experience Test</Button>
+          </Link>
+        </div>
         <Button onClick={handleCreateTest}>
           <Plus className="h-4 w-4 mr-1" /> Create Test
         </Button>
