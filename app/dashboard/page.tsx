@@ -1,8 +1,6 @@
 import { Suspense } from "react"
-import { RecentChats } from "@/components/recent-chats"
-import { ActiveRooms } from "@/components/active-rooms"
-import { FriendSuggestions } from "@/components/friend-suggestions"
 import { DashboardSkeleton } from "@/components/dashboard-skeleton"
+import { LazyRecentChats, LazyActiveRooms, LazyFriendSuggestions } from "@/components/lazy"
 
 export default function DashboardPage() {
   return (
@@ -10,9 +8,9 @@ export default function DashboardPage() {
       <h1 className="text-3xl font-bold">Dashboard</h1>
       <Suspense fallback={<DashboardSkeleton />}>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <RecentChats />
-          <ActiveRooms />
-          <FriendSuggestions />
+          <LazyRecentChats />
+          <LazyActiveRooms />
+          <LazyFriendSuggestions />
         </div>
       </Suspense>
     </div>
