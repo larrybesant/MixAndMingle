@@ -1,246 +1,168 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { auth, db, storage } from "@/lib/firebase-client"
-import { collection, addDoc, getDocs } from "firebase/firestore"
-import { ref, uploadString, getDownloadURL } from "firebase/storage"
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react"
+import { auth, db, storage } from "@/lib/firebase-client-safe"
+import { collection, addDoc, getDocs, query, limit } from "firebase/firestore"
+import { ref, uploadString, getDownloadURL } from "firebase/storage"
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth"
 
 export function EmulatorTest() {
-  const [isUsingEmulators, setIsUsingEmulators] = useState<boolean>(false)
-  const [authStatus, setAuthStatus] = useState<"idle" | "success" | "error">("idle")
-  const [firestoreStatus, setFirestoreStatus] = useState<"idle" | "success" | "error">("idle")
-  const [storageStatus, setStorageStatus] = useState<"idle" | "success" | "error">("idle")
-  const [authMessage, setAuthMessage] = useState<string>("")
-  const [firestoreMessage, setFirestoreMessage] = useState<string>("")
-  const [storageMessage, setStorageMessage] = useState<string>("")
-  const [email, setEmail] = useState<string>("test@example.com")
-  const [password, setPassword] = useState<string>("password123")
+  const [firestoreStatus, setFirestoreStatus] = useState<"loading" | "success" | "error">("loading")
+  const [authStatus, setAuthStatus] = useState<"loading" | "success" | "error">("loading")
+  const [storageStatus, setStorageStatus] = useState<"loading" | "success" | "error">("loading")
+  const [message, setMessage] = useState("")
 
-  useEffect(() => {
-    setIsUsingEmulators(process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true")
-  }, [])
-
-  const testAuth = async () => {
+  // Test Firestore
+  const testFirestore = async () => {
+    setFirestoreStatus("loading")
     try {
-      setAuthStatus("idle")
-      setAuthMessage("Testing authentication...")
+      // Try to add a document
+      const docRef = await addDoc(collection(db, "emulator-test"), {
+        message: "Test message",
+        timestamp: new Date(),
+      })
 
+      // Try to read documents
+      const q = query(collection(db, "emulator-test"), limit(1))
+      const querySnapshot = await getDocs(q)
+
+      if (querySnapshot.size > 0) {
+        setFirestoreStatus("success")
+        setMessage("Firestore emulator is working correctly!")
+      } else {
+        setFirestoreStatus("error")
+        setMessage("Firestore emulator is running but no data was retrieved.")
+      }
+    } catch (error) {
+      console.error("Firestore test error:", error)
+      setFirestoreStatus("error")
+      setMessage(`Firestore emulator error: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  // Test Auth
+  const testAuth = async () => {
+    setAuthStatus("loading")
+    try {
       // Create a test user
-      await createUserWithEmailAndPassword(auth, email, password)
-      setAuthMessage("User created successfully. Attempting to sign in...")
+      const email = `test-${Date.now()}@example.com`
+      const password = "Test123!"
 
-      // Sign in with the test user
-      await signInWithEmailAndPassword(auth, email, password)
-      setAuthMessage("Sign in successful. Signing out...")
+      // Create user
+      await createUserWithEmailAndPassword(auth, email, password)
 
       // Sign out
       await signOut(auth)
-      setAuthMessage("Authentication test completed successfully!")
+
+      // Sign in again
+      await signInWithEmailAndPassword(auth, email, password)
+
+      // Sign out again
+      await signOut(auth)
+
       setAuthStatus("success")
-    } catch (error: any) {
+      setMessage("Auth emulator is working correctly!")
+    } catch (error) {
       console.error("Auth test error:", error)
-      setAuthMessage(`Authentication test failed: ${error.message}`)
       setAuthStatus("error")
+      setMessage(`Auth emulator error: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
-  const testFirestore = async () => {
-    try {
-      setFirestoreStatus("idle")
-      setFirestoreMessage("Testing Firestore...")
-
-      // Add a test document
-      const docRef = await addDoc(collection(db, "emulator-test"), {
-        message: "Hello from emulator!",
-        timestamp: new Date(),
-      })
-      setFirestoreMessage(`Document added with ID: ${docRef.id}. Fetching documents...`)
-
-      // Fetch documents
-      const querySnapshot = await getDocs(collection(db, "emulator-test"))
-      const docsCount = querySnapshot.size
-      setFirestoreMessage(`Firestore test completed successfully! Found ${docsCount} document(s).`)
-      setFirestoreStatus("success")
-    } catch (error: any) {
-      console.error("Firestore test error:", error)
-      setFirestoreMessage(`Firestore test failed: ${error.message}`)
-      setFirestoreStatus("error")
-    }
-  }
-
+  // Test Storage
   const testStorage = async () => {
+    setStorageStatus("loading")
     try {
-      setStorageStatus("idle")
-      setStorageMessage("Testing Storage...")
+      // Create a test file
+      const storageRef = ref(storage, `test-${Date.now()}.txt`)
 
-      // Upload a test file
-      const storageRef = ref(storage, "emulator-test/test-file.txt")
-      await uploadString(storageRef, "Hello from emulator storage!")
-      setStorageMessage("File uploaded successfully. Getting download URL...")
+      // Upload string
+      await uploadString(storageRef, "Hello, World!")
 
       // Get download URL
       const url = await getDownloadURL(storageRef)
-      setStorageMessage(`Storage test completed successfully! URL: ${url}`)
-      setStorageStatus("success")
-    } catch (error: any) {
+
+      if (url) {
+        setStorageStatus("success")
+        setMessage("Storage emulator is working correctly!")
+      } else {
+        setStorageStatus("error")
+        setMessage("Storage emulator is running but URL retrieval failed.")
+      }
+    } catch (error) {
       console.error("Storage test error:", error)
-      setStorageMessage(`Storage test failed: ${error.message}`)
       setStorageStatus("error")
+      setMessage(`Storage emulator error: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
-  const renderStatusIcon = (status: "idle" | "success" | "error") => {
+  // Run all tests
+  const runAllTests = () => {
+    testFirestore()
+    testAuth()
+    testStorage()
+  }
+
+  // Status indicator component
+  const StatusIndicator = ({ status }: { status: "loading" | "success" | "error" }) => {
+    if (status === "loading") return <AlertCircle className="h-5 w-5 text-yellow-500" />
     if (status === "success") return <CheckCircle className="h-5 w-5 text-green-500" />
-    if (status === "error") return <XCircle className="h-5 w-5 text-red-500" />
-    return null
+    return <XCircle className="h-5 w-5 text-red-500" />
   }
 
   return (
-    <Card className="w-full max-w-3xl">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          Firebase Emulator Test
-          {isUsingEmulators ? (
-            <span className="text-sm font-normal bg-green-100 text-green-800 px-2 py-1 rounded">Emulators Enabled</span>
-          ) : (
-            <span className="text-sm font-normal bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-              Using Production
-            </span>
-          )}
-        </CardTitle>
-        <CardDescription>Test your Firebase emulators to ensure they're working correctly</CardDescription>
+        <CardTitle>Firebase Emulator Test</CardTitle>
+        <CardDescription>Test if your Firebase emulators are running correctly</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {!isUsingEmulators && (
-          <Alert variant="warning">
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span>Firestore Emulator</span>
+          <StatusIndicator status={firestoreStatus} />
+        </div>
+        <div className="flex items-center justify-between">
+          <span>Auth Emulator</span>
+          <StatusIndicator status={authStatus} />
+        </div>
+        <div className="flex items-center justify-between">
+          <span>Storage Emulator</span>
+          <StatusIndicator status={storageStatus} />
+        </div>
+
+        {message && (
+          <Alert
+            variant={
+              firestoreStatus === "error" || authStatus === "error" || storageStatus === "error"
+                ? "destructive"
+                : "default"
+            }
+          >
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Warning</AlertTitle>
-            <AlertDescription>
-              You are not using Firebase emulators. These tests will affect your production Firebase project.
-            </AlertDescription>
+            <AlertTitle>Status</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
           </Alert>
         )}
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Test Email</Label>
-            <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="test@example.com" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Test Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="password123"
-            />
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-medium">Authentication</h3>
-              {renderStatusIcon(authStatus)}
-            </div>
-            <Button onClick={testAuth} variant="outline">
-              Test Auth
-            </Button>
-          </div>
-          {authMessage && (
-            <div
-              className={`p-3 rounded text-sm ${
-                authStatus === "success"
-                  ? "bg-green-50 text-green-700"
-                  : authStatus === "error"
-                    ? "bg-red-50 text-red-700"
-                    : "bg-gray-50 text-gray-700"
-              }`}
-            >
-              {authMessage}
-            </div>
-          )}
-        </div>
-
-        <Separator />
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-medium">Firestore</h3>
-              {renderStatusIcon(firestoreStatus)}
-            </div>
-            <Button onClick={testFirestore} variant="outline">
-              Test Firestore
-            </Button>
-          </div>
-          {firestoreMessage && (
-            <div
-              className={`p-3 rounded text-sm ${
-                firestoreStatus === "success"
-                  ? "bg-green-50 text-green-700"
-                  : firestoreStatus === "error"
-                    ? "bg-red-50 text-red-700"
-                    : "bg-gray-50 text-gray-700"
-              }`}
-            >
-              {firestoreMessage}
-            </div>
-          )}
-        </div>
-
-        <Separator />
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-medium">Storage</h3>
-              {renderStatusIcon(storageStatus)}
-            </div>
-            <Button onClick={testStorage} variant="outline">
-              Test Storage
-            </Button>
-          </div>
-          {storageMessage && (
-            <div
-              className={`p-3 rounded text-sm ${
-                storageStatus === "success"
-                  ? "bg-green-50 text-green-700"
-                  : storageStatus === "error"
-                    ? "bg-red-50 text-red-700"
-                    : "bg-gray-50 text-gray-700"
-              }`}
-            >
-              {storageMessage}
-            </div>
-          )}
-        </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={() => window.open("http://localhost:4000", "_blank")}>
-          Open Emulator UI
+        <Button variant="outline" onClick={runAllTests}>
+          Test All Emulators
         </Button>
-        <Button
-          variant="default"
-          onClick={() => {
-            testAuth()
-            testFirestore()
-            testStorage()
-          }}
-        >
-          Run All Tests
-        </Button>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={testFirestore}>
+            Test Firestore
+          </Button>
+          <Button variant="outline" onClick={testAuth}>
+            Test Auth
+          </Button>
+          <Button variant="outline" onClick={testStorage}>
+            Test Storage
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )

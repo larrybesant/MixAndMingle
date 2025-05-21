@@ -62,6 +62,7 @@
     "framer-motion": "latest",
     "fs": "latest",
     "glob": "latest",
+    "http": "latest",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
     "madge": "latest",
