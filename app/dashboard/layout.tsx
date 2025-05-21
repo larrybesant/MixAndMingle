@@ -1,62 +1,43 @@
 import type React from "react"
-import { redirect } from "next/navigation"
-import { DashboardNav } from "@/components/dashboard-nav"
+import { Suspense } from "react"
+import { LazyDashboardNav, LazyNotificationBell } from "@/components/lazy"
+import { Skeleton } from "@/components/ui/skeleton"
 import { UserNav } from "@/components/user-nav"
-import { auth } from "@/lib/firebase-admin"
-import { cookies } from "next/headers"
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  // Server-side authentication check with fallback for development
-  const cookieStore = cookies()
-  const sessionCookie = cookieStore.get("session")?.value || ""
-
-  try {
-    if (process.env.NODE_ENV === "development" && !process.env.FIREBASE_PROJECT_ID) {
-      // Skip authentication in development if Firebase admin credentials aren't set
-      console.warn("Skipping authentication check in development (Firebase Admin not configured)")
-    } else if (sessionCookie) {
-      // Verify the session cookie if it exists
-      try {
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie)
-        if (!decodedClaims) {
-          redirect("/login")
-        }
-      } catch (error) {
-        console.error("Error verifying session cookie:", error)
-        redirect("/login")
-      }
-    } else {
-      redirect("/login")
-    }
-  } catch (error) {
-    console.error("Error in auth check:", error)
-    // Fallback for development
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("Continuing without authentication in development mode")
-    } else {
-      redirect("/login")
-    }
-  }
-
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">Mix & Mingle</span>
+      <header className="sticky top-0 z-50 border-b bg-background">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold">Mix & Mingle</h1>
           </div>
-          <UserNav />
+          <div className="flex items-center gap-4">
+            <Suspense fallback={<Skeleton className="h-10 w-10 rounded-full" />}>
+              <LazyNotificationBell />
+            </Suspense>
+            <UserNav />
+          </div>
         </div>
       </header>
-      <div className="container grid flex-1 gap-12 md:grid-cols-[200px_1fr]">
-        <aside className="hidden w-[200px] flex-col md:flex">
-          <DashboardNav />
+      <div className="flex flex-1">
+        <aside className="hidden w-64 border-r md:block">
+          <div className="sticky top-16 p-4 h-[calc(100vh-4rem)] overflow-auto">
+            <Suspense
+              fallback={
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              }
+            >
+              <LazyDashboardNav />
+            </Suspense>
+          </div>
         </aside>
-        <main className="flex w-full flex-1 flex-col overflow-hidden">{children}</main>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

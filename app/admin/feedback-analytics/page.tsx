@@ -6,17 +6,21 @@ import { redirect } from "next/navigation"
 import { DateRangePicker } from "@/components/analytics/date-range-picker"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FeedbackTrendChart } from "@/components/analytics/feedback-trend-chart"
-import { CategoryDistributionChart } from "@/components/analytics/category-distribution-chart"
-import { SentimentDistributionChart } from "@/components/analytics/sentiment-distribution-chart"
-import { FeatureHeatmap } from "@/components/analytics/feature-heatmap"
-import { TagCloud } from "@/components/analytics/tag-cloud"
 import { TopFeatureRequests } from "@/components/analytics/top-feature-requests"
 import { FeedbackByDay } from "@/components/analytics/feedback-by-day"
 import { ResponseTimeChart } from "@/components/analytics/response-time-chart"
 import { feedbackAnalyticsService, type FeedbackAnalyticsData } from "@/lib/feedback-analytics-service"
 import { collection, getDocs, query, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { Suspense } from "react"
+import {
+  LazyFeedbackTrendChart,
+  LazyCategoryDistributionChart,
+  LazySentimentDistributionChart,
+  LazyFeatureHeatmap,
+  LazyTagCloud,
+} from "@/components/lazy"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function FeedbackAnalyticsDashboard() {
   const [isLoading, setIsLoading] = useState(true)
@@ -184,26 +188,32 @@ export default function FeedbackAnalyticsDashboard() {
 
         <TabsContent value="trends">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FeedbackTrendChart trends={analyticsData.trends} isLoading={isLoading} />
-            <SentimentDistributionChart
-              data={analyticsData.sentimentDistribution}
-              averageSentiment={analyticsData.averageSentiment}
-              isLoading={isLoading}
-            />
+            <Suspense fallback={<Skeleton className="h-[300px] w-full rounded-lg" />}>
+              <LazyFeedbackTrendChart />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-[300px] w-full rounded-lg" />}>
+              <LazySentimentDistributionChart />
+            </Suspense>
           </div>
         </TabsContent>
 
         <TabsContent value="distribution">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <CategoryDistributionChart data={analyticsData.categoryDistribution} isLoading={isLoading} />
-            <TagCloud data={analyticsData.tagCloud} isLoading={isLoading} />
+            <Suspense fallback={<Skeleton className="h-[300px] w-full rounded-lg" />}>
+              <LazyCategoryDistributionChart />
+            </Suspense>
+            <Suspense fallback={<Skeleton className="h-[300px] w-full rounded-lg" />}>
+              <LazyTagCloud />
+            </Suspense>
           </div>
         </TabsContent>
 
         <TabsContent value="features">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <TopFeatureRequests data={analyticsData.topRequests} isLoading={isLoading} />
-            <FeatureHeatmap data={analyticsData.featureHeatmap} isLoading={isLoading} />
+            <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+              <LazyFeatureHeatmap />
+            </Suspense>
           </div>
         </TabsContent>
 

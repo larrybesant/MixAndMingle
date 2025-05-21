@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Suspense } from "react"
+import { LazyBadgeCollection } from "@/components/lazy"
 
 export default function BadgesPage() {
   const { user } = useAuth()
@@ -42,18 +44,22 @@ export default function BadgesPage() {
     setIsDialogOpen(true)
   }
 
-  if (isLoading) {
-    return (
-      <div className="container py-6">
-        <Skeleton className="h-12 w-48 mb-6" />
-        <Skeleton className="h-[500px] w-full rounded-lg" />
-      </div>
-    )
-  }
-
   return (
-    <div className="container py-6">
-      <h1 className="text-3xl font-bold mb-6">Badges & Achievements</h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Your Badges</h1>
+
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+            <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+            <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+            <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+          </div>
+        }
+      >
+        <LazyBadgeCollection />
+      </Suspense>
 
       <Tabs defaultValue="all">
         <TabsList className="mb-4">

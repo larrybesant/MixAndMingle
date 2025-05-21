@@ -1,22 +1,26 @@
-import { DailyChallenges } from "@/components/daily-challenges"
-import { ChallengeLeaderboard } from "@/components/challenge-leaderboard"
+import { Suspense } from "react"
+import { LazyDailyChallenges } from "@/components/lazy"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ChallengesPage() {
   return (
-    <div className="container py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">Daily Challenges</h1>
-      <p className="text-muted-foreground mb-8">
-        Complete daily challenges to earn points, badges, and climb the leaderboard
-      </p>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Daily Challenges</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <DailyChallenges />
-        </div>
-        <div>
-          <ChallengeLeaderboard limit={5} />
-        </div>
-      </div>
+      <Suspense
+        fallback={
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-3/4" />
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full rounded-lg" />
+              <Skeleton className="h-20 w-full rounded-lg" />
+              <Skeleton className="h-20 w-full rounded-lg" />
+            </div>
+          </div>
+        }
+      >
+        <LazyDailyChallenges />
+      </Suspense>
     </div>
   )
 }
