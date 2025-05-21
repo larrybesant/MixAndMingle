@@ -15,6 +15,7 @@ import {
 } from "firebase/auth"
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase-client-safe"
+import { handleFirebaseError, retryOperation } from "@/lib/firebase-error-handler"
 
 interface AuthContextType {
   user: User | null
@@ -60,7 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return () => unsubscribe()
     } catch (error) {
       console.error("Error setting up auth listener:", error)
-      setError(error instanceof Error ? error : new Error(String(error)))
+      const handledError = handleFirebaseError(error, {
+        operation: "auth-listener-setup",
+      })
+      setError(handledError.originalError || new Error(handledError.message))
       setLoading(false)
       setAuthInitialized(true)
     }
@@ -76,7 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Authentication not initialized")
       }
 
-      const result = await signInWithEmailAndPassword(auth, email, password)
+      // Use retry for network errors
+      const result = await retryOperation(
+        async () => signInWithEmailAndPassword(auth, email, password),
+        3, // max retries
+        1000, // initial delay in ms
+      )
 
       // Update user's online status
       if (result.user) {
@@ -86,15 +95,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             onlineStatus: "online",
           })
         } catch (docError) {
-          console.error("Error updating user document:", docError)
-          // Don't fail the login if this update fails
+          // Handle but don't fail the login
+          handleFirebaseError(docError, {
+            operation: "update-user-status",
+            userId: result.user.uid,
+          })
         }
       }
 
       return result
     } catch (error) {
       console.error("Email sign-in error:", error)
-      setError(error instanceof Error ? error : new Error(String(error)))
+      const handledError = handleFirebaseError(error, {
+        operation: "email-sign-in",
+        additionalData: { email },
+      })
+      setError(handledError.originalError || new Error(handledError.message))
       throw error
     }
   }
@@ -115,7 +131,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider.setCustomParameters({
         prompt: "select_account",
       })
-      const result = await signInWithPopup(auth, provider)
+
+      // Use retry for network errors
+      const result = await retryOperation(
+        async () => signInWithPopup(auth, provider),
+        2, // max retries
+        1000, // initial delay in ms
+      )
 
       // Create or update user document
       if (result.user) {
@@ -143,15 +165,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             })
           }
         } catch (docError) {
-          console.error("Error with user document:", docError)
-          // Don't fail the login if this update fails
+          // Handle but don't fail the login
+          handleFirebaseError(docError, {
+            operation: "google-sign-in-user-doc",
+            userId: result.user.uid,
+          })
         }
       }
 
       return result
     } catch (error) {
       console.error("Google sign-in error:", error)
-      setError(error instanceof Error ? error : new Error(String(error)))
+      const handledError = handleFirebaseError(error, {
+        operation: "google-sign-in",
+      })
+      setError(handledError.originalError || new Error(handledError.message))
       throw error
     }
   }
@@ -167,7 +195,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const provider = new FacebookAuthProvider()
-      const result = await signInWithPopup(auth, provider)
+
+      // Use retry for network errors
+      const result = await retryOperation(
+        async () => signInWithPopup(auth, provider),
+        2, // max retries
+        1000, // initial delay in ms
+      )
 
       // Create or update user document
       if (result.user) {
@@ -195,15 +229,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             })
           }
         } catch (docError) {
-          console.error("Error with user document:", docError)
-          // Don't fail the login if this update fails
+          // Handle but don't fail the login
+          handleFirebaseError(docError, {
+            operation: "facebook-sign-in-user-doc",
+            userId: result.user.uid,
+          })
         }
       }
 
       return result
     } catch (error) {
       console.error("Facebook sign-in error:", error)
-      setError(error instanceof Error ? error : new Error(String(error)))
+      const handledError = handleFirebaseError(error, {
+        operation: "facebook-sign-in",
+      })
+      setError(handledError.originalError || new Error(handledError.message))
       throw error
     }
   }
@@ -237,15 +277,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             provider: "email",
           })
         } catch (profileError) {
-          console.error("Error updating profile:", profileError)
-          // Continue even if profile update fails
+          // Handle but don't fail the signup
+          handleFirebaseError(profileError, {
+            operation: "sign-up-profile-update",
+            userId: result.user.uid,
+          })
         }
       }
 
       return result
     } catch (error) {
       console.error("Sign-up error:", error)
-      setError(error instanceof Error ? error : new Error(String(error)))
+      const handledError = handleFirebaseError(error, {
+        operation: "sign-up",
+        additionalData: { email },
+      })
+      setError(handledError.originalError || new Error(handledError.message))
       throw error
     }
   }
@@ -268,15 +315,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             lastSeen: serverTimestamp(),
           })
         } catch (docError) {
-          console.error("Error updating online status:", docError)
-          // Continue with sign out even if this fails
+          // Handle but don't fail the sign out
+          handleFirebaseError(docError, {
+            operation: "sign-out-status-update",
+            userId: user.uid,
+          })
         }
       }
 
       await firebaseSignOut(auth)
     } catch (error) {
       console.error("Sign-out error:", error)
-      setError(error instanceof Error ? error : new Error(String(error)))
+      const handledError = handleFirebaseError(error, {
+        operation: "sign-out",
+        userId: user?.uid,
+      })
+      setError(handledError.originalError || new Error(handledError.message))
       throw error
     }
   }
@@ -300,7 +354,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
     } catch (error) {
       console.error("Profile update error:", error)
-      setError(error instanceof Error ? error : new Error(String(error)))
+      const handledError = handleFirebaseError(error, {
+        operation: "update-profile",
+        userId: auth.currentUser?.uid,
+      })
+      setError(handledError.originalError || new Error(handledError.message))
       throw error
     }
   }

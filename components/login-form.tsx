@@ -13,14 +13,15 @@ import { useToast } from "@/hooks/use-toast"
 import { AlertCircle, Info } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
+import { useFirebaseError } from "@/hooks/use-firebase-error"
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const router = useRouter()
   const { signInWithEmail, signInWithGoogle, signInWithFacebook } = useAuth()
   const { toast } = useToast()
+  const { error, handleError, clearError } = useFirebaseError()
 
   // Check Firebase configuration on component mount
   useEffect(() => {
@@ -48,7 +49,7 @@ export function LoginForm() {
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
-    setError(null)
+    clearError()
     setDebugInfo(null)
 
     const formData = new FormData(event.currentTarget)
@@ -74,27 +75,16 @@ export function LoginForm() {
     } catch (error: any) {
       console.error("Login error:", error)
 
-      // Detailed error logging
-      setDebugInfo(`Error type: ${error.name}, Code: ${error.code}, Message: ${error.message}`)
-
-      // More user-friendly error messages
-      if (error.code === "auth/invalid-api-key") {
-        setError("Firebase configuration error. Please contact support.")
-      } else if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
-        setError("Invalid email or password. Please try again.")
-      } else if (error.code === "auth/too-many-requests") {
-        setError("Too many failed login attempts. Please try again later.")
-      } else if (error.code === "auth/network-request-failed") {
-        setError("Network error. Please check your internet connection.")
-      } else {
-        setError(error.message || "Something went wrong. Please try again.")
-      }
-
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: "Please check your credentials.",
+      // Use our error handler
+      handleError(error, {
+        operation: "login-form-submit",
+        additionalData: { email },
       })
+
+      // Set debug info for development
+      if (process.env.NODE_ENV !== "production") {
+        setDebugInfo(`Error type: ${error.name}, Code: ${error.code}, Message: ${error.message}`)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -103,7 +93,7 @@ export function LoginForm() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true)
-      setError(null)
+      clearError()
       setDebugInfo(null)
 
       console.log("Attempting to sign in with Google")
@@ -121,25 +111,15 @@ export function LoginForm() {
     } catch (error: any) {
       console.error("Google login error:", error)
 
-      // Detailed error logging
-      setDebugInfo(`Google sign-in error: ${error.code || ""} - ${error.message}`)
-
-      // User-friendly error messages
-      if (error.code === "auth/popup-closed-by-user") {
-        setError("Login canceled. Please try again.")
-      } else if (error.code === "auth/popup-blocked") {
-        setError("Login popup was blocked. Please allow popups for this site.")
-      } else if (error.code === "auth/account-exists-with-different-credential") {
-        setError("An account already exists with the same email address but different sign-in credentials.")
-      } else {
-        setError("Failed to sign in with Google. Please try again.")
-      }
-
-      toast({
-        variant: "destructive",
-        title: "Google login failed",
-        description: "Please try again or use email login.",
+      // Use our error handler
+      handleError(error, {
+        operation: "google-login-button",
       })
+
+      // Set debug info for development
+      if (process.env.NODE_ENV !== "production") {
+        setDebugInfo(`Google sign-in error: ${error.code || ""} - ${error.message}`)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -148,7 +128,7 @@ export function LoginForm() {
   const handleFacebookLogin = async () => {
     try {
       setIsLoading(true)
-      setError(null)
+      clearError()
       setDebugInfo(null)
 
       console.log("Attempting to sign in with Facebook")
@@ -156,8 +136,16 @@ export function LoginForm() {
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Facebook login error:", error)
-      setError("Failed to sign in with Facebook. Please try again.")
-      setDebugInfo(`Facebook sign-in error: ${error.message}`)
+
+      // Use our error handler
+      handleError(error, {
+        operation: "facebook-login-button",
+      })
+
+      // Set debug info for development
+      if (process.env.NODE_ENV !== "production") {
+        setDebugInfo(`Facebook sign-in error: ${error.message}`)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -168,7 +156,7 @@ export function LoginForm() {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error.userMessage || error.message}</AlertDescription>
         </Alert>
       )}
 
