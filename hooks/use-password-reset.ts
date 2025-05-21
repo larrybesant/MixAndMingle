@@ -23,8 +23,12 @@ export function usePasswordReset(): UsePasswordResetReturn {
       // Get the current origin for the redirect URL
       const origin = typeof window !== "undefined" ? window.location.origin : ""
 
+      // Use the auth/action route to handle the reset link
+      const actionUrl = `${origin}/auth/action`
+      console.log("Using action URL:", actionUrl)
+
       await sendPasswordResetEmail(auth, email, {
-        url: `${origin}/login`, // Redirect URL after password reset
+        url: actionUrl,
         handleCodeInApp: false,
       })
     } catch (err) {
