@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp } from "firebase/firestore"
 import { createUserWithEmailAndPassword } from "firebase/auth"
@@ -10,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
@@ -27,8 +28,18 @@ export function BetaRegistrationForm() {
   const [codeVerified, setCodeVerified] = useState(false)
   const [inviteData, setInviteData] = useState<any>(null)
 
-  const verifyInviteCode = async () => {
-    if (!inviteCode.trim()) {
+  // Check for invite code in session storage
+  useEffect(() => {
+    const storedCode = sessionStorage.getItem("betaInviteCode")
+    if (storedCode) {
+      setInviteCode(storedCode)
+      // Automatically verify the code if it came from session storage
+      verifyInviteCode(storedCode)
+    }
+  }, [])
+
+  const verifyInviteCode = async (codeToVerify = inviteCode) => {
+    if (!codeToVerify.trim()) {
       setError("Please enter your invitation code")
       return
     }
@@ -39,7 +50,7 @@ export function BetaRegistrationForm() {
     try {
       const q = query(
         collection(db, "betaInviteCodes"),
-        where("code", "==", inviteCode.trim()),
+        where("code", "==", codeToVerify.trim()),
         where("used", "==", false),
       )
 
@@ -134,6 +145,9 @@ export function BetaRegistrationForm() {
         usedBy: user.uid,
         usedAt: serverTimestamp(),
       })
+
+      // Clear the session storage
+      sessionStorage.removeItem("betaInviteCode")
 
       toast({
         title: "Registration Successful",
@@ -236,7 +250,7 @@ export function BetaRegistrationForm() {
 
       {step === 1 && (
         <CardFooter>
-          <Button onClick={verifyInviteCode} className="w-full" disabled={loading || !inviteCode.trim()}>
+          <Button onClick={() => verifyInviteCode()} className="w-full" disabled={loading || !inviteCode.trim()}>
             {loading ? "Verifying..." : "Verify Invitation Code"}
           </Button>
         </CardFooter>
