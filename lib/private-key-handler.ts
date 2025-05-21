@@ -3,8 +3,10 @@
  * with detailed error handling and logging.
  */
 
+import { hashString } from "./crypto-utils"
+
 // Function to get the private key with detailed error handling
-export function getPrivateKey(): string {
+export async function getPrivateKey(): Promise<string> {
   try {
     // First, try to use the base64 encoded key (recommended approach)
     if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
@@ -15,7 +17,7 @@ export function getPrivateKey(): string {
         // Verify the decoded key has the expected format
         if (decoded.includes("-----BEGIN PRIVATE KEY-----") && decoded.includes("-----END PRIVATE KEY-----")) {
           console.log("Successfully decoded private key from base64")
-          return decoded
+          return await handlePrivateKey(decoded)
         } else {
           console.warn("Decoded base64 key doesn't have the expected PEM format")
         }
@@ -40,26 +42,26 @@ export function getPrivateKey(): string {
       rawKey.includes("-----END PRIVATE KEY-----")
     ) {
       console.log("Using private key with proper PEM format")
-      return rawKey
+      return await handlePrivateKey(rawKey)
     }
 
     // If the key has escaped newlines (\\n)
     if (rawKey.includes("\\n")) {
       const formattedKey = rawKey.replace(/\\n/g, "\n")
       console.log("Converted escaped newlines in private key")
-      return formattedKey
+      return await handlePrivateKey(formattedKey)
     }
 
     // If the key is just the raw key without headers/footers
     if (!rawKey.includes("-----BEGIN PRIVATE KEY-----")) {
       const formattedKey = `-----BEGIN PRIVATE KEY-----\n${rawKey}\n-----END PRIVATE KEY-----\n`
       console.log("Added PEM headers to private key")
-      return formattedKey
+      return await handlePrivateKey(formattedKey)
     }
 
     // Last resort: return as is
     console.log("Using private key as-is")
-    return rawKey
+    return await handlePrivateKey(rawKey)
   } catch (error) {
     console.error("Error processing private key:", error)
     // Return a dummy key for build process
@@ -70,4 +72,11 @@ export function getPrivateKey(): string {
 // Function to check if we're in a build environment
 export function isBuildEnvironment(): boolean {
   return process.env.NODE_ENV === "production" && !process.env.VERCEL_URL
+}
+
+// Function to handle the private key using safe crypto utilities
+export async function handlePrivateKey(key: string): Promise<string> {
+  // Use our safe crypto utilities
+  const hashedKey = await hashString(key)
+  return hashedKey
 }
