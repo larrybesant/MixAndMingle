@@ -1,103 +1,133 @@
-// Define types for our safe crypto functions
-type HashAlgorithm = "sha1" | "sha256" | "sha512" | "md5"
+/**
+ * Safe Crypto Utility
+ *
+ * This utility provides a safe way to use crypto functions in both Node.js and browser environments.
+ * It handles the differences between the environments and provides fallbacks when needed.
+ */
 
-interface SafeCryptoUtils {
-  createHash: (algorithm: HashAlgorithm, data: string | Uint8Array) => Promise<string>
-  randomBytes: (size: number) => Promise<Uint8Array>
-  generateRandomString: (length: number) => Promise<string>
+// Type definitions for crypto operations
+type HashAlgorithm = "sha1" | "sha256" | "sha512" | "md5"
+type DigestFormat = "hex" | "base64" | "base64url"
+
+// Interface for the safeCrypto object
+export interface SafeCrypto {
+  createHash: (data: string, algorithm?: HashAlgorithm, format?: DigestFormat) => Promise<string>
+  randomBytes: (length: number) => Promise<Uint8Array>
+  randomString: (length: number) => Promise<string>
+  isCryptoAvailable: () => Promise<boolean>
 }
 
 /**
- * Creates a safe crypto utility that works in both Node.js and browser environments
+ * Create a hash of the given data
  */
-export const createSafeCrypto = (): SafeCryptoUtils => {
-  // Check if we're in a browser environment
-  const isBrowser = typeof window !== "undefined"
+async function createHash(
+  data: string,
+  algorithm: HashAlgorithm = "sha256",
+  format: DigestFormat = "hex",
+): Promise<string> {
+  // Use the Web Crypto API if available (modern browsers)
+  if (typeof window !== "undefined" && window.crypto && window.crypto.subtle) {
+    try {
+      // Convert algorithm name to the format expected by Web Crypto API
+      const webCryptoAlgorithm = algorithm === "md5" ? "SHA-1" : algorithm.toUpperCase()
 
-  /**
-   * Creates a hash using the specified algorithm
-   */
-  const createHash = async (algorithm: HashAlgorithm, data: string | Uint8Array): Promise<string> => {
-    if (isBrowser) {
-      // Use Web Crypto API in the browser
+      // Encode the data as UTF-8
       const encoder = new TextEncoder()
-      const dataBuffer = typeof data === "string" ? encoder.encode(data) : data
+      const data_buffer = encoder.encode(data)
 
-      // Map Node.js hash algorithm names to Web Crypto API algorithm names
-      const algorithmMap: Record<HashAlgorithm, AlgorithmIdentifier> = {
-        sha1: "SHA-1",
-        sha256: "SHA-256",
-        sha512: "SHA-512",
-        md5: "MD5", // Note: MD5 might not be supported in all browsers
-      }
+      // Create the hash
+      const hash_buffer = await window.crypto.subtle.digest(webCryptoAlgorithm, data_buffer)
 
-      try {
-        const hashBuffer = await crypto.subtle.digest(algorithmMap[algorithm], dataBuffer)
-        return Array.from(new Uint8Array(hashBuffer))
+      // Convert the hash to the requested format
+      if (format === "hex") {
+        return Array.from(new Uint8Array(hash_buffer))
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("")
-      } catch (error) {
-        console.error(`Web Crypto API error: ${error}`)
-        throw new Error(`Hashing failed: ${error}`)
+      } else if (format === "base64") {
+        return btoa(String.fromCharCode(...new Uint8Array(hash_buffer)))
+      } else if (format === "base64url") {
+        return btoa(String.fromCharCode(...new Uint8Array(hash_buffer)))
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "")
       }
-    } else {
-      // Use Node.js crypto in server environment
-      try {
-        // Dynamic import to avoid bundling issues
-        const crypto = await import("crypto")
-        const hash = crypto.createHash(algorithm)
-        hash.update(data)
-        return hash.digest("hex")
-      } catch (error) {
-        console.error(`Node.js crypto error: ${error}`)
-        throw new Error(`Hashing failed: ${error}`)
-      }
+
+      throw new Error(`Unsupported digest format: ${format}`)
+    } catch (error) {
+      console.warn("Web Crypto API failed, falling back to crypto-browserify", error)
+      // Fall back to crypto-browserify
     }
   }
 
-  /**
-   * Generates random bytes
-   */
-  const randomBytes = async (size: number): Promise<Uint8Array> => {
-    if (isBrowser) {
-      // Use Web Crypto API in the browser
-      const array = new Uint8Array(size)
-      crypto.getRandomValues(array)
-      return array
-    } else {
-      // Use Node.js crypto in server environment
-      try {
-        const crypto = await import("crypto")
-        const buffer = crypto.randomBytes(size)
-        return new Uint8Array(buffer)
-      } catch (error) {
-        console.error(`Node.js randomBytes error: ${error}`)
-        throw new Error(`Random bytes generation failed: ${error}`)
-      }
-    }
-  }
-
-  /**
-   * Generates a random string of specified length
-   */
-  const generateRandomString = async (length: number): Promise<string> => {
-    const bytes = await randomBytes(Math.ceil(length * 0.75))
-    return btoa(String.fromCharCode(...bytes))
-      .replace(/[+/]/g, "")
-      .substring(0, length)
-  }
-
-  return {
-    createHash,
-    randomBytes,
-    generateRandomString,
+  // Fallback to crypto-browserify
+  try {
+    // Dynamic import to avoid bundling issues
+    const crypto = await import("crypto")
+    return crypto.createHash(algorithm).update(data).digest(format)
+  } catch (error) {
+    console.error("Crypto operations failed", error)
+    throw new Error(`Crypto operation failed: ${error.message}`)
   }
 }
 
-// Export a singleton instance for convenience
-export const safeCrypto = createSafeCrypto()
+/**
+ * Generate random bytes
+ */
+async function randomBytes(length: number): Promise<Uint8Array> {
+  // Use the Web Crypto API if available
+  if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+    try {
+      const bytes = new Uint8Array(length)
+      window.crypto.getRandomValues(bytes)
+      return bytes
+    } catch (error) {
+      console.warn("Web Crypto API failed, falling back to crypto-browserify", error)
+      // Fall back to crypto-browserify
+    }
+  }
 
-// Example usage:
-// const hash = await safeCrypto.createHash('sha256', 'hello world');
-// const randomBytes = await safeCrypto.randomBytes(16);
-// const randomString = await safeCrypto.generateRandomString(32);
+  // Fallback to crypto-browserify
+  try {
+    const crypto = await import("crypto")
+    const buffer = crypto.randomBytes(length)
+    return new Uint8Array(buffer)
+  } catch (error) {
+    console.error("Random bytes generation failed", error)
+    throw new Error(`Random bytes generation failed: ${error.message}`)
+  }
+}
+
+/**
+ * Generate a random string
+ */
+async function randomString(length: number): Promise<string> {
+  const bytes = await randomBytes(length)
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, length)
+}
+
+/**
+ * Check if crypto is available
+ */
+async function isCryptoAvailable(): Promise<boolean> {
+  try {
+    // Try to use crypto
+    await createHash("test")
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+// Create and export the safeCrypto object with all the utility functions
+export const safeCrypto: SafeCrypto = {
+  createHash,
+  randomBytes,
+  randomString,
+  isCryptoAvailable,
+}
+
+// Also export individual functions for direct use
+export { createHash, randomBytes, randomString, isCryptoAvailable }
