@@ -20,11 +20,15 @@ export function usePasswordReset(): UsePasswordResetReturn {
     setLoading(true)
     setError(null)
     try {
+      // Get the current origin for the redirect URL
+      const origin = typeof window !== "undefined" ? window.location.origin : ""
+
       await sendPasswordResetEmail(auth, email, {
-        url: `${window.location.origin}/login`, // Redirect URL after password reset
+        url: `${origin}/login`, // Redirect URL after password reset
         handleCodeInApp: false,
       })
     } catch (err) {
+      console.error("Password reset error:", err)
       setError(err instanceof Error ? err : new Error("Failed to send password reset email"))
       throw err
     } finally {
@@ -38,6 +42,7 @@ export function usePasswordReset(): UsePasswordResetReturn {
     try {
       await confirmPasswordReset(auth, code, newPassword)
     } catch (err) {
+      console.error("Confirm reset error:", err)
       setError(err instanceof Error ? err : new Error("Failed to reset password"))
       throw err
     } finally {
@@ -51,6 +56,7 @@ export function usePasswordReset(): UsePasswordResetReturn {
     try {
       return await verifyPasswordResetCode(auth, code)
     } catch (err) {
+      console.error("Verify reset code error:", err)
       setError(err instanceof Error ? err : new Error("Invalid or expired password reset code"))
       throw err
     } finally {

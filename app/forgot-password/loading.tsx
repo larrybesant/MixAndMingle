@@ -1,6 +1,6 @@
 import { Logo } from "@/components/Logo"
 
-export default function ResetPasswordLoading() {
+export default function ForgotPasswordLoading() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-950 to-black flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full bg-black/30 backdrop-blur-sm p-8 rounded-xl border border-indigo-900/50">
