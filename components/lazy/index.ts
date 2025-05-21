@@ -66,3 +66,46 @@ export const LazyBetaEngagementChart = withLazyLoading(() => import("../analytic
 export const LazyFeedbackAnalytics = withLazyLoading(() => import("../analytics/beta-feedback-analytics"), {
   fallback: <Skeleton className="h-[400px] w-full rounded-lg" />,
 })
+
+// Recent Chats Component
+export const LazyRecentChats = withLazyLoading(() => import("../recent-chats"), {
+  fallback: (
+    <div className="rounded-lg border p-4">
+      <Skeleton className="h-8 w-48 mb-4" />
+      <div className="space-y-3">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    </div>
+  ),
+})
+
+// Active Rooms Component
+export const LazyActiveRooms = withLazyLoading(() => import("../active-rooms"), {
+  fallback: (
+    <div className="rounded-lg border p-4">
+      <Skeleton className="h-8 w-48 mb-4" />
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-24 w-full rounded-md" />
+        <Skeleton className="h-24 w-full rounded-md" />
+        <Skeleton className="h-24 w-full rounded-md" />
+        <Skeleton className="h-24 w-full rounded-md" />
+      </div>
+    </div>
+  ),
+})
+
+// Friend Suggestions Component
+export const LazyFriendSuggestions = withLazyLoading(() => import("../friend-suggestions"), {
+  fallback: (
+    <div className="rounded-lg border p-4">
+      <Skeleton className="h-8 w-48 mb-4" />
+      <div className="space-y-3">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+    </div>
+  ),
+})
