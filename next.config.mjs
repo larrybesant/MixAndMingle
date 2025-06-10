@@ -1,4 +1,3 @@
-@"
 const nextConfig = {
   trailingSlash: true,
   images: {
@@ -13,4 +12,3 @@ const nextConfig = {
 }
 
 export default nextConfig
-"@ | Out-File -FilePath "next.config.mjs" -Encoding UTF8
