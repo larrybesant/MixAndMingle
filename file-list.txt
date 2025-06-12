@@ -1,0 +1,397 @@
+
+    Directory: D:\mix-and-mingle
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/4/2025  6:31 PM                .firebase
+d----            6/5/2025  7:10 PM                .vercel
+d----           6/10/2025  1:36 PM                mixandmingle-f3
+d----           6/11/2025  9:18 PM                node_modules
+d----            6/5/2025  8:35 AM                out
+d----            6/4/2025  4:26 PM                public
+d----           6/11/2025  7:56 AM                scripts
+d----            6/4/2025  4:26 PM                src
+-a---            6/4/2025  5:15 PM           1090 .env.local
+-a---            6/4/2025  6:10 PM             60 .firebaserc
+-a---            6/5/2025  7:10 PM            491 .gitignore
+-a---            6/9/2025  4:36 PM        1338843 dev-server.log
+-a---            6/4/2025  4:19 PM            369 eslint.config.mjs
+-a---           6/11/2025 10:08 PM            211 file-list.txt
+-a---            6/4/2025  6:10 PM            376 firebase.json
+-a---            6/4/2025  6:07 PM              0 firebase.json.txt
+-a---            6/4/2025  6:02 PM            563 firestore.indexes.json
+-a---            6/4/2025  6:02 PM            730 firestore.rules
+-a---            6/4/2025  4:26 PM             77 jsconfig.json
+-a---            6/4/2025  5:36 PM           2437 New Text Document.txt
+-a---            6/5/2025  9:20 AM            273 next.config.js
+-a---           6/11/2025 11:40 AM            265 next.config.mjs
+-a---           6/11/2025  9:32 PM            318 package.json
+-a---            6/4/2025  4:19 PM             81 postcss.config.mjs
+-a---            6/4/2025  4:19 PM           1458 README.md
+-a---            6/4/2025  6:10 PM            315 storage.rules
+
+    Directory: D:\mix-and-mingle\public
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/4/2025  4:19 PM          25931 favicon.ico
+-a---            6/4/2025  4:19 PM            391 file.svg
+-a---            6/4/2025  4:19 PM           1035 globe.svg
+-a---            6/4/2025  6:03 PM           4606 index.html
+-a---            6/4/2025  4:19 PM           1375 next.svg
+-a---            6/4/2025  4:19 PM            128 vercel.svg
+-a---            6/4/2025  4:19 PM            385 window.svg
+
+    Directory: D:\mix-and-mingle\src
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/4/2025  4:26 PM                app
+
+    Directory: D:\mix-and-mingle\src\app
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/9/2025  3:19 PM                auth
+d----            6/9/2025  3:24 PM                dashboard
+d----            6/9/2025  3:12 PM                room
+d----           6/11/2025 11:40 AM                src
+d----            6/9/2025  3:49 PM                webcam-test
+-a---            6/4/2025  4:19 PM            488 globals.css
+-a---           6/10/2025  8:08 AM            315 layout.js
+-a---            6/9/2025  2:50 PM            740 page.js
+
+    Directory: D:\mix-and-mingle\src\app\room
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/9/2025  3:12 PM                [id]
+
+    Directory: D:\mix-and-mingle\src\app\room\[id]
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/9/2025  3:55 PM           1087 page.js
+
+    Directory: D:\mix-and-mingle\src\app\auth
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/9/2025  3:19 PM                login
+d----            6/9/2025  3:19 PM                signup
+
+    Directory: D:\mix-and-mingle\src\app\auth\login
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/9/2025  3:26 PM           1891 page.js
+
+    Directory: D:\mix-and-mingle\src\app\auth\signup
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/9/2025  3:26 PM           2299 page.js
+
+    Directory: D:\mix-and-mingle\src\app\dashboard
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/9/2025  3:26 PM           1387 page.js
+
+    Directory: D:\mix-and-mingle\src\app\webcam-test
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/9/2025  3:49 PM           1150 page.js
+
+    Directory: D:\mix-and-mingle\src\app\src
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025 11:40 AM                app
+
+    Directory: D:\mix-and-mingle\src\app\src\app
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025 11:40 AM              2 layout.js
+
+    Directory: D:\mix-and-mingle\.firebase
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/5/2025 10:15 AM             90 hosting.b3V0.cache
+
+    Directory: D:\mix-and-mingle\out
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/5/2025 10:25 AM                cache
+d----           6/11/2025  9:28 PM                server
+d----           6/11/2025  9:28 PM                static
+d----           6/11/2025  9:28 PM                types
+-a---           6/11/2025  9:28 PM             17 app-build-manifest.json
+-a---           6/11/2025  9:28 PM            321 build-manifest.json
+-a---           6/11/2025  9:28 PM             20 package.json
+-a---           6/11/2025  9:28 PM              2 react-loadable-manifest.json
+-a---           6/11/2025  9:31 PM         333991 trace
+
+    Directory: D:\mix-and-mingle\out\cache
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:30 PM                swc
+d----            6/9/2025 12:10 PM                webpack
+-a---            6/5/2025 10:25 AM            102 .rscinfo
+
+    Directory: D:\mix-and-mingle\out\cache\webpack
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/9/2025 12:10 PM                client-development
+d----           6/11/2025  9:30 PM                client-development-fallback
+d----           6/11/2025  9:30 PM                server-development
+
+    Directory: D:\mix-and-mingle\out\cache\webpack\client-development
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---            6/9/2025 12:10 PM          44281 0.pack.gz
+-a---           6/11/2025  9:30 PM        3780843 1.pack.gz
+-a---           6/11/2025  9:30 PM         101314 index.pack.gz
+-a---            6/9/2025 12:10 PM           1113 index.pack.gz.old
+
+    Directory: D:\mix-and-mingle\out\cache\webpack\server-development
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025  9:30 PM        5939295 0.pack.gz
+-a---           6/11/2025  9:30 PM         157197 index.pack.gz
+
+    Directory: D:\mix-and-mingle\out\cache\webpack\client-development-fallback
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025  9:30 PM        1256964 0.pack.gz
+-a---           6/11/2025  9:30 PM          18236 index.pack.gz
+
+    Directory: D:\mix-and-mingle\out\cache\swc
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:30 PM                plugins
+
+    Directory: D:\mix-and-mingle\out\cache\swc\plugins
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:30 PM                v7_windows_x86_64_9.0.0
+
+    Directory: D:\mix-and-mingle\out\server
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:30 PM                app
+d----           6/11/2025  9:30 PM                vendor-chunks
+-a---           6/11/2025  9:30 PM             28 app-paths-manifest.json
+-a---           6/11/2025  9:28 PM             47 interception-route-rewrite-manifest.js
+-a---           6/11/2025  9:28 PM            446 middleware-build-manifest.js
+-a---           6/11/2025  9:28 PM             83 middleware-manifest.json
+-a---           6/11/2025  9:28 PM             35 middleware-react-loadable-manifest.js
+-a---           6/11/2025  9:28 PM            113 next-font-manifest.js
+-a---           6/11/2025  9:28 PM             77 next-font-manifest.json
+-a---           6/11/2025  9:30 PM              2 pages-manifest.json
+-a---           6/11/2025  9:30 PM            140 server-reference-manifest.js
+-a---           6/11/2025  9:30 PM             97 server-reference-manifest.json
+-a---           6/11/2025  9:30 PM           8668 webpack-runtime.js
+
+    Directory: D:\mix-and-mingle\out\server\app
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025  9:30 PM          60974 page.js
+
+    Directory: D:\mix-and-mingle\out\server\vendor-chunks
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025  9:30 PM         332430 @opentelemetry.js
+-a---           6/11/2025  9:30 PM        4039022 next.js
+
+    Directory: D:\mix-and-mingle\out\static
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:28 PM                chunks
+d----           6/11/2025  9:28 PM                development
+
+    Directory: D:\mix-and-mingle\out\static\chunks
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025  9:28 PM         112594 polyfills.js
+
+    Directory: D:\mix-and-mingle\out\static\development
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025  9:28 PM            238 _buildManifest.js
+-a---           6/11/2025  9:28 PM             76 _ssgManifest.js
+
+    Directory: D:\mix-and-mingle\out\types
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:30 PM                app
+-a---           6/11/2025  9:30 PM           5861 cache-life.d.ts
+-a---           6/11/2025  9:30 PM             18 package.json
+
+    Directory: D:\mix-and-mingle\out\types\app
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/11/2025  9:30 PM           3696 layout.ts
+-a---           6/11/2025  9:30 PM           3684 page.ts
+
+    Directory: D:\mix-and-mingle\.vercel
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----            6/9/2025 12:10 PM                cache
+-a---            6/5/2025  7:10 PM             88 project.json
+-a---            6/5/2025  7:10 PM            520 README.txt
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/10/2025  1:36 PM                app
+d----           6/10/2025  1:36 PM                components
+d----           6/10/2025  1:36 PM                hooks
+d----           6/10/2025  1:36 PM                lib
+d----           6/10/2025  1:36 PM                public
+d----           6/10/2025  1:36 PM                styles
+-a---           6/10/2025  1:36 PM            339 .gitignore
+-a---           6/10/2025  1:36 PM            463 components.json
+-a---           6/10/2025  1:50 PM            397 middleware.ts
+-a---           6/10/2025  1:36 PM            240 next.config.mjs
+-a---           6/10/2025  1:36 PM           2289 package.json
+-a---           6/10/2025  1:36 PM         203103 pnpm-lock.yaml
+-a---           6/10/2025  1:36 PM            143 postcss.config.mjs
+-a---           6/10/2025  1:36 PM           1240 README.md
+-a---           6/10/2025  1:36 PM           2666 tailwind.config.ts
+-a---           6/10/2025  1:36 PM            622 tsconfig.json
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\app
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/10/2025  1:36 PM                api
+-a---           6/10/2025  1:36 PM           2059 error.tsx
+-a---           6/10/2025  1:36 PM           2522 globals.css
+-a---           6/10/2025  1:42 PM            667 layout.tsx
+-a---           6/10/2025  1:36 PM           1569 not-found.tsx
+-a---           6/10/2025  3:28 PM          10047 page.tsx
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\app\api
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/10/2025  1:36 PM                rooms
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\app\api\rooms
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/10/2025  1:36 PM           2079 route.ts
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\components
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/10/2025  1:36 PM                auth
+-a---           6/10/2025  3:27 PM            843 button.tsx
+-a---           6/10/2025  1:36 PM           3841 error-boundary.tsx
+-a---           6/10/2025  1:36 PM           1120 error-toast.tsx
+-a---           6/10/2025  1:36 PM           2863 global-error-handler.tsx
+-a---           6/10/2025  1:36 PM           2648 room-list.tsx
+-a---           6/10/2025  1:36 PM            303 theme-provider.tsx
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\components\auth
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/10/2025  1:36 PM          10140 login-form.tsx
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\hooks
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/10/2025  1:36 PM           1070 use-async-operation.ts
+-a---           6/10/2025  1:41 PM           1400 use-auth.tsx
+-a---           6/10/2025  1:36 PM           3110 use-github.ts
+-a---           6/10/2025  1:36 PM            584 use-mobile.tsx
+-a---           6/10/2025  1:36 PM           4142 use-toast.ts
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\lib
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/10/2025  1:36 PM                firebase
+d----           6/10/2025  1:36 PM                github
+-a---           6/10/2025  1:36 PM           1821 api-error-handler.ts
+-a---           6/10/2025  1:36 PM           1481 errors.ts
+-a---           6/10/2025  1:36 PM           1413 firebase-error-handler.ts
+-a---           6/10/2025  1:36 PM            172 utils.ts
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\lib\firebase
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/10/2025  1:36 PM          11434 firebase-error-handler.ts
+-a---           6/10/2025  1:36 PM           9303 firebase-service.ts
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\lib\github
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/10/2025  1:36 PM           2266 github-error-handler.ts
+-a---           6/10/2025  1:36 PM           5273 github-service.ts
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\public
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/10/2025  1:36 PM            568 placeholder-logo.png
+-a---           6/10/2025  1:36 PM           3208 placeholder-logo.svg
+-a---           6/10/2025  1:36 PM           1635 placeholder-user.jpg
+-a---           6/10/2025  1:36 PM           1064 placeholder.jpg
+-a---           6/10/2025  1:36 PM           3253 placeholder.svg
+
+    Directory: D:\mix-and-mingle\mixandmingle-f3\styles
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           6/10/2025  1:36 PM           2522 globals.css
+
+    Directory: D:\mix-and-mingle\node_modules
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:18 PM                @types
+
+    Directory: D:\mix-and-mingle\node_modules\@types
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:18 PM                eslint
+d----           6/11/2025  9:18 PM                node
+
+    Directory: D:\mix-and-mingle\node_modules\@types\node
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d----           6/11/2025  9:18 PM                ts5.1
+d----           6/11/2025  9:18 PM                ts5.6
+d----           6/11/2025  9:18 PM                ts5.7
+
