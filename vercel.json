@@ -1,5 +1,16 @@
 {
+  "version": 2,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "installCommand": null,
+  "framework": null,
   "env": {
     "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl"
-  }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
