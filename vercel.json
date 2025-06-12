@@ -1,5 +1,6 @@
 {
   "version": 2,
+<<<<<<< HEAD
   "buildCommand": null,
   "outputDirectory": ".",
   "installCommand": null,
@@ -7,6 +8,14 @@
   "env": {
     "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl"
   },
+=======
+  "builds": [
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    }
+  ],
+>>>>>>> b18fad7 (🔧 Fix vercel.json for static HTML deployment)
   "routes": [
     {
       "src": "/(.*)",
