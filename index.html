@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mix & Mingle - Stream Live DJs</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #050511;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    .neon-orange {
+      color: #ff6b35;
+      text-shadow: 0 0 10px rgba(255, 107, 53, 0.7);
+    }
+    .neon-blue {
+      color: #4361ee;
+      text-shadow: 0 0 10px rgba(67, 97, 238, 0.7);
+    }
+    .btn-blue {
+      background-color: #4361ee;
+      padding: 1rem 2.5rem;
+      border-radius: 9999px;
+      font-size: 1.25rem;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-blue:hover {
+      background-color: #3a56d4;
+    }
+    .btn-purple {
+      background-color: rgba(139, 92, 246, 0.3);
+      border: 1px solid #8b5cf6;
+      padding: 1rem 2.5rem;
+      border-radius: 9999px;
+      font-size: 1.25rem;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-purple:hover {
+      background-color: rgba(139, 92, 246, 0.5);
+    }
+    .dj-card {
+      background-color: rgba(30, 30, 46, 0.5);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .dj-card:hover {
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+<body>
+  <!-- Logo Header -->
+  <div class="pt-12 pb-8 text-center">
+    <h1 class="text-5xl font-bold inline-block">
+      <span class="neon-orange">MIX</span>
+      <span class="text-orange-400 mx-1">♪</span>
+      <span class="neon-blue">MINGLE</span>
+    </h1>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 max-w-6xl">
+    <!-- Hero Text -->
+    <div class="text-center mb-12">
+      <h2 class="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+        Stream Live DJs
+        <br>
+        from Around the World
+      </h2>
+      <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto">
+        Party from home with friends or solo. Join rooms. Go live. Connect with global vibes.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+        <a href="/rooms" class="btn-blue text-white">
+          Browse Rooms
+        </a>
+        <a href="/go-live" class="btn-purple text-white">
+          Go Live
+        </a>
+      </div>
+    </div>
+
+    <!-- Featured DJ -->
+    <div class="relative mb-16 rounded-3xl overflow-hidden">
+      <img 
+        src="https://images.unsplash.com/photo-1571266028243-a217a987d4f4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80" 
+        alt="Featured DJ" 
+        class="w-full object-cover h-96"
+      >
+    </div>
+
+    <!-- DJ Rooms Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+      <!-- Room 1 -->
+      <div class="dj-card">
+        <img 
+          src="https://images.unsplash.com/photo-1516873240891-4bf014598ab4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80" 
+          alt="Electronic Journey DJ" 
+          class="w-full h-48 object-cover"
+        >
+        <div class="p-4">
+          <h3 class="text-xl font-bold">Electronic Journey</h3>
+          <p class="text-gray-400">DJ Synthwave</p>
+          <p class="text-gray-500">129 viewers</p>
+        </div>
+      </div>
+
+      <!-- Room 2 -->
+      <div class="dj-card">
+        <img 
+          src="https://images.unsplash.com/photo-1571266028225-64d8b7c0a0b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80" 
+          alt="Rhythmic Beats DJ" 
+          class="w-full h-48 object-cover"
+        >
+        <div class="p-4">
+          <h3 class="text-xl font-bold">Rhythmic Beats</h3>
+          <p class="text-gray-400">DJ Bassline</p>
+          <p class="text-gray-500">69 viewers</p>
+        </div>
+      </div>
+
+      <!-- Room 3 -->
+      <div class="dj-card">
+        <img 
+          src="https://images.unsplash.com/photo-1516873240891-4bf014598ab4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80" 
+          alt="Groove Session DJ" 
+          class="w-full h-48 object-cover"
+        >
+        <div class="p-4">
+          <h3 class="text-xl font-bold">Groove Session</h3>
+          <p class="text-gray-400">DJ Melody</p>
+          <p class="text-gray-500">78 viewers</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Room CTA -->
+    <div class="text-center mb-16">
+      <a href="/create-room" class="btn-purple text-white text-2xl px-8 py-4">
+        Create a Room
+      </a>
+    </div>
+  </div>
+</body>
+</html>
