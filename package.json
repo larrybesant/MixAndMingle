@@ -13,6 +13,7 @@
     "test:push": "echo 'No push tests implemented yet'"
   },
   "dependencies": {
+    "@daily-co/daily-react": "^0.22.0",
     "@neondatabase/serverless": "^1.0.1",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-dialog": "^1.1.14",
@@ -23,12 +24,14 @@
     "@radix-ui/react-toast": "^1.2.14",
     "@stripe/stripe-js": "^7.3.1",
     "@supabase/supabase-js": "^2.50.0",
+    "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.44.2",
     "firebase": "^11.9.1",
     "lucide-react": "^0.515.0",
     "next": "15.3.3",
+    "postcss": "^8.5.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "stripe": "^18.2.1",

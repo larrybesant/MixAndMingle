@@ -1,7 +1,4 @@
-// filepath: app/beta-room/page.tsx
 "use client"
-
-import React from "react";
 
 export default function BetaRoom() {
   return (
@@ -23,5 +20,5 @@ export default function BetaRoom() {
         Share this link with DJs to test live video and audio.
       </p>
     </div>
-  );
+  )
 }

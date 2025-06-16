@@ -1,0 +1,117 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+
+export default function Page() {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-[#18122B] via-[#1E1A36] to-[#18122B] text-white px-4 py-8 font-sans">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-12">
+        <div className="text-4xl font-extrabold tracking-tight">
+          <span className="text-orange-400">MIX</span>
+          <span className="mx-2 text-3xl text-orange-400 align-middle">🎵</span>
+          <span className="text-indigo-400">MINGLE</span>
+        </div>
+        <Link href="/login" className="border border-gray-400 px-5 py-2 rounded-lg text-gray-200 hover:bg-gray-800 transition">
+          Sign In
+        </Link>
+      </header>
+
+      {/* Hero Section */}
+      <section className="text-center mb-12">
+        <h1 className="text-5xl font-extrabold mb-4">Stream Live DJs</h1>
+        <p className="text-lg text-gray-300 mb-8">
+          Join live DJ sets from around the world. Chat and mingle with other music lovers.
+        </p>
+        <div className="flex justify-center gap-6 mb-10">
+          <Link href="/discover" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition">
+            Browse Rooms
+          </Link>
+          <Link href="/go-live" className="bg-transparent border border-pink-500 text-pink-400 px-8 py-3 rounded-xl font-bold text-lg hover:bg-pink-900/20 transition">
+            Go Live
+          </Link>
+        </div>
+      </section>
+
+      {/* Featured DJ */}
+      <section className="flex flex-col items-center mb-16">
+        <div className="relative w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl">
+          <Image
+            src="/dj-featured.jpg"
+            alt="Featured DJ"
+            width={800}
+            height={400}
+            className="object-cover w-full h-80"
+            priority
+          />
+          {/* Chat bubble */}
+          <div className="absolute top-6 right-6 bg-[#232046]/90 px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg">
+            <span className="font-bold text-blue-400">truegrooves</span>
+            <span className="text-xl">🔥</span>
+            <span className="text-gray-200">Love this set!</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Live DJ Rooms */}
+      <section>
+        <h2 className="text-3xl font-bold mb-6">Live DJ Rooms</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {/* Room 1 */}
+          <div className="bg-[#232046] rounded-2xl overflow-hidden shadow-lg">
+            <Image
+              src="/dj1.jpg"
+              alt="Electronic Voyage"
+              width={400}
+              height={250}
+              className="object-cover w-full h-48"
+            />
+            <div className="p-5">
+              <div className="font-bold text-lg mb-1">Electronic Voyage</div>
+              <div className="text-gray-400 text-sm mb-2">by selectors</div>
+              <div className="text-gray-400 text-xs">120 viewers</div>
+            </div>
+          </div>
+          {/* Room 2 */}
+          <div className="bg-[#232046] rounded-2xl overflow-hidden shadow-lg">
+            <Image
+              src="/dj2.jpg"
+              alt="Hip Hop Grooves"
+              width={400}
+              height={250}
+              className="object-cover w-full h-48"
+            />
+            <div className="p-5">
+              <div className="font-bold text-lg mb-1">Hip Hop Grooves</div>
+              <div className="text-gray-400 text-sm mb-2">DJ FreshBeats</div>
+              <div className="text-gray-400 text-xs">63 viewers</div>
+            </div>
+          </div>
+          {/* Room 3 */}
+          <div className="bg-[#232046] rounded-2xl overflow-hidden shadow-lg">
+            <Image
+              src="/dj3.jpg"
+              alt="Soulful Sounds"
+              width={400}
+              height={250}
+              className="object-cover w-full h-48"
+            />
+            <div className="p-5">
+              <div className="font-bold text-lg mb-1">Soulful Sounds</div>
+              <div className="text-gray-400 text-sm mb-2">DJ Harmony</div>
+              <div className="text-gray-400 text-xs">78 viewers</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Create a Room */}
+      <section className="text-center mb-10">
+        <Link href="/go-live" className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold text-xl shadow-lg hover:scale-105 transition">
+          Create a Room
+        </Link>
+      </section>
+    </main>
+  );
+}
