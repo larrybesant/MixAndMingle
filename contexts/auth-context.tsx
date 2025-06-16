@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase/client';
 
@@ -5,6 +7,8 @@ interface AuthContextType {
   user: any;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signInWithProvider: (provider: 'google' | 'github') => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -35,6 +39,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   };
 
+  const signUp = async (email: string, password: string) => {
+    setLoading(true);
+    await supabase.auth.signUp({ email, password });
+    setLoading(false);
+  };
+
+  const signInWithProvider = async (provider: 'google' | 'github') => {
+    setLoading(true);
+    await supabase.auth.signInWithOAuth({ provider });
+    setLoading(false);
+  };
+
   const signOut = async () => {
     setLoading(true);
     await supabase.auth.signOut();
@@ -42,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithProvider, signOut }}>
       {children}
     </AuthContext.Provider>
   );
