@@ -36,166 +36,102 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#18122B] to-[#1F1D36] text-white px-4 pb-16">
       {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-        <div className="text-4xl font-extrabold tracking-tight">
+      <header className="flex justify-between items-center py-8 max-w-5xl mx-auto">
+        <div className="flex items-center gap-2 text-3xl font-bold">
           <span className="text-orange-400">MIX</span>
-          <span className="mx-2 text-3xl text-orange-400 align-middle">🎵</span>
+          <span className="text-orange-400 text-2xl">&</span>
           <span className="text-indigo-400">MINGLE</span>
         </div>
-        <nav className="flex flex-wrap gap-2 md:gap-4">
-          <Link
-            href="/"
-            className="border border-gray-400 px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800 transition text-sm"
-          >
-            Home
-          </Link>
-          <Link
-            href="/dashboard"
-            className="border border-blue-400 px-3 py-2 rounded-lg text-blue-200 hover:bg-blue-800 transition text-sm"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/go-live"
-            className="border border-pink-400 px-3 py-2 rounded-lg text-pink-200 hover:bg-pink-800 transition text-sm"
-          >
-            Go Live
-          </Link>
-          <Link
-            href="/discover"
-            className="border border-green-400 px-3 py-2 rounded-lg text-green-200 hover:bg-green-800 transition text-sm"
-          >
-            Browse
-          </Link>
-          <Link
-            href="/login"
-            className="border border-gray-400 px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800 transition text-sm"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            className="border border-pink-400 px-3 py-2 rounded-lg text-pink-200 hover:bg-pink-800 transition text-sm"
-          >
-            Sign Up
-          </Link>
-        </nav>
+        <button className="border border-white/30 rounded-lg px-5 py-2 text-white hover:bg-white/10 transition">
+          Sign In
+        </button>
       </header>
 
-      {/* Hero Section */}
-      <section className="text-center mb-12">
-        <h1 className="text-4xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-          Stream Live DJs
-        </h1>
-        <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-          Join live DJ sets from around the world. Chat and mingle with other music lovers in real-time.
+      {/* Hero */}
+      <section className="flex flex-col items-center text-center mt-8">
+        <h1 className="text-5xl font-extrabold mb-4">Stream Live DJs</h1>
+        <p className="text-lg text-white/70 mb-8 max-w-xl">
+          Join live DJ sets from around the world. Chat and mingle with other music lovers.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-10">
-          <Link
-            href="/discover"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition"
-          >
+        <div className="flex gap-4 mb-12">
+          <button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow">
             Browse Rooms
-          </Link>
-          <Link
-            href="/go-live"
-            className="bg-transparent border border-pink-500 text-pink-400 px-8 py-3 rounded-xl font-bold text-lg hover:bg-pink-900/20 transition"
-          >
+          </button>
+          <button className="border border-fuchsia-500 text-fuchsia-300 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-fuchsia-900/20 transition">
             Go Live
-          </Link>
+          </button>
+        </div>
+      </section>
+
+      {/* Featured DJ */}
+      <section className="max-w-3xl mx-auto mb-12">
+        <div className="relative rounded-3xl overflow-hidden shadow-lg">
+          <img
+            src="/dj-featured.jpg"
+            alt="Featured DJ"
+            className="w-full h-72 object-cover"
+          />
+          <div className="absolute top-4 right-4 bg-[#232046]/80 px-4 py-2 rounded-xl flex items-center gap-2">
+            <span className="text-blue-400 font-bold">truegrooves</span>
+            <span className="text-yellow-400 text-lg">🔥</span>
+            <span className="ml-3 text-white/80">Love this set!</span>
+          </div>
         </div>
       </section>
 
       {/* Live DJ Rooms */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-bold mb-6 text-center">Live DJ Rooms</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {djs.length === 0 ? (
-            <div className="col-span-full text-center text-gray-400 py-12">
-              <p className="text-xl mb-4">No DJs online right now</p>
-              <p>Be the first to go live!</p>
+      <section className="max-w-5xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Live DJ Rooms</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Room 1 */}
+          <div className="bg-[#232046] rounded-2xl overflow-hidden shadow-lg">
+            <img
+              src="/dj1.jpg"
+              alt="Electronic Voyage"
+              className="w-full h-40 object-cover"
+            />
+            <div className="p-4">
+              <div className="font-semibold text-lg">Electronic Voyage</div>
+              <div className="text-white/60 text-sm mb-2">by selectors</div>
+              <div className="text-white/50 text-xs">120 viewers</div>
             </div>
-          ) : (
-            djs.map((dj) => (
-              <div
-                key={dj.id}
-                className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-700 hover:border-purple-500/50 transition-all"
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🎧</span>
-                  </div>
-                  <h3 className="font-bold text-lg mb-2 text-white">{dj.username}</h3>
-                  <div className="text-gray-400 text-sm mb-4">
-                    <span className="inline-flex items-center gap-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      Live Now
-                    </span>
-                  </div>
-                  <Link
-                    href={`/profile/${dj.id}`}
-                    className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition"
-                  >
-                    Join Room
-                  </Link>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white mb-4">Why Mix & Mingle?</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Experience the future of social music streaming with real-time interaction and discovery.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">🎵</span>
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Live DJ Streaming</h3>
-            <p className="text-gray-400">Stream your sets live to a global audience with high-quality audio.</p>
           </div>
-
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">👥</span>
+          {/* Room 2 */}
+          <div className="bg-[#232046] rounded-2xl overflow-hidden shadow-lg">
+            <img
+              src="/dj2.jpg"
+              alt="Hip Hop Grooves"
+              className="w-full h-40 object-cover"
+            />
+            <div className="p-4">
+              <div className="font-semibold text-lg">Hip Hop Grooves</div>
+              <div className="text-white/60 text-sm mb-2">DJ FreshBeats</div>
+              <div className="text-white/50 text-xs">63 viewers</div>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Social Discovery</h3>
-            <p className="text-gray-400">Connect with like-minded music lovers and discover new artists.</p>
           </div>
-
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">💬</span>
+          {/* Room 3 */}
+          <div className="bg-[#232046] rounded-2xl overflow-hidden shadow-lg">
+            <img
+              src="/dj3.jpg"
+              alt="Soulful Sounds"
+              className="w-full h-40 object-cover"
+            />
+            <div className="p-4">
+              <div className="font-semibold text-lg">Soulful Sounds</div>
+              <div className="text-white/60 text-sm mb-2">DJ Harmony</div>
+              <div className="text-white/50 text-xs">78 viewers</div>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Real-time Chat</h3>
-            <p className="text-gray-400">Chat, react, and engage with DJs and listeners in real-time.</p>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="text-center">
-        <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 max-w-2xl mx-auto">
-          <h3 className="text-2xl font-bold text-white mb-4">Ready to Mix & Mingle?</h3>
-          <p className="text-gray-400 mb-6">Join the community and start your musical journey today.</p>
-          <Link
-            href="/signup"
-            className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold text-xl shadow-lg hover:scale-105 transition"
-          >
-            Get Started
-          </Link>
-        </div>
+      {/* Create a Room (placeholder) */}
+      <section className="max-w-5xl mx-auto mt-16">
+        <h2 className="text-xl font-bold mb-4">Create a Room</h2>
+        {/* Add your create room form or button here */}
       </section>
-    </main>
+    </div>
   )
 }
