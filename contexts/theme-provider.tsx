@@ -27,6 +27,3 @@ export function ThemeProvider({
     </NextThemesProvider>
   );
 }
-
-
-
