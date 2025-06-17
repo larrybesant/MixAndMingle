@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import Image from 'next/image';
 
 export default function SignupPage() {
   const [djName, setDjName] = useState('');
@@ -25,6 +26,13 @@ export default function SignupPage() {
       setError(error.message);
     } else {
       router.push('/dashboard');
+    }
+  };
+
+  const handleOAuth = async (provider: 'google' | 'facebook') => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider });
+    if (error) {
+      console.error('OAuth signup failed:', error.message);
     }
   };
 
@@ -65,6 +73,24 @@ export default function SignupPage() {
         >
           Sign Up
         </button>
+
+        <div className="space-y-3 pt-2">
+          <button
+            onClick={() => handleOAuth('google')}
+            className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded text-sm bg-white text-black hover:bg-gray-100"
+          >
+            <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
+            Continue with Google
+          </button>
+
+          <button
+            onClick={() => handleOAuth('facebook')}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm"
+          >
+            <Image src="/icons/facebook.svg" alt="Facebook" width={20} height={20} />
+            Continue with Facebook
+          </button>
+        </div>
 
         <p className="text-center text-sm">
           Already have an account?{' '}
