@@ -1,104 +1,76 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
-import Image from 'next/image';
+import { useState } from "react";
+import Link from "next/link";
+import supabase from "@/lib/supabaseClient";
 
 export default function SignupPage() {
-  const [djName, setDjName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleSignUp = async () => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: 'https://v0-m-and-m-mvp-5d-82uexu1b5-larrybesants-projects.vercel.app/dashboard',
-        data: { dj_name: djName },
-      },
-    });
-
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      setError(error.message);
-    } else {
-      router.push('/dashboard');
+      setMessage(error.message);
+      setLoading(false);
+      return;
     }
-  };
-
-  const handleOAuth = async (provider: 'google' | 'facebook') => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) {
-      console.error('OAuth signup failed:', error.message);
+    // Save profile
+    if (data.user) {
+      await supabase.from("profiles").insert([
+        { id: data.user.id, username }
+      ]);
     }
+    setLoading(false);
+    setMessage("Check your email to confirm your signup!");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-bold text-center">Sign Up</h1>
-
+    <main className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
+      <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
+      <form onSubmit={handleSignup} className="flex flex-col gap-4 w-80">
         <input
+          className="p-3 rounded bg-gray-800"
           type="text"
           placeholder="DJ Name"
-          value={djName}
-          onChange={(e) => setDjName(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          required
         />
-
         <input
+          className="p-3 rounded bg-gray-800"
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          onChange={e => setEmail(e.target.value)}
+          required
         />
-
         <input
+          className="p-3 rounded bg-gray-800"
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          onChange={e => setPassword(e.target.value)}
+          required
         />
-
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-
         <button
-          onClick={handleSignUp}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+          className="bg-pink-600 py-3 rounded font-bold hover:bg-pink-700"
+          type="submit"
+          disabled={loading}
         >
-          Sign Up
+          {loading ? "Signing Up..." : "Sign Up"}
         </button>
-
-        <div className="space-y-3 pt-2">
-          <button
-            onClick={() => handleOAuth('google')}
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded text-sm bg-white text-black hover:bg-gray-100"
-          >
-            <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
-            Continue with Google
-          </button>
-
-          <button
-            onClick={() => handleOAuth('facebook')}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm"
-          >
-            <Image src="/icons/facebook.svg" alt="Facebook" width={20} height={20} />
-            Continue with Facebook
-          </button>
-        </div>
-
-        <p className="text-center text-sm">
-          Already have an account?{' '}
-          <a href="/login" className="text-blue-500 hover:underline">
-            Sign In
-          </a>
-        </p>
-      </div>
-    </div>
+      </form>
+      {message && <div className="mt-4 text-center text-sm text-yellow-400">{message}</div>}
+      <Link href="/login" className="mt-4 text-pink-400 hover:underline">
+        Already have an account? Sign In
+      </Link>
+    </main>
   );
 }

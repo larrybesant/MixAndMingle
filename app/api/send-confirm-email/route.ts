@@ -1,10 +1,29 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import crypto from 'crypto';
 
-const resend = new Resend('re_PfuwFkAW_4Y6P6d8i9MJsvN2hf4L3x4SK');
+const resend = new Resend(process.env.RESEND_KEY!);
+const SUPABASE_SECRET = process.env.SUPABASE_WEBHOOK_SECRET!;
+
+function verifySignature(req: Request, body: string): boolean {
+  const signature = req.headers.get('supabase-signature');
+  const expected = crypto
+    .createHmac('sha256', SUPABASE_SECRET)
+    .update(body)
+    .digest('hex');
+
+  return signature === expected;
+}
 
 export async function POST(req: Request) {
-  const { email, dj_name } = await req.json();
+  const bodyText = await req.text();
+  const valid = verifySignature(req, bodyText);
+
+  if (!valid) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  const { email, dj_name } = JSON.parse(bodyText);
 
   try {
     const data = await resend.emails.send({

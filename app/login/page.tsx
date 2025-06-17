@@ -1,91 +1,60 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
-import Image from 'next/image';
+import { useState } from "react";
+import Link from "next/link";
+import supabase from "@/lib/supabaseClient";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
     if (error) {
-      setError('Login failed. Check email and password.');
+      setMessage(error.message);
     } else {
-      router.push('/dashboard');
-    }
-  };
-
-  const handleOAuth = async (provider: 'google' | 'facebook') => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) {
-      console.error('OAuth login failed:', error.message);
+      window.location.href = "/dashboard";
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-sm w-full space-y-6">
-        <h1 className="text-center text-2xl font-bold text-white">Sign In</h1>
-
+    <main className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
+      <h1 className="text-3xl font-bold mb-6">Sign In</h1>
+      <form onSubmit={handleLogin} className="flex flex-col gap-4 w-80">
         <input
+          className="p-3 rounded bg-gray-800"
           type="email"
           placeholder="Email"
-          className="w-full border border-gray-300 p-2 rounded"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={e => setEmail(e.target.value)}
+          required
         />
         <input
+          className="p-3 rounded bg-gray-800"
           type="password"
           placeholder="Password"
-          className="w-full border border-gray-300 p-2 rounded"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
+          required
         />
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-
         <button
-          onClick={handleLogin}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+          className="bg-purple-600 py-3 rounded font-bold hover:bg-purple-700"
+          type="submit"
+          disabled={loading}
         >
-          Sign In
+          {loading ? "Signing In..." : "Sign In"}
         </button>
-
-        <div className="space-y-3">
-          <button
-            onClick={() => handleOAuth('google')}
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded text-sm bg-white text-black hover:bg-gray-100"
-          >
-            <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
-            Continue with Google
-          </button>
-
-          <button
-            onClick={() => handleOAuth('facebook')}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm"
-          >
-            <Image src="/icons/facebook.svg" alt="Facebook" width={20} height={20} />
-            Continue with Facebook
-          </button>
-        </div>
-
-        <p className="text-center text-sm text-white">
-          Don’t have an account?{' '}
-          <a href="/signup" className="text-blue-400 hover:underline">
-            Sign Up
-          </a>
-        </p>
-        <p className="text-center text-xs text-gray-400">
-          <a href="/forgot-password" className="hover:underline">
-            Forgot Password?
-          </a>
-        </p>
-      </div>
-    </div>
+      </form>
+      {message && <div className="mt-4 text-center text-sm text-yellow-400">{message}</div>}
+      <Link href="/signup" className="mt-4 text-purple-400 hover:underline">
+        Don't have an account? Sign Up
+      </Link>
+    </main>
   );
 }

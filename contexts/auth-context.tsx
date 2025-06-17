@@ -1,12 +1,5 @@
 'use client';
-
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase/client';
 
 interface AuthContextType {
@@ -31,11 +24,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     };
     getSession();
-
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-
     return () => {
       listener.subscription.unsubscribe();
     };
@@ -66,9 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, signIn, signUp, signInWithProvider, signOut }}
-    >
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithProvider, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -81,3 +70,19 @@ export const useAuth = () => {
   }
   return context;
 };
+'use client';
+
+import { track } from '@vercel/analytics';
+
+export function CTA() {
+  return (
+    <button
+      onClick={() => {
+        track('Go Live Clicked');
+        // your existing logic here
+      }}
+    >
+      Go Live
+    </button>
+  );
+}
