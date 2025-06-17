@@ -1,76 +1,76 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import supabase from "@/lib/supabaseClient";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
 
 export default function SignupPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [djName, setDjName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-    const { data, error } = await supabase.auth.signUp({ email, password });
+  const handleSignUp = async () => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { dj_name: djName },
+      },
+    });
     if (error) {
-      setMessage(error.message);
-      setLoading(false);
-      return;
+      setError(error.message);
+    } else {
+      router.push('/dashboard');
     }
-    // Save profile
-    if (data.user) {
-      await supabase.from("profiles").insert([
-        { id: data.user.id, username }
-      ]);
-    }
-    setLoading(false);
-    setMessage("Check your email to confirm your signup!");
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-      <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
-      <form onSubmit={handleSignup} className="flex flex-col gap-4 w-80">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-sm space-y-4">
+        <h1 className="text-2xl font-bold text-center">Sign Up</h1>
+
         <input
-          className="p-3 rounded bg-gray-800"
           type="text"
           placeholder="DJ Name"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-          required
+          value={djName}
+          onChange={(e) => setDjName(e.target.value)}
+          className="w-full border border-gray-300 rounded px-3 py-2"
         />
+
         <input
-          className="p-3 rounded bg-gray-800"
           type="email"
           placeholder="Email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border border-gray-300 rounded px-3 py-2"
         />
+
         <input
-          className="p-3 rounded bg-gray-800"
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border border-gray-300 rounded px-3 py-2"
         />
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
         <button
-          className="bg-pink-600 py-3 rounded font-bold hover:bg-pink-700"
-          type="submit"
-          disabled={loading}
+          onClick={handleSignUp}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
         >
-          {loading ? "Signing Up..." : "Sign Up"}
+          Sign Up
         </button>
-      </form>
-      {message && <div className="mt-4 text-center text-sm text-yellow-400">{message}</div>}
-      <Link href="/login" className="mt-4 text-pink-400 hover:underline">
-        Already have an account? Sign In
-      </Link>
-    </main>
+
+        <p className="text-center text-sm">
+          Already have an account?{' '}
+          <a href="/login" className="text-blue-500 hover:underline">
+            Sign In
+          </a>
+        </p>
+      </div>
+    </div>
   );
 }
