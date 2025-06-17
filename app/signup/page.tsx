@@ -16,9 +16,11 @@ export default function SignupPage() {
       email,
       password,
       options: {
+        emailRedirectTo: 'https://v0-m-and-m-mvp-5d-82uexu1b5-larrybesants-projects.vercel.app/dashboard',
         data: { dj_name: djName },
       },
     });
+
     if (error) {
       setError(error.message);
     } else {
