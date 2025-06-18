@@ -1,9 +1,6 @@
 {
   "env": {
     "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl"
-  },
-  "functions": {
-    "api/**.js": {}
   }
 }
 
