@@ -1,9 +1,12 @@
+import fs from "fs";
+import path from "path";
+
 console.log("🧪 COMPREHENSIVE MIX & MINGLE TEST SUITE")
 console.log("==========================================")
 
 // Test 1: Environment Variables
 console.log("\n1️⃣ Testing Environment Variables...")
-const requiredEnvVars = [
+const testRequiredEnvVars = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
@@ -13,7 +16,7 @@ const requiredEnvVars = [
 ]
 
 let envIssues = 0
-requiredEnvVars.forEach((envVar) => {
+testRequiredEnvVars.forEach((envVar) => {
   if (process.env[envVar]) {
     console.log(`✅ ${envVar}: Present`)
   } else {
@@ -51,8 +54,6 @@ try {
 
 // Test 3: File Structure
 console.log("\n3️⃣ Testing File Structure...")
-const fs = require("fs")
-const path = require("path")
 
 const criticalFiles = [
   "app/page.tsx",
@@ -127,7 +128,7 @@ try {
     }
   })
 } catch (error) {
-  console.log(`❌ Import test failed: ${error.message}`)
+  console.log(`❌ Import test failed: ${error instanceof Error ? error.message : String(error)}`)
 }
 
 // Test 6: Build Compatibility
