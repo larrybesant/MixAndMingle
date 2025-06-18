@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase/client"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function SignupPage() {
   const [djName, setDjName] = useState("")
@@ -51,15 +50,14 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
-      <Card className="w-full max-w-md bg-black/80 border-purple-500/30 backdrop-blur-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
+      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 backdrop-blur-sm rounded-lg">
+        <div className="text-center p-6 pb-0">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
             Mix 🎵 Mingle
-          </CardTitle>
+          </h1>
           <p className="text-gray-400 text-sm">Join the ultimate DJ community</p>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
+        </div>
+        <div className="space-y-4 p-6">
           <Input
             type="text"
             placeholder="DJ Name (e.g. DJ MixMaster)"
@@ -149,8 +147,8 @@ export default function SignupPage() {
               </a>
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

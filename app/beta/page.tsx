@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -39,11 +38,11 @@ export default function BetaTestingPage() {
 
         {/* Beta Testing Info */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <Card className="bg-black/60 border-purple-500/30 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl text-purple-400">🎯 What to Test</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-gray-300">
+          <div className="bg-black/60 border border-purple-500/30 backdrop-blur-sm rounded-lg p-6">
+            <div className="mb-4">
+              <h2 className="text-2xl text-purple-400 font-semibold">🎯 What to Test</h2>
+            </div>
+            <div className="space-y-4 text-gray-300">
               <div className="flex items-start gap-3">
                 <span className="text-green-400">✓</span>
                 <div>
@@ -79,14 +78,14 @@ export default function BetaTestingPage() {
                   <p className="text-sm">Test on phones and tablets</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="bg-black/60 border-cyan-500/30 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl text-cyan-400">🐛 Report Issues</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-gray-300">
+          <div className="bg-black/60 border border-cyan-500/30 backdrop-blur-sm rounded-lg p-6">
+            <div className="mb-4">
+              <h2 className="text-2xl text-cyan-400 font-semibold">🐛 Report Issues</h2>
+            </div>
+            <div className="space-y-4 text-gray-300">
               <div className="flex items-start gap-3">
                 <span className="text-red-400">!</span>
                 <div>
@@ -115,16 +114,16 @@ export default function BetaTestingPage() {
                   <p className="text-sm">Issues on specific browsers/devices</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Quick Access Links */}
-        <Card className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-500/30 mb-12">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center text-white">🚀 Quick Access</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border-purple-500/30 mb-12 rounded-lg p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl text-center text-white font-semibold">🚀 Quick Access</h2>
+          </div>
+          <div>
             <div className="grid md:grid-cols-4 gap-4">
               <Link href="/signup">
                 <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">📝 Sign Up</Button>
@@ -143,15 +142,15 @@ export default function BetaTestingPage() {
                 </Button>
               </Link>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Feedback Form */}
-        <Card className="bg-black/60 border-orange-500/30 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-2xl text-orange-400">💬 Submit Feedback</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="bg-black/60 border border-orange-500/30 backdrop-blur-sm rounded-lg p-6">
+          <div className="mb-4">
+            <h2 className="text-2xl text-orange-400 font-semibold">💬 Submit Feedback</h2>
+          </div>
+          <div>
             {!submitted ? (
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
@@ -189,8 +188,8 @@ export default function BetaTestingPage() {
                 <p className="text-gray-300">Your feedback has been submitted. We appreciate your help!</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Contact Info */}
         <div className="text-center mt-12 text-gray-400">
