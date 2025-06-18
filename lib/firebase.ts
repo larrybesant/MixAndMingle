@@ -1,7 +1,7 @@
 // Firebase client setup for notifications and analytics
-import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
-import { getAnalytics } from 'firebase/analytics';
+import { initializeApp, getApps } from 'firebase/app';
+import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+import { getAnalytics, isSupported as analyticsSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,12 +13,33 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const messaging = getMessaging(app);
-export const analytics = getAnalytics(app);
+// Only initialize app once (for hot reload/dev)
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+// Only access analytics and messaging in the browser
+let analytics: ReturnType<typeof getAnalytics> | null = null;
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  analyticsSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
+
+let messaging: Messaging | null = null;
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  try {
+    messaging = getMessaging(app);
+  } catch (e) {
+    messaging = null;
+  }
+}
+
+export { analytics, messaging };
 
 // Example: Request notification permission and get token
 export async function requestFirebaseNotificationPermission() {
+  if (!messaging) return null;
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
@@ -33,5 +54,6 @@ export async function requestFirebaseNotificationPermission() {
 
 // Example: Listen for foreground messages
 export function onFirebaseMessage(callback: (payload: any) => void) {
+  if (!messaging) return;
   onMessage(messaging, callback);
 }
