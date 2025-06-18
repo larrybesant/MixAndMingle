@@ -19,6 +19,7 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: "Mix 🎵 Mingle",
   description: "Live DJ streaming and social rooms",
+    generator: 'v0.dev'
 };
 
 export default function RootLayout({
