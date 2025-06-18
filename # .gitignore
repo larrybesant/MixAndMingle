@@ -1,0 +1,11 @@
+# .gitignore
+node_modules/
+.next/
+.env*
+out/
+build/
+.DS_Store
+.vercel/
+*.log
+*.tsbuildinfo
+some-big-repo.git/
