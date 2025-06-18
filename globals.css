@@ -9,6 +9,9 @@
   .text-foreground {
     color: var(--foreground);
   }
+  .border-border {
+    border-color: hsl(var(--border));
+  }
 }
 
 :root {
@@ -53,7 +56,7 @@
   --muted: 217.2 32.6% 17.5%;
   --muted-foreground: 215 20.2% 65.1%;
   --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent-foreground: 222.2 47.4% 11.2%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
   --border: 217.2 32.6% 17.5%;
@@ -68,7 +71,6 @@
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
     border-width: 1px;
     border-style: solid;
   }
@@ -79,16 +81,30 @@
 
 /* Custom Mix & Mingle Styles */
 .gradient-bg {
-  background: linear-gradient(135deg, #18122b 0%, #1e1a36 50%, #18122b 100%);
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
   min-height: 100vh;
 }
 
 .neon-text {
-  text-shadow: 0 0 10px currentColor;
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
 }
 
 .glass-card {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pulse-animation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
