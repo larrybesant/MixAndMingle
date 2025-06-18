@@ -1,7 +1,6 @@
 {
-  "build": {
-    "env": {
-      "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl"
-    }
+  "env": {
+    "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl"
   }
 }
+
