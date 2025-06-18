@@ -1,60 +1,96 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import supabase from "@/lib/supabaseClient";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
+import Image from 'next/image';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+  const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
     if (error) {
-      setMessage(error.message);
+      setError('Login failed. Check email and password.');
     } else {
-      window.location.href = "/dashboard";
+      router.push('/dashboard');
+    }
+  };
+
+  const handleOAuth = async (provider: 'google' | 'facebook') => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider });
+    if (error) {
+      console.error('OAuth login failed:', error.message);
     }
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-      <h1 className="text-3xl font-bold mb-6">Sign In</h1>
-      <form onSubmit={handleLogin} className="flex flex-col gap-4 w-80">
-        <input
-          className="p-3 rounded bg-gray-800"
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="max-w-sm w-full space-y-6">
+        <h1 className="text-center text-2xl font-bold text-white">Sign In</h1>
+
+        <Input
           type="email"
           placeholder="Email"
+          className="w-full text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
           value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
+          onChange={(e) => setEmail(e.target.value)}
         />
-        <input
-          className="p-3 rounded bg-gray-800"
+        <Input
           type="password"
           placeholder="Password"
+          className="w-full text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
           value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
+          onChange={(e) => setPassword(e.target.value)}
         />
-        <button
-          className="bg-purple-600 py-3 rounded font-bold hover:bg-purple-700"
-          type="submit"
-          disabled={loading}
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        <Button
+          onClick={handleLogin}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
         >
-          {loading ? "Signing In..." : "Sign In"}
-        </button>
-      </form>
-      {message && <div className="mt-4 text-center text-sm text-yellow-400">{message}</div>}
-      <Link href="/signup" className="mt-4 text-purple-400 hover:underline">
-        Don't have an account? Sign Up
-      </Link>
-    </main>
+          Sign In
+        </Button>
+
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleOAuth('google')}
+            className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-100"
+          >
+            <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
+            Continue with Google
+          </Button>
+
+          <Button
+            type="button"
+            onClick={() => handleOAuth('facebook')}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm"
+          >
+            <Image src="/icons/facebook.svg" alt="Facebook" width={20} height={20} />
+            Continue with Facebook
+          </Button>
+        </div>
+
+        <p className="text-center text-sm text-white">
+          Don’t have an account?{' '}
+          <a href="/signup" className="text-blue-400 hover:underline">
+            Sign Up
+          </a>
+        </p>
+        <p className="text-center text-xs text-gray-400">
+          <a href="/forgot-password" className="hover:underline">
+            Forgot Password?
+          </a>
+        </p>
+      </div>
+    </div>
   );
 }
