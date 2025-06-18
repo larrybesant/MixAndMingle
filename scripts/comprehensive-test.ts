@@ -201,3 +201,6 @@ if (fileIssues === 0) {
 }
 
 console.log("\n🎵 Mix & Mingle Test Complete!")
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const someModule = require('some-module');

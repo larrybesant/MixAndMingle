@@ -1,6 +1,7 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_KEY)
+const resendKey = process.env.RESEND_KEY
+const resend = resendKey ? new Resend(resendKey) : null
 
 export interface BetaTester {
   email: string
@@ -11,6 +12,11 @@ export interface BetaTester {
 
 export class BetaTestingEmail {
   static async sendBetaInvite(tester: BetaTester) {
+    if (!resend) {
+      console.error("Resend API key missing. Skipping email send.")
+      return { success: false, error: "Resend API key missing" }
+    }
+
     const betaLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://mixandmingle.live"}/beta`
 
     try {
@@ -120,6 +126,11 @@ export class BetaTestingEmail {
   }
 
   static async sendFeedbackConfirmation(email: string, name: string, feedback: string) {
+    if (!resend) {
+      console.error("Resend API key missing. Skipping email send.")
+      return { success: false, error: "Resend API key missing" }
+    }
+
     try {
       const { data, error } = await resend.emails.send({
         from: "Mix & Mingle <beta@mixandmingle.live>",

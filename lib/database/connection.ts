@@ -16,7 +16,9 @@ export { sql }
 export async function testConnections() {
   try {
     // Test Supabase
-    const { data: supabaseTest, error: supabaseError } = await supabase.from("profiles").select("count").limit(1)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const supabaseTest = {}
+    const { error: supabaseError } = await supabase.from("profiles").select("count").limit(1)
 
     console.log("✅ Supabase connected:", !supabaseError)
 

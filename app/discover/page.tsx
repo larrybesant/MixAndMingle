@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import supabase from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 export default function DiscoverPage() {
   const [djs, setDjs] = useState<{ id: string; username: string }[]>([]);
@@ -22,7 +22,7 @@ export default function DiscoverPage() {
         {djs.length === 0 && (
           <div className="text-gray-400">No DJs yet. Be the first to sign up!</div>
         )}
-        {djs.map((dj) => (
+        {djs.map((dj: { id: string; username: string }) => (
           <div key={dj.id} className="bg-gray-800 rounded-2xl p-6 shadow-lg flex flex-col items-center">
             <div className="font-bold text-lg mb-2">{dj.username}</div>
             <div className="text-gray-400 text-sm mb-2">Live soon...</div>

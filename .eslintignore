@@ -1,0 +1,7 @@
+# ESLint ignore file to exclude generated and build directories
+.next/
+node_modules/
+build/
+dist/
+coverage/
+public/

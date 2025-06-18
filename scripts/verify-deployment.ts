@@ -1,7 +1,9 @@
 console.log("🔍 Verifying deployment status...")
 
 // Check if files match what's expected
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require("fs")
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require("path")
 
 try {
@@ -20,5 +22,9 @@ try {
 
   console.log("✅ Basic file structure verified")
 } catch (error) {
-  console.error("❌ Error:", error.message)
+  if (error instanceof Error) {
+    console.error("❌ Error:", error.message)
+  } else {
+    console.error("❌ Error:", error)
+  }
 }

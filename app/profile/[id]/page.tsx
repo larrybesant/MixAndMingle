@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import supabase from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
 
 export default function DJProfilePage() {

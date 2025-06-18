@@ -1,8 +1,8 @@
+import fs from "fs";
+import path from "path";
+
 console.log("🎨 TESTING UI COMPONENTS")
 console.log("========================")
-
-const fs = require("fs")
-const path = require("path")
 
 // Test UI component files
 const uiComponents = [
@@ -19,7 +19,7 @@ const uiComponents = [
 ]
 
 console.log("📁 Checking UI component files...")
-const missingComponents = []
+const missingComponents: string[] = []
 
 uiComponents.forEach((component) => {
   const filePath = path.join(process.cwd(), "components", "ui", component)
@@ -95,7 +95,11 @@ try {
     }
   }
 } catch (error) {
-  console.log(`❌ Import test failed: ${error.message}`)
+  if (error instanceof Error) {
+    console.log(`❌ Import test failed: ${error.message}`)
+  } else {
+    console.log("❌ Import test failed: Unknown error", error)
+  }
 }
 
 // Summary

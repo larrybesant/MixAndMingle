@@ -42,13 +42,16 @@ async function testSupabaseConnection() {
     await supabase.removeChannel(channel)
     console.log("✅ Real-time channel cleaned up")
   } catch (error) {
-    console.log(`❌ Supabase test failed: ${error.message}`)
-
-    if (error.message.includes("NEXT_PUBLIC_SUPABASE_URL")) {
-      console.log("💡 Missing NEXT_PUBLIC_SUPABASE_URL environment variable")
-    }
-    if (error.message.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY")) {
-      console.log("💡 Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable")
+    if (error instanceof Error) {
+      console.log(`❌ Supabase test failed: ${error.message}`)
+      if (error.message.includes("NEXT_PUBLIC_SUPABASE_URL")) {
+        console.log("💡 Missing NEXT_PUBLIC_SUPABASE_URL environment variable")
+      }
+      if (error.message.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY")) {
+        console.log("💡 Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable")
+      }
+    } else {
+      console.log("❌ Supabase test failed: Unknown error", error)
     }
   }
 }

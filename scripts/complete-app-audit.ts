@@ -88,6 +88,7 @@ console.log("\n3️⃣ PACKAGE DEPENDENCIES AUDIT");
 console.log("==============================");
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const packageJson = require("../package.json");
   const requiredDeps = [
     "@supabase/supabase-js",

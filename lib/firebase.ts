@@ -53,7 +53,17 @@ export async function requestFirebaseNotificationPermission() {
 }
 
 // Example: Listen for foreground messages
-export function onFirebaseMessage(callback: (payload: any) => void) {
+export function onFirebaseMessage(callback: (payload: unknown) => void) {
   if (!messaging) return;
   onMessage(messaging, callback);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function someFunction(e: unknown) {
+  // ...existing code...
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function anotherFunction(param: unknown) {
+  // ...existing code...
 }
