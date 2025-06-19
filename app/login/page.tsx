@@ -63,7 +63,8 @@ export default function LoginPage() {
           Sign In
         </Button>
 
-        <div className="space-y-3">
+        {/* Social Sign-In Buttons */}
+        <div className="space-y-3 mt-4">
           <Button
             type="button"
             variant="outline"
