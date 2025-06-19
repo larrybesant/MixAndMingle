@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import supabase from "@/lib/supabaseClient"
+import { supabase } from "@/lib/supabase/client"
 
 export default function Page() {
   const [djs, setDjs] = useState<{ id: string; username: string }[]>([])
