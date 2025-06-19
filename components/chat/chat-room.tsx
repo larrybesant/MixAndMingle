@@ -38,7 +38,7 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
       ]
 
       if (Math.random() > 0.7) {
-        const randomUser = `DJ_Fan${Math.floor(Math.random() * 100)}`
+        const randomUser = `Fan${Math.floor(Math.random() * 100)}`
         const randomMsg = randomMessages[Math.floor(Math.random() * randomMessages.length)]
 
         setMessages((prev) => [

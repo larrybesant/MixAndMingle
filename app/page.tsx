@@ -6,14 +6,14 @@ import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
 
 export default function Page() {
-  const [djs, setDjs] = useState<{ id: string; username: string }[]>([])
+  const [users, setUsers] = useState<{ id: string; username: string }[]>([])
 
   useEffect(() => {
-    async function fetchDJs() {
+    async function fetchUsers() {
       const { data } = await supabase.from("profiles").select("id, username")
-      setDjs(data || [])
+      setUsers(data || [])
     }
-    fetchDJs()
+    fetchUsers()
   }, [])
 
   return (
@@ -53,7 +53,7 @@ export default function Page() {
         <div className="max-w-5xl mx-auto">
           {/* Main Headline */}
           <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight">
-            <span className="block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">Stream Live DJs</span>
+            <span className="block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">Stream Live Content</span>
             <span className="block text-transparent bg-gradient-to-r from-orange-400 via-pink-400 to-cyan-400 bg-clip-text text-4xl md:text-5xl mt-4 font-bold">
               from Around the World
             </span>
@@ -84,13 +84,13 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Featured DJ Hero Image */}
+      {/* Featured User Hero Image */}
       <section className="relative z-10 px-6 mb-20">
         <div className="max-w-4xl mx-auto">
           <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
             <Image
               src="/hero-dj.jpg"
-              alt="Featured DJ"
+              alt="Featured Creator"
               width={1200}
               height={600}
               className="w-full h-80 md:h-96 object-cover transition-transform duration-700 group-hover:scale-105"
@@ -116,11 +116,11 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Live DJ Rooms */}
+      {/* Live User Rooms */}
       <section className="relative z-10 px-6 pb-20">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-black text-center mb-12 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-            Live DJ Rooms
+            Live Rooms
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -133,7 +133,7 @@ export default function Page() {
                       <span className="text-3xl">🎧</span>
                     </div>
                     <div className="text-white font-bold text-xl mb-2">Electronic Journey</div>
-                    <div className="text-cyan-200 text-sm">DJ Synthwave</div>
+                    <div className="text-cyan-200 text-sm">@Synthwave</div>
                   </div>
                 </div>
                 <div className="p-6 bg-black/40 backdrop-blur-sm">
@@ -159,7 +159,7 @@ export default function Page() {
                       <span className="text-3xl">🎵</span>
                     </div>
                     <div className="text-white font-bold text-xl mb-2">Rhythmic Beats</div>
-                    <div className="text-pink-200 text-sm">DJ Bassline</div>
+                    <div className="text-pink-200 text-sm">@Bassline</div>
                   </div>
                 </div>
                 <div className="p-6 bg-black/40 backdrop-blur-sm">
@@ -185,7 +185,7 @@ export default function Page() {
                       <span className="text-3xl">🎶</span>
                     </div>
                     <div className="text-white font-bold text-xl mb-2">Groove Session</div>
-                    <div className="text-green-200 text-sm">DJ Melody</div>
+                    <div className="text-green-200 text-sm">@Melody</div>
                   </div>
                 </div>
                 <div className="p-6 bg-black/40 backdrop-blur-sm">
@@ -211,7 +211,7 @@ export default function Page() {
           <h2 className="text-4xl md:text-5xl font-black mb-6 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
             Create a Room
           </h2>
-          <p className="text-xl text-gray-300 mb-8">Ready to share your beats with the world?</p>
+          <p className="text-xl text-gray-300 mb-8">Ready to share your content with the world?</p>
           <Link
             href="/go-live"
             className="group relative inline-block bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 hover:from-orange-600 hover:via-pink-600 hover:to-purple-700 text-white px-16 py-5 rounded-3xl font-black text-2xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_40px_rgba(251,146,60,0.6)] hover:shadow-[0_0_60px_rgba(251,146,60,0.8)]"

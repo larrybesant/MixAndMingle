@@ -104,7 +104,7 @@ export function LiveStream({ isHost = false, roomId }: LiveStreamProps) {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-blue-900/50 rounded-2xl flex items-center justify-center">
             <div className="text-center">
               <Radio className="w-16 h-16 text-white/50 mx-auto mb-4" />
-              <p className="text-white/70 text-lg">{isHost ? "Ready to go live?" : "Waiting for DJ to start..."}</p>
+              <p className="text-white/70 text-lg">{isHost ? "Ready to go live?" : "Waiting for user to start..."}</p>
             </div>
           </div>
         )}

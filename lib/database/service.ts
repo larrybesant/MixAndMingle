@@ -1,5 +1,5 @@
 import { supabase, sql } from "./connection"
-import type { Profile, DJRoom, ChatMessage } from "@/types/database"
+import type { Profile, UserRoom, ChatMessage } from "@/types/database"
 
 export class DatabaseService {
   // Profile operations
@@ -25,10 +25,10 @@ export class DatabaseService {
     return data
   }
 
-  // DJ Room operations
-  static async getLiveRooms(): Promise<DJRoom[]> {
+  // User Room operations
+  static async getLiveRooms(): Promise<UserRoom[]> {
     const { data, error } = await supabase
-      .from("dj_rooms")
+      .from("user_rooms")
       .select(`
         *,
         profiles:host_id (
@@ -47,9 +47,9 @@ export class DatabaseService {
     return data || []
   }
 
-  static async createRoom(hostId: string, roomData: Partial<DJRoom>) {
+  static async createRoom(hostId: string, roomData: Partial<UserRoom>) {
     const { data, error } = await supabase
-      .from("dj_rooms")
+      .from("user_rooms")
       .insert({
         ...roomData,
         host_id: hostId,
@@ -67,7 +67,7 @@ export class DatabaseService {
 
   static async updateRoomStatus(roomId: string, isLive: boolean) {
     const { data, error } = await supabase
-      .from("dj_rooms")
+      .from("user_rooms")
       .update({ is_live: isLive })
       .eq("id", roomId)
       .select()
@@ -154,7 +154,7 @@ export class DatabaseService {
         {
           event: "UPDATE",
           schema: "public",
-          table: "dj_rooms",
+          table: "user_rooms",
           filter: `id=eq.${roomId}`,
         },
         onUpdate,
@@ -173,7 +173,7 @@ export class DatabaseService {
           COUNT(cm.id) as total_messages,
           AVG(r.viewer_count) as avg_viewers,
           MAX(r.viewer_count) as peak_viewers
-        FROM dj_rooms r
+        FROM user_rooms r
         LEFT JOIN room_participants rp ON r.id = rp.room_id
         LEFT JOIN chat_messages cm ON r.id = cm.room_id
         WHERE r.id = ${roomId}
@@ -187,9 +187,9 @@ export class DatabaseService {
     }
   }
 
-  static async getTopDJs(limit = 10) {
+  static async getTopUsers(limit = 10) {
     try {
-      const topDJs = await sql`
+      const topUsers = await sql`
         SELECT 
           p.id,
           p.username,
@@ -198,16 +198,16 @@ export class DatabaseService {
           SUM(r.viewer_count) as total_viewers,
           AVG(r.viewer_count) as avg_viewers
         FROM profiles p
-        JOIN dj_rooms r ON p.id = r.host_id
-        WHERE p.is_dj = true
+        JOIN user_rooms r ON p.id = r.host_id
+        WHERE p.is_creator = true
         GROUP BY p.id, p.username, p.avatar_url
         ORDER BY total_viewers DESC
         LIMIT ${limit}
       `
 
-      return topDJs
+      return topUsers
     } catch (error) {
-      console.error("Error fetching top DJs:", error)
+      console.error("Error fetching top users:", error)
       return []
     }
   }
