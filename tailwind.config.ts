@@ -94,5 +94,3 @@ const config: Config = {
   plugins: [require("tailwindcss-animate")],
 };
 export default config;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const someModule = require('some-module');

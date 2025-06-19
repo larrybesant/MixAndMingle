@@ -261,6 +261,3 @@ console.log("4. Test streaming functionality");
 console.log("5. Deploy to Vercel");
 
 console.log("\n🎵 Mix & Mingle Audit Complete!");
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const someModule = require("some-module");
