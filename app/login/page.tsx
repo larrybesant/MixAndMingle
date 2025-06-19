@@ -90,8 +90,8 @@ export default function LoginPage() {
             Sign Up
           </a>
         </p>
-        <p className="text-center text-xs text-gray-400">
-          <a href="/forgot-password" className="hover:underline">
+        <p className="text-center text-xs text-gray-400 mt-2">
+          <a href="/forgot-password" className="hover:underline text-blue-400">
             Forgot Password?
           </a>
         </p>
