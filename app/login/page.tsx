@@ -14,11 +14,16 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError('Login failed. Check email and password.');
     } else {
-      router.push('/dashboard');
+      // Admin redirect
+      if (data.user && data.user.email === "larrybesant@gmail.com") {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     }
   };
 
@@ -37,14 +42,14 @@ export default function LoginPage() {
         <Input
           type="email"
           placeholder="Email"
-          className="w-full text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
+          className="w-full bg-black/40 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <Input
           type="password"
           placeholder="Password"
-          className="w-full text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
+          className="w-full bg-black/40 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

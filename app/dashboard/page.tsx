@@ -46,7 +46,8 @@ export default function DashboardPage() {
             onSubmit={async (e) => {
               e.preventDefault();
               await supabase.from("profiles").update({ username: profile.username }).eq("id", user.id);
-              alert("Profile updated!");
+              // Redirect to dashboard after update
+              router.replace("/dashboard");
             }}
           >
             <label className="text-gray-300">Username</label>
