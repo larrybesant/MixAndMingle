@@ -8,6 +8,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -24,6 +25,11 @@ export default function DashboardPage() {
         .eq("id", data.user.id)
         .single();
       setProfile(profileData);
+      // Redirect to onboarding if profile is incomplete
+      if (!profileData || !profileData.username || !profileData.bio || !profileData.genres || !profileData.avatar_url) {
+        router.replace("/create-profile");
+        return;
+      }
       setLoading(false);
     }
     getUser();
@@ -32,17 +38,26 @@ export default function DashboardPage() {
   if (loading) return <div className="text-white p-8">Loading...</div>;
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2 sm:px-0">
       <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
       <div className="mb-2">Welcome, {profile?.username || user.email}!</div>
       <div className="mb-8 text-gray-400">Your Profile</div>
       {/* Profile Editing Form */}
       <form
-        className="flex flex-col gap-2 mb-6"
+        className="flex flex-col gap-2 mb-6 w-full max-w-xs sm:max-w-md"
         onSubmit={async (e) => {
           e.preventDefault();
-          await supabase.from("profiles").update({ username: profile.username }).eq("id", user.id);
-          alert("Profile updated!");
+          setFormMessage(null);
+          if (!profile?.username) {
+            setFormMessage("Username is required.");
+            return;
+          }
+          const { error } = await supabase.from("profiles").update({ username: profile.username }).eq("id", user.id);
+          if (error) {
+            setFormMessage("Failed to update profile. Try again.");
+          } else {
+            setFormMessage("Profile updated!");
+          }
         }}
       >
         <label className="text-gray-300">Username</label>
@@ -56,6 +71,7 @@ export default function DashboardPage() {
         <button className="bg-blue-600 px-4 py-2 rounded font-bold mt-2" type="submit">
           Update Profile
         </button>
+        {formMessage && <div className="text-sm text-white bg-black/60 rounded p-2 mt-2">{formMessage}</div>}
       </form>
       <button
         className="bg-red-600 px-4 py-2 rounded font-bold mt-4"

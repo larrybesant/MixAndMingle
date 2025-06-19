@@ -38,8 +38,8 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
-      <div className="max-w-md w-full space-y-6 bg-black/40 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
+    <div className="min-h-screen flex items-center justify-center px-2 sm:px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="max-w-xs sm:max-w-md w-full space-y-6 bg-black/40 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
           <p className="text-gray-400">Enter your email to receive a reset link</p>

@@ -49,8 +49,8 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
-      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 backdrop-blur-sm rounded-lg">
+    <div className="min-h-screen flex items-center justify-center px-2 sm:px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="w-full max-w-xs sm:max-w-md bg-black/80 border border-purple-500/30 backdrop-blur-sm rounded-lg">
         <div className="text-center p-6 pb-0">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
             Mix 🎵 Mingle

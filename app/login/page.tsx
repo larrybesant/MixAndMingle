@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
@@ -13,17 +13,25 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const checkProfileAndRedirect = async (userId: string) => {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    if (!profileData || !profileData.username || !profileData.bio || !profileData.genres || !profileData.avatar_url) {
+      router.push("/create-profile");
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
   const handleLogin = async () => {
     const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError('Login failed. Check email and password.');
-    } else {
-      // Admin redirect
-      if (data.user && data.user.email === "larrybesant@gmail.com") {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
-      }
+    } else if (data.user) {
+      await checkProfileAndRedirect(data.user.id);
     }
   };
 
@@ -34,9 +42,19 @@ export default function LoginPage() {
     }
   };
 
+  useEffect(() => {
+    async function checkOnMount() {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        await checkProfileAndRedirect(data.user.id);
+      }
+    }
+    checkOnMount();
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
-      <div className="max-w-sm w-full space-y-6">
+    <div className="min-h-screen flex items-center justify-center px-2 sm:px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="max-w-xs sm:max-w-sm w-full space-y-6">
         <h1 className="text-center text-2xl font-bold text-white">Sign In</h1>
 
         <Input

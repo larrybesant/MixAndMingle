@@ -3,16 +3,30 @@ import { Card } from "../ui/card"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar"
+import { useRouter, useParams } from "next/navigation"
+import { LiveStream } from "@/components/streaming/live-stream"
 
 export const RoomView = () => {
+  const router = useRouter();
+  const params = useParams();
+  const roomId = params?.id as string;
   const [reported, setReported] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
-  const roomId = "demo-room-id"; // TODO: get from router or props
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userMap, setUserMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    async function joinRoom() {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        setUserId(data.user.id);
+        await supabase.from('room_participants').upsert({ room_id: roomId, user_id: data.user.id });
+      }
+    }
+    joinRoom();
     // Subscribe to room participants
     const participantSub = supabase
       .channel('room_participants')
@@ -36,6 +50,12 @@ export const RoomView = () => {
     async function fetchParticipants() {
       const { data } = await supabase.from('room_participants').select('user_id, profiles(username, avatar_url)').eq('room_id', roomId);
       setParticipants(data || []);
+      // Build userId to username map
+      const map: Record<string, string> = {};
+      (data || []).forEach((p: any) => {
+        if (p.user_id && p.profiles?.username) map[p.user_id] = p.profiles.username;
+      });
+      setUserMap(map);
     }
     async function fetchMessages() {
       const { data } = await supabase.from('chat_messages').select('*').eq('room_id', roomId).order('created_at', { ascending: true });
@@ -45,9 +65,8 @@ export const RoomView = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    // TODO: get user_id from auth context
-    await supabase.from('chat_messages').insert({ room_id: roomId, user_id: 'demo-user-id', message });
+    if (!message.trim() || !userId) return;
+    await supabase.from('chat_messages').insert({ room_id: roomId, user_id: userId, message });
     setMessage("");
   };
 
@@ -64,7 +83,9 @@ export const RoomView = () => {
   return (
     <Card>
       <h2 className="text-2xl font-bold mb-2">Live User Room</h2>
-      <div className="mb-4">[Streaming Player Placeholder]</div>
+      <div className="mb-4">
+        <LiveStream roomId={roomId} isHost={false} />
+      </div>
       <div className="mb-4">
         <h3 className="font-semibold text-white mb-2">Live Users</h3>
         <div className="flex gap-2 flex-wrap">
@@ -84,7 +105,7 @@ export const RoomView = () => {
         <div className="bg-gray-900 rounded p-2 h-40 overflow-y-auto mb-2">
           {messages.map((msg, i) => (
             <div key={i} className="mb-1">
-              <span className="font-bold text-purple-400">{msg.user_id}:</span> <span className="text-white">{msg.message}</span>
+              <span className="font-bold text-purple-400">{userMap[msg.user_id] || msg.user_id}:</span> <span className="text-white">{msg.message}</span>
             </div>
           ))}
         </div>
@@ -95,7 +116,7 @@ export const RoomView = () => {
             onChange={e => setMessage(e.target.value)}
             placeholder="Type a message..."
           />
-          <button type="submit" className="bg-blue-600 px-4 py-2 rounded text-white font-bold">Send</button>
+          <button type="submit" className="bg-blue-600 px-4 py-2 rounded text-white font-bold" disabled={!message.trim()}>Send</button>
         </form>
       </div>
       <div className="mt-4 flex gap-2">

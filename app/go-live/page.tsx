@@ -24,6 +24,8 @@ import {
   Globe,
   Lock,
 } from "lucide-react"
+import { supabase } from "@/lib/supabase/client"
+import { LiveStream } from "@/components/streaming/live-stream"
 
 export default function GoLivePage() {
   const [roomData, setRoomData] = useState({
@@ -38,6 +40,7 @@ export default function GoLivePage() {
   const [isLive, setIsLive] = useState(false)
   const [viewers, setViewers] = useState(0)
   const [newTag, setNewTag] = useState("")
+  const [goLiveError, setGoLiveError] = useState<string | null>(null)
 
   const categories = [
     {
@@ -182,15 +185,33 @@ export default function GoLivePage() {
     setRoomData({ ...roomData, tags: roomData.tags.filter((tag) => tag !== tagToRemove) })
   }
 
-  const handleGoLive = () => {
-    if (!roomData.name.trim()) return
-    setIsLive(true)
-    // Simulate viewer count
-    const interval = setInterval(() => {
-      setViewers((prev) => prev + Math.floor(Math.random() * 5))
-    }, 2000)
-
-    return () => clearInterval(interval)
+  const handleGoLive = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setGoLiveError(null)
+    if (!roomData.name.trim()) {
+      setGoLiveError("Room name is required.")
+      return
+    }
+    // Assume user is authenticated
+    const user = (await supabase.auth.getUser()).data.user
+    if (!user) return
+    const { error } = await supabase.from("dj_rooms").upsert({
+      id: `${user.id}-${roomData.name}`.replace(/\s+/g, "-"),
+      name: roomData.name,
+      genre: roomData.genre,
+      is_live: true,
+      viewer_count: 1,
+      host_id: user.id,
+      description: roomData.description,
+      category: roomData.category,
+      tags: roomData.tags,
+    })
+    if (error) {
+      setGoLiveError("Failed to create room. Try again.")
+      return
+    }
+    // Optionally redirect to the room page
+    window.location.href = `/room/${user.id}-${roomData.name}`.replace(/\s+/g, "-")
   }
 
   const handleStopStream = () => {
