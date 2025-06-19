@@ -36,17 +36,34 @@ export default function LoginPage() {
   };
 
   const handleOAuth = async (provider: 'google' | 'facebook') => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) {
-      console.error('OAuth login failed:', error.message);
+    setError("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) {
+        setError(`OAuth login failed: ${error.message}`);
+      } else {
+        // The user will be redirected to /dashboard after OAuth
+      }
+    } catch (err: any) {
+      setError(`OAuth login error: ${err.message || err}`);
     }
   };
 
   useEffect(() => {
     async function checkOnMount() {
-      const { data } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        setError("Session error: " + error.message);
+      }
       if (data.user) {
         await checkProfileAndRedirect(data.user.id);
+      } else if (window.location.pathname === "/dashboard") {
+        setError("Login failed or session not found after OAuth. Please try again or contact support.");
       }
     }
     checkOnMount();
@@ -72,7 +89,9 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && <p className="text-red-500 text-sm">{error} <br />
+          <a href="/login" className="underline text-blue-400">Try again</a> or <a href="mailto:beta@djmixandmingle.com" className="underline text-blue-400">Contact support</a>
+        </p>}
 
         <Button
           onClick={handleLogin}
