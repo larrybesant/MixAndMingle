@@ -35,7 +35,7 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
       <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
       <div className="mb-2">Welcome, {profile?.username || user.email}!</div>
-      <div className="mb-8 text-gray-400">Your DJ Profile</div>
+      <div className="mb-8 text-gray-400">Your Profile</div>
       {/* Profile Editing Form */}
       <form
         className="flex flex-col gap-2 mb-6"
@@ -45,7 +45,7 @@ export default function DashboardPage() {
           alert("Profile updated!");
         }}
       >
-        <label className="text-gray-300">DJ Name</label>
+        <label className="text-gray-300">Username</label>
         <input
           className="p-2 rounded bg-gray-700 text-white"
           type="text"
