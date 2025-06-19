@@ -1,262 +1,240 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Play, Users, Heart, Share2, Music, Headphones, Radio, Zap } from "lucide-react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
+import supabase from "@/lib/supabaseClient"
 
-export default function HomePage() {
-  const [isClient, setIsClient] = useState(false)
+export default function Page() {
+  const [djs, setDjs] = useState<{ id: string; username: string }[]>([])
 
   useEffect(() => {
-    setIsClient(true)
+    async function fetchDJs() {
+      const { data } = await supabase.from("profiles").select("id, username")
+      setDjs(data || [])
+    }
+    fetchDJs()
   }, [])
 
-  if (!isClient) {
-    return <div className="min-h-screen bg-black" />
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-purple-900/20 to-black">
-      {/* Navigation */}
-      <nav className="border-b border-purple-500/20 bg-black/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Music className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                Mix & Mingle
-              </span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/login">
-                <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-purple-500/20">
-                  Login
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white">
-                  Sign Up
-                </Button>
-              </Link>
-            </div>
+    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-blue-900/20"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]"></div>
+
+      {/* Floating Particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-orange-400 rounded-full animate-ping"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse"></div>
+        <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-pink-400 rounded-full animate-ping"></div>
+      </div>
+
+      {/* Header */}
+      <header className="relative z-10 flex justify-between items-center py-6 px-6 max-w-7xl mx-auto">
+        <div className="flex items-center gap-3">
+          {/* Neon Logo */}
+          <div className="text-4xl font-black tracking-wider">
+            <span className="text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)] font-extrabold">MIX</span>
+            <span className="text-orange-400 text-5xl mx-2 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)]">🎵</span>
+            <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-extrabold">MINGLE</span>
           </div>
         </div>
-      </nav>
+        <Link
+          href="/login"
+          className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all duration-300 font-semibold"
+        >
+          Sign In
+        </Link>
+      </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-8">
-            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 mb-4">
-              <Zap className="w-4 h-4 mr-1" />
-              Where Music Meets Connection
-            </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-green-400 bg-clip-text text-transparent">
-                Mix & Mingle
-              </span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Join live DJ streams, discover new music, and connect with fellow music lovers in real-time. The ultimate
-              nightlife experience, digitally reimagined.
-            </p>
-          </div>
+      <section className="relative z-10 text-center py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          {/* Main Headline */}
+          <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight">
+            <span className="block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">Stream Live DJs</span>
+            <span className="block text-transparent bg-gradient-to-r from-orange-400 via-pink-400 to-cyan-400 bg-clip-text text-4xl md:text-5xl mt-4 font-bold">
+              from Around the World
+            </span>
+          </h1>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link href="/signup">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-3"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Start Mixing
-              </Button>
+          {/* Subtitle */}
+          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Party from home with friends or solo. Join rooms. Go live. Connect with global vibes.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            <Link
+              href="/discover"
+              className="group relative bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.5)] hover:shadow-[0_0_40px_rgba(59,130,246,0.8)]"
+            >
+              <span className="relative z-10">Browse Rooms</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-300 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </Link>
-            <Link href="/discover">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20 px-8 py-3"
-              >
-                <Radio className="w-5 h-5 mr-2" />
-                Discover Rooms
-              </Button>
+            <Link
+              href="/go-live"
+              className="group relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:shadow-[0_0_40px_rgba(147,51,234,0.8)]"
+            >
+              <span className="relative z-10">Go Live</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Live Rooms Section */}
-      <section className="py-16 px-4">
+      {/* Featured DJ Hero Image */}
+      <section className="relative z-10 px-6 mb-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
+            <Image
+              src="/hero-dj.jpg"
+              alt="Featured DJ"
+              width={1200}
+              height={600}
+              className="w-full h-80 md:h-96 object-cover transition-transform duration-700 group-hover:scale-105"
+              priority
+            />
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+
+            {/* Live Chat Bubble */}
+            <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl flex items-center gap-3 border border-white/20">
+              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
+              <span className="text-cyan-400 font-bold text-lg">truegrooves</span>
+              <span className="text-2xl">🔥</span>
+              <span className="text-white/90 text-lg">Love this set!</span>
+            </div>
+
+            {/* Live Indicator */}
+            <div className="absolute top-6 left-6 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse flex items-center gap-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+              LIVE
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Live DJ Rooms */}
+      <section className="relative z-10 px-6 pb-20">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">🔥 Live Now</h2>
-            <p className="text-gray-400">Join thousands of music lovers in live DJ rooms</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                title: "Electronic Vibes",
-                dj: "DJ Neon",
-                viewers: 1247,
-                genre: "Electronic",
-                image: "/dj-electronic.jpg",
-              },
-              {
-                title: "Hip-Hop Central",
-                dj: "MC Flow",
-                viewers: 892,
-                genre: "Hip-Hop",
-                image: "/dj-hiphop.jpg",
-              },
-              {
-                title: "House Party",
-                dj: "DJ Pulse",
-                viewers: 634,
-                genre: "House",
-                image: "/dj-featured.jpg",
-              },
-            ].map((room, index) => (
-              <Card
-                key={index}
-                className="bg-black/40 border-purple-500/20 backdrop-blur-sm hover:border-purple-500/40 transition-all duration-300 group cursor-pointer"
-              >
-                <div className="relative">
-                  <img
-                    src={room.image || "/placeholder.svg"}
-                    alt={room.title}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <Badge className="bg-red-500 text-white animate-pulse">
-                      <div className="w-2 h-2 bg-white rounded-full mr-1" />
-                      LIVE
-                    </Badge>
-                  </div>
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-black/60 text-white">
-                      <Users className="w-3 h-3 mr-1" />
-                      {room.viewers.toLocaleString()}
-                    </Badge>
-                  </div>
-                </div>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-white group-hover:text-purple-300 transition-colors">
-                      {room.title}
-                    </CardTitle>
-                    <Badge variant="outline" className="border-purple-500/30 text-purple-300">
-                      {room.genre}
-                    </Badge>
-                  </div>
-                  <CardDescription className="flex items-center text-gray-400">
-                    <Avatar className="w-6 h-6 mr-2">
-                      <AvatarImage src="/placeholder-user.jpg" />
-                      <AvatarFallback>{room.dj[0]}</AvatarFallback>
-                    </Avatar>
-                    {room.dj}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Button size="sm" className="bg-purple-500 hover:bg-purple-600 text-white">
-                      <Headphones className="w-4 h-4 mr-1" />
-                      Join Room
-                    </Button>
-                    <div className="flex items-center space-x-2">
-                      <Button size="sm" variant="ghost" className="text-gray-400 hover:text-red-400">
-                        <Heart className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-gray-400 hover:text-blue-400">
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 px-4 bg-gradient-to-r from-purple-900/10 to-blue-900/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Why Mix & Mingle?</h2>
-            <p className="text-gray-400">The ultimate platform for music lovers and DJs</p>
-          </div>
+          <h2 className="text-4xl md:text-5xl font-black text-center mb-12 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            Live DJ Rooms
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <Radio className="w-8 h-8 text-purple-400" />,
-                title: "Live DJ Streams",
-                description: "Experience real-time DJ performances with crystal clear audio",
-              },
-              {
-                icon: <Users className="w-8 h-8 text-blue-400" />,
-                title: "Real-Time Chat",
-                description: "Connect with fellow music lovers and interact with DJs live",
-              },
-              {
-                icon: <Heart className="w-8 h-8 text-green-400" />,
-                title: "Music Discovery",
-                description: "Discover new genres, artists, and connect with like-minded people",
-              },
-            ].map((feature, index) => (
-              <Card key={index} className="bg-black/20 border-purple-500/20 backdrop-blur-sm text-center">
-                <CardHeader>
-                  <div className="flex justify-center mb-4">{feature.icon}</div>
-                  <CardTitle className="text-white">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-gray-400">{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
+            {/* Room 1 */}
+            <div className="group cursor-pointer transform hover:scale-105 transition-all duration-500">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-cyan-500/30">
+                <div className="aspect-square bg-gradient-to-br from-blue-600 via-purple-600 to-cyan-600 p-8 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
+                      <span className="text-3xl">🎧</span>
+                    </div>
+                    <div className="text-white font-bold text-xl mb-2">Electronic Journey</div>
+                    <div className="text-cyan-200 text-sm">DJ Synthwave</div>
+                  </div>
+                </div>
+                <div className="p-6 bg-black/40 backdrop-blur-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-sm font-semibold">129 viewers</span>
+                    </div>
+                    <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                      LIVE
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Room 2 */}
+            <div className="group cursor-pointer transform hover:scale-105 transition-all duration-500">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50 border border-purple-500/30">
+                <div className="aspect-square bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 p-8 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
+                      <span className="text-3xl">🎵</span>
+                    </div>
+                    <div className="text-white font-bold text-xl mb-2">Rhythmic Beats</div>
+                    <div className="text-pink-200 text-sm">DJ Bassline</div>
+                  </div>
+                </div>
+                <div className="p-6 bg-black/40 backdrop-blur-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-sm font-semibold">69 viewers</span>
+                    </div>
+                    <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                      LIVE
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Room 3 */}
+            <div className="group cursor-pointer transform hover:scale-105 transition-all duration-500">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-green-900/50 to-blue-900/50 border border-green-500/30">
+                <div className="aspect-square bg-gradient-to-br from-green-600 via-teal-600 to-blue-600 p-8 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
+                      <span className="text-3xl">🎶</span>
+                    </div>
+                    <div className="text-white font-bold text-xl mb-2">Groove Session</div>
+                    <div className="text-green-200 text-sm">DJ Melody</div>
+                  </div>
+                </div>
+                <div className="p-6 bg-black/40 backdrop-blur-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-sm font-semibold">78 viewers</span>
+                    </div>
+                    <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                      LIVE
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">Ready to Start Your Musical Journey?</h2>
-          <p className="text-xl text-gray-300 mb-8">Join thousands of music lovers already mixing and mingling</p>
-          <Link href="/signup">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-12 py-4 text-lg"
-            >
-              <Play className="w-6 h-6 mr-2" />
-              Get Started Free
-            </Button>
+      {/* Create Room CTA */}
+      <section className="relative z-10 text-center py-16 px-6">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-black mb-6 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            Create a Room
+          </h2>
+          <p className="text-xl text-gray-300 mb-8">Ready to share your beats with the world?</p>
+          <Link
+            href="/go-live"
+            className="group relative inline-block bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 hover:from-orange-600 hover:via-pink-600 hover:to-purple-700 text-white px-16 py-5 rounded-3xl font-black text-2xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_40px_rgba(251,146,60,0.6)] hover:shadow-[0_0_60px_rgba(251,146,60,0.8)]"
+          >
+            <span className="relative z-10">Go Live Now</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-300 to-purple-400 rounded-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
           </Link>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-purple-500/20 bg-black/50 backdrop-blur-xl py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded flex items-center justify-center">
-              <Music className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              Mix & Mingle
-            </span>
-          </div>
-          <p className="text-gray-400 text-sm">© 2025 Mix & Mingle. Where Music Meets Connection.</p>
-        </div>
-      </footer>
+      {/* Join Live Room Button */}
+      <section className="relative z-10 text-center pb-20">
+        <Link
+          href="https://mixandmingle.daily.co/onFsceKakRamUvWONG5y"
+          target="_blank"
+          className="inline-block bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.8)]"
+        >
+          🔴 Join Live Room
+        </Link>
+      </section>
+
+      {/* Bottom Glow Effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-900/20 to-transparent"></div>
     </div>
   )
 }

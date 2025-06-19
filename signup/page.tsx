@@ -1,141 +1,154 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import supabase from "@/lib/supabaseClient"
-import { Button } from "@/components/ui/button"
+import { supabase } from "@/lib/supabase/client"
+import Image from "next/image"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 
 export default function SignupPage() {
+  const [djName, setDjName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState("")
   const router = useRouter()
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSignUp = async () => {
     setLoading(true)
-    setMessage("")
+    setError("")
 
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/setup-profile`,
-        },
-      })
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/verify-email`,
+        data: { dj_name: djName },
+      },
+    })
 
-      if (error) {
-        setMessage(error.message)
-        setLoading(false)
-        return
-      }
-
-      if (data.user && !data.session) {
-        setMessage("✅ Account created! Check your email to verify, then you'll set up your screen name.")
-      } else if (data.session) {
-        router.push("/setup-profile")
-      }
-    } catch (err: any) {
-      setMessage(err.message || "Something went wrong")
+    if (error) {
+      setError(error.message)
+    } else {
+      alert("🎵 Check your email for a verification link before signing in!")
     }
-
     setLoading(false)
   }
 
+  const handleOAuth = async (provider: "google" | "facebook") => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    })
+    if (error) {
+      setError(`OAuth signup failed: ${error.message}`)
+    }
+  }
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#1a1a2e] to-[#16213e] text-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-1">
-            <span className="text-4xl font-bold text-orange-500">MIX</span>
-            <span className="text-4xl font-bold text-orange-500">🎵</span>
-            <span className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              MINGLE
-            </span>
-          </Link>
-          <p className="text-gray-300 mt-2">Join the music community</p>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 backdrop-blur-sm rounded-lg">
+        <div className="text-center p-6 pb-0">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
+            Mix 🎵 Mingle
+          </h1>
+          <p className="text-gray-400 text-sm">Join the ultimate DJ community</p>
         </div>
+        <div className="space-y-4 p-6">
+          <Input
+            type="text"
+            placeholder="DJ Name (e.g. DJ MixMaster)"
+            value={djName}
+            onChange={(e) => setDjName(e.target.value)}
+            className="bg-gray-900/50 border-purple-500/30 text-white placeholder-gray-400 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
+          />
 
-        {/* Signup Form */}
-        <div className="bg-black/20 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl">
-          <h2 className="text-2xl font-bold mb-2 text-center">Create Account</h2>
-          <p className="text-gray-400 text-sm text-center mb-6">
-            You'll choose your screen name after verifying your email
-          </p>
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="bg-gray-900/50 border-purple-500/30 text-white placeholder-gray-400 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
+          />
 
-          <form onSubmit={handleSignup} className="space-y-6">
-            <div>
-              <Label htmlFor="email" className="text-white mb-2 block font-medium">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/5 border-white/20 text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
-                required
-              />
-              <p className="text-gray-500 text-xs mt-1">We'll send a verification link to this email</p>
+          <Input
+            type="password"
+            placeholder="Password (min 6 characters)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="bg-gray-900/50 border-purple-500/30 text-white placeholder-gray-400 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
+          />
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+              <p className="text-red-400 text-sm">{error}</p>
             </div>
+          )}
 
-            <div>
-              <Label htmlFor="password" className="text-white mb-2 block font-medium">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Create a strong password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-white/5 border-white/20 text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
-                required
-                minLength={6}
-              />
-              <p className="text-gray-500 text-xs mt-1">Minimum 6 characters</p>
+          <Button
+            onClick={handleSignUp}
+            disabled={loading || !djName || !email || !password}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl h-12 transition-all duration-200 transform hover:scale-105"
+          >
+            {loading ? "Creating Account..." : "🎧 Join Mix & Mingle"}
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-600" />
             </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-black px-2 text-gray-400">Or continue with</span>
+            </div>
+          </div>
 
-            {message && (
-              <div
-                className={`text-sm text-center p-4 rounded-xl border ${
-                  message.includes("✅") || message.includes("Check your email")
-                    ? "text-green-400 bg-green-400/10 border-green-400/20"
-                    : "text-red-400 bg-red-400/10 border-red-400/20"
-                }`}
-              >
-                {message}
-              </div>
-            )}
+          <div className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOAuth("google")}
+              className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-100 border-gray-300 rounded-xl h-12"
+            >
+              <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
+              Continue with Google
+            </Button>
 
             <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white py-3 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 h-12"
+              type="button"
+              onClick={() => handleOAuth("facebook")}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl h-12"
             >
-              {loading ? "Creating Account..." : "Create Account"}
+              <Image src="/icons/facebook.svg" alt="Facebook" width={20} height={20} />
+              Continue with Facebook
             </Button>
-          </form>
+          </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-500 text-sm mb-4">
-              By signing up, you agree to our Terms of Service and Privacy Policy
+          <div className="text-center pt-4">
+            <p className="text-gray-400 text-sm">
+              Already have an account?{" "}
+              <a href="/login" className="text-blue-400 hover:text-blue-300 hover:underline font-medium">
+                Sign In
+              </a>
             </p>
-            <Link href="/login" className="text-orange-400 hover:text-orange-300 transition-colors font-medium">
-              Already have an account? Sign In
-            </Link>
+          </div>
+
+          <div className="text-center">
+            <p className="text-xs text-gray-500">
+              By signing up, you agree to our{" "}
+              <a href="/terms" className="text-purple-400 hover:underline">
+                Terms
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="text-purple-400 hover:underline">
+                Privacy Policy
+              </a>
+            </p>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
