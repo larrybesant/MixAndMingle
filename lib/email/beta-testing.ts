@@ -17,11 +17,11 @@ export class BetaTestingEmail {
       return { success: false, error: "Resend API key missing" }
     }
 
-    const betaLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://mixandmingle.live"}/beta`
+    const betaLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://djmixandmingle.com"}/beta`
 
     try {
       const { data, error } = await resend.emails.send({
-        from: "Mix & Mingle <beta@mixandmingle.live>",
+        from: "Mix & Mingle <beta@djmixandmingle.com>",
         to: [tester.email],
         subject: "🎵 You're Invited to Beta Test Mix & Mingle!",
         html: `
@@ -81,7 +81,7 @@ export class BetaTestingEmail {
 
                 <p style="color: #9ca3af; font-size: 14px; margin-top: 30px;">
                   <strong>Beta Testing Period:</strong> ${new Date().toLocaleDateString()} - ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}<br>
-                  <strong>Feedback Email:</strong> <a href="mailto:beta@mixandmingle.live" style="color: #22d3ee;">beta@mixandmingle.live</a><br>
+                  <strong>Feedback Email:</strong> <a href="mailto:beta@djmixandmingle.com" style="color: #22d3ee;">beta@djmixandmingle.com</a><br>
                   <strong>Beta Testing Page:</strong> <a href="${betaLink}" style="color: #22d3ee;">${betaLink}</a>
                 </p>
               </div>
@@ -133,7 +133,7 @@ export class BetaTestingEmail {
 
     try {
       const { data, error } = await resend.emails.send({
-        from: "Mix & Mingle <beta@mixandmingle.live>",
+        from: "Mix & Mingle <beta@djmixandmingle.com>",
         to: [email],
         subject: "🎉 Thanks for Your Beta Feedback!",
         html: `
@@ -150,7 +150,7 @@ export class BetaTestingEmail {
             
             <div style="text-align: center; color: #9ca3af; font-size: 14px;">
               <p>Keep testing and send us more feedback anytime!</p>
-              <p><a href="mailto:beta@mixandmingle.live" style="color: #22d3ee;">beta@mixandmingle.live</a></p>
+              <p><a href="mailto:beta@djmixandmingle.com" style="color: #22d3ee;">beta@djmixandmingle.com</a></p>
             </div>
           </div>
         `,

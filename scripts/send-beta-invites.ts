@@ -42,8 +42,8 @@ async function sendBetaInvites() {
 
   if (successCount > 0) {
     console.log("\n🎉 BETA INVITES SENT SUCCESSFULLY!")
-    console.log("🔗 Beta Testing Link: https://mixandmingle.live/beta")
-    console.log("📧 Feedback Email: beta@mixandmingle.live")
+    console.log("🔗 Beta Testing Link: https://djmixandmingle.com/beta")
+    console.log("📧 Feedback Email: beta@djmixandmingle.com")
   }
 }
 
