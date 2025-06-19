@@ -1,3 +1,4 @@
+"use client"
 import { Card } from "../ui/card"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
