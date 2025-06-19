@@ -80,4 +80,51 @@ See `.env.example` for Firebase setup.
 
 ---
 
+## Beta Tester Instructions
+
+Thank you for helping test Mix & Mingle! Please follow these steps:
+
+### 1. Setup
+- Clone the repository and install dependencies:
+  ```bash
+  npm install
+  ```
+- Copy `.env.example` to `.env.local` and fill in your Firebase and other required credentials.
+- Start the development server:
+  ```bash
+  npm run dev
+  ```
+- Or build and run in production mode:
+  ```bash
+  npm run build && npm start
+  ```
+
+### 2. What to Test
+- Sign up, log in, and log out
+- Complete your profile and upload a photo
+- Try matching/discovering users
+- Start and participate in chats
+- Join or create rooms/live streams
+- Test on both desktop and mobile
+- Try to break things! (invalid input, network errors, etc.)
+
+### 3. Reporting Bugs & Feedback
+- Note the steps to reproduce any bug
+- Include screenshots or screen recordings if possible
+- Report issues via [GitHub Issues](https://github.com/your-repo/issues) or the feedback form in the app (if available)
+
+### 4. Manual Testing Checklist
+- [ ] Sign up, log in, log out
+- [ ] Reset password and verify email (if required)
+- [ ] Edit profile and upload photo
+- [ ] Match/discover users
+- [ ] Start/join chats and rooms
+- [ ] Test on mobile and desktop
+- [ ] Try invalid actions and check error handling
+- [ ] Confirm you cannot access protected pages when logged out
+
+---
+
+**Your feedback is crucial to making Mix & Mingle a great experience! Thank you for testing.**
+
 This project is designed for Gen Z and millennials who love music, live events, and networking. The app blends the best of Twitch, Spotify, Clubhouse, and Tinder into a premium nightlife digital experience.

@@ -39,7 +39,7 @@ export default function DashboardPage() {
       {profile && user && (
         <>
           <div className="mb-2">Welcome, {profile.username || user.email}!</div>
-          <div className="mb-8 text-gray-400">Your DJ Profile</div>
+          <div className="mb-8 text-gray-400">Your Profile</div>
           {/* Profile Editing Form */}
           <form
             className="flex flex-col gap-2 mb-6"
@@ -49,7 +49,7 @@ export default function DashboardPage() {
               alert("Profile updated!");
             }}
           >
-            <label className="text-gray-300">DJ Name</label>
+            <label className="text-gray-300">Username</label>
             <input
               className="p-2 rounded bg-gray-700 text-white"
               type="text"

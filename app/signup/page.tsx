@@ -60,7 +60,7 @@ export default function SignupPage() {
         <div className="space-y-4 p-6">
           <Input
             type="text"
-            placeholder="DJ Name (e.g. DJ MixMaster)"
+            placeholder="Username (e.g. musicfan123)"
             value={djName}
             onChange={(e) => setDjName(e.target.value)}
             className="bg-gray-900/50 border-purple-500/30 text-white placeholder-gray-400 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
