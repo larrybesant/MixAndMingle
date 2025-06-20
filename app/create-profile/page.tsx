@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function CreateProfilePage() {
+  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [musicPreferences, setMusicPreferences] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -17,7 +18,7 @@ export default function CreateProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!bio.trim() || !musicPreferences.trim() || !photo) {
+    if (!username.trim() || !bio.trim() || !musicPreferences.trim() || !photo) {
       setError("All fields and a profile photo are required.");
       return;
     }
@@ -45,6 +46,7 @@ export default function CreateProfilePage() {
       if (!user) throw new Error("User not authenticated");
       const { error: updateError } = await supabase.from("profiles").upsert({
         id: user.id,
+        username,
         bio,
         music_preferences: musicPreferences.split(",").map((g) => g.trim()),
         avatar_url: photoUrl,
@@ -62,6 +64,12 @@ export default function CreateProfilePage() {
     <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
       <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
       <form className="flex flex-col gap-4 w-full max-w-xs" onSubmit={handleSubmit}>
+        <Input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
+        />
         <Input
           type="text"
           value={bio}
