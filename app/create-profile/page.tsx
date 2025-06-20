@@ -11,7 +11,11 @@ export default function CreateProfilePage() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [musicPreferences, setMusicPreferences] = useState("");
+  const [relationshipStyle, setRelationshipStyle] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [bdsmPreferences, setBdsmPreferences] = useState("");
+  const [showBdsmPublic, setShowBdsmPublic] = useState(false);
+  const [isDatingVisible, setIsDatingVisible] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -33,8 +37,9 @@ export default function CreateProfilePage() {
     const cleanUsername = sanitizeInput(username, 20);
     const cleanBio = sanitizeInput(bio, 160);
     const cleanMusicPreferences = sanitizeInput(musicPreferences, 100);
-    if (!cleanUsername || !cleanBio || !cleanMusicPreferences || !photo) {
-      setError("All fields and a profile photo are required.");
+    const cleanBdsmPreferences = sanitizeInput(bdsmPreferences, 200);
+    if (!cleanUsername || !cleanBio || !cleanMusicPreferences || !relationshipStyle || !photo) {
+      setError("All fields, including relationship style, and a profile photo are required.");
       return;
     }
     if (!isValidUsername(cleanUsername)) {
@@ -68,6 +73,10 @@ export default function CreateProfilePage() {
         username: cleanUsername,
         bio: cleanBio,
         music_preferences: cleanMusicPreferences.split(",").map((g) => sanitizeInput(g, 30)),
+        relationship_style: relationshipStyle,
+        bdsm_preferences: cleanBdsmPreferences,
+        show_bdsm_public: showBdsmPublic,
+        is_dating_visible: isDatingVisible,
         avatar_url: photoUrl,
       });
       if (updateError) throw updateError;
@@ -102,6 +111,51 @@ export default function CreateProfilePage() {
             onChange={(e) => setMusicPreferences(e.target.value)}
             placeholder="Favorite Genres (comma separated)"
           />
+          <select
+            className="p-2 rounded bg-gray-700 text-white"
+            value={relationshipStyle}
+            onChange={e => setRelationshipStyle(e.target.value)}
+            required
+          >
+            <option value="">Select Relationship Style</option>
+            <option value="traditional">Traditional/Monogamous</option>
+            <option value="poly">Polyamorous</option>
+            <option value="open">Open</option>
+            <option value="queerplatonic">Queerplatonic</option>
+            <option value="other">Other</option>
+          </select>
+          {/* BDSM/Kink Preferences Section */}
+          <div className="flex flex-col gap-2 bg-gray-800/60 p-3 rounded-lg mt-2">
+            <label className="text-white font-semibold">BDSM / Kink / Other Preferences (optional)</label>
+            <textarea
+              className="p-2 rounded bg-gray-700 text-white"
+              value={bdsmPreferences}
+              onChange={e => setBdsmPreferences(e.target.value)}
+              placeholder="Share as much or as little as you want..."
+              rows={3}
+              maxLength={200}
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={showBdsmPublic}
+                onChange={e => setShowBdsmPublic(e.target.checked)}
+              />
+              Show this section on my public profile
+            </label>
+          </div>
+          {/* Dating Visibility Section */}
+          <div className="flex items-center gap-2 bg-gray-800/60 p-3 rounded-lg mt-2">
+            <input
+              type="checkbox"
+              checked={isDatingVisible}
+              onChange={e => setIsDatingVisible(e.target.checked)}
+              id="dating-visible"
+            />
+            <label htmlFor="dating-visible" className="text-sm text-gray-300">
+              Add me to the dating/matchmaking part of Mix & Mingle
+            </label>
+          </div>
           <Input
             type="file"
             accept="image/*"
