@@ -7,25 +7,32 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function CreateProfilePage() {
-  const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
-  const [genres, setGenres] = useState("");
+  const [musicPreferences, setMusicPreferences] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!username.trim() || !bio.trim() || !genres.trim() || !photo) {
+    if (!bio.trim() || !musicPreferences.trim() || !photo) {
       setError("All fields and a profile photo are required.");
       return;
     }
+    if (photo) {
+      if (!photo.type.startsWith("image/")) {
+        setError("Profile photo must be an image file.");
+        return;
+      }
+      if (photo.size > 5 * 1024 * 1024) {
+        setError("Profile photo must be less than 5MB.");
+        return;
+      }
+    }
     setLoading(true);
     try {
-      // Upload photo if present
       let photoUrl = "";
       if (photo) {
         const { data, error: uploadError } = await supabase.storage
@@ -34,19 +41,16 @@ export default function CreateProfilePage() {
         if (uploadError) throw uploadError;
         photoUrl = data?.path || "";
       }
-      // Update profile
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("User not authenticated");
       const { error: updateError } = await supabase.from("profiles").upsert({
         id: user.id,
-        username,
         bio,
-        genres: genres.split(",").map((g) => g.trim()),
+        music_preferences: musicPreferences.split(",").map((g) => g.trim()),
         avatar_url: photoUrl,
       });
       if (updateError) throw updateError;
-      setShowSuccess(true);
-      setTimeout(() => router.push("/dashboard"), 1500);
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Profile setup failed");
     } finally {
@@ -55,39 +59,21 @@ export default function CreateProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2 sm:px-0">
+    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
       <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
-      {showSuccess && (
-        <div className="bg-green-600 text-white px-6 py-4 rounded-xl mb-4 font-bold text-lg animate-bounce">
-          Profile created! Redirecting...
-        </div>
-      )}
-      <form
-        className="flex flex-col gap-4 w-full max-w-xs sm:max-w-md"
-        onSubmit={handleSubmit}
-      >
-        <label className="text-gray-300">Username</label>
-        <Input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <label className="text-gray-300">Bio</label>
+      <form className="flex flex-col gap-4 w-full max-w-xs" onSubmit={handleSubmit}>
         <Input
           type="text"
           value={bio}
           onChange={(e) => setBio(e.target.value)}
-          placeholder="Tell us about yourself"
+          placeholder="Bio"
         />
-        <label className="text-gray-300">Favorite Genres (comma separated)</label>
         <Input
           type="text"
-          value={genres}
-          onChange={(e) => setGenres(e.target.value)}
-          placeholder="e.g. House, Techno, Jazz"
+          value={musicPreferences}
+          onChange={(e) => setMusicPreferences(e.target.value)}
+          placeholder="Favorite Genres (comma separated)"
         />
-        <label className="text-gray-300">Profile Photo</label>
         <Input
           type="file"
           accept="image/*"

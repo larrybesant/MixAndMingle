@@ -19,7 +19,7 @@ export default function LoginPage() {
       .select("*")
       .eq("id", userId)
       .single();
-    if (!profileData || !profileData.username || !profileData.bio || !profileData.genres || !profileData.avatar_url) {
+    if (!profileData || !profileData.username || !profileData.bio || !profileData.music_preferences || !profileData.avatar_url) {
       router.push("/create-profile");
     } else {
       router.push("/dashboard");

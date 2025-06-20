@@ -26,7 +26,7 @@ export default function DashboardPage() {
         .single();
       setProfile(profileData);
       // Redirect to onboarding if profile is incomplete
-      if (!profileData || !profileData.username || !profileData.bio || !profileData.genres || !profileData.avatar_url) {
+      if (!profileData || !profileData.username || !profileData.bio || !profileData.music_preferences || !profileData.avatar_url) {
         router.replace("/create-profile");
         return;
       }
