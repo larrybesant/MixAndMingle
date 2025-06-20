@@ -18,6 +18,7 @@ export default function CreateProfilePage() {
   const [isDatingVisible, setIsDatingVisible] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [gender, setGender] = useState("");
   const router = useRouter();
 
   // Helper to sanitize input (remove HTML tags, trim, limit length)
@@ -38,8 +39,8 @@ export default function CreateProfilePage() {
     const cleanBio = sanitizeInput(bio, 160);
     const cleanMusicPreferences = sanitizeInput(musicPreferences, 100);
     const cleanBdsmPreferences = sanitizeInput(bdsmPreferences, 200);
-    if (!cleanUsername || !cleanBio || !cleanMusicPreferences || !relationshipStyle || !photo) {
-      setError("All fields, including relationship style, and a profile photo are required.");
+    if (!cleanUsername || !cleanBio || !cleanMusicPreferences || !relationshipStyle || !photo || !gender) {
+      setError("All fields, including relationship style, gender, and a profile photo are required.");
       return;
     }
     if (!isValidUsername(cleanUsername)) {
@@ -78,6 +79,7 @@ export default function CreateProfilePage() {
         show_bdsm_public: showBdsmPublic,
         is_dating_visible: isDatingVisible,
         avatar_url: photoUrl,
+        gender: gender,
       });
       if (updateError) throw updateError;
       router.push("/dashboard");
@@ -123,6 +125,19 @@ export default function CreateProfilePage() {
             <option value="open">Open</option>
             <option value="queerplatonic">Queerplatonic</option>
             <option value="other">Other</option>
+          </select>
+          <select
+            className="p-2 rounded bg-gray-700 text-white"
+            value={gender}
+            onChange={e => setGender(e.target.value)}
+            required
+          >
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="nonbinary">Nonbinary</option>
+            <option value="transgender">Transgender</option>
+            <option value="other">Other / Prefer not to say</option>
           </select>
           {/* BDSM/Kink Preferences Section */}
           <div className="flex flex-col gap-2 bg-gray-800/60 p-3 rounded-lg mt-2">

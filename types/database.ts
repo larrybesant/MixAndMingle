@@ -7,6 +7,7 @@ export type Profile = {
   music_preferences: string[] | null
   created_at: string
   is_creator?: boolean
+  gender?: string // 'male', 'female', 'nonbinary', 'transgender', 'other', etc.
 }
 
 export type UserRoom = {

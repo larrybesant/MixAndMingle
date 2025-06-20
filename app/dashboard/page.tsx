@@ -75,6 +75,21 @@ export default function DashboardPage() {
           </button>
           {formMessage && <div className="text-sm text-white bg-black/60 rounded p-2 mt-2">{formMessage}</div>}
         </form>
+        <div className="mb-4 text-center text-lg">
+          <span className="font-semibold">Relationship Style:</span> {profile?.relationship_style ? profile.relationship_style.charAt(0).toUpperCase() + profile.relationship_style.slice(1) : "Not set"}
+        </div>
+        <div className="mb-4 text-center text-sm text-gray-300">
+          <span className="font-semibold">Music Preferences:</span> {Array.isArray(profile?.music_preferences) ? profile.music_preferences.join(", ") : profile.music_preferences}
+        </div>
+        <div className="mb-4 text-center text-sm text-gray-300">
+          <span className="font-semibold">Dating/Matchmaking:</span> {profile?.is_dating_visible ? "Opted In" : "Not Listed"}
+        </div>
+        {profile?.bdsm_preferences && (
+          <div className="mb-4 text-center text-sm bg-gray-800/80 p-3 rounded-lg">
+            <span className="font-semibold text-purple-300">BDSM / Kink / Other (private):</span> {profile.bdsm_preferences}
+            {profile.show_bdsm_public && <span className="ml-2 text-green-400">(Public)</span>}
+          </div>
+        )}
         <button
           className="bg-red-600 px-4 py-2 rounded font-bold mt-4"
           onClick={async () => {

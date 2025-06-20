@@ -63,8 +63,8 @@ export default function LoginPage() {
   useEffect(() => {
     async function checkOnMount() {
       const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        setError("Session error: " + error.message);
+      if (error && error.message !== 'User not found') {
+        setError("There was a problem with your session. Please sign in again or contact support if this continues.");
       }
       if (data.user) {
         if (!data.user.email_confirmed_at) {

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@babel/core": "latest",
+    "@daily-co/daily-js": "^0.80.0",
     "@jest/transform": "latest",
     "@jest/types": "latest",
     "@neondatabase/serverless": "latest",

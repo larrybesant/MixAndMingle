@@ -16,7 +16,7 @@ export default function UserProfilePage() {
     async function fetchProfile() {
       const { data } = await supabase
         .from("profiles")
-        .select("username, bio, music_preferences, relationship_style, bdsm_preferences, show_bdsm_public, avatar_url")
+        .select("username, bio, music_preferences, relationship_style, bdsm_preferences, show_bdsm_public, avatar_url, gender")
         .eq("id", id)
         .single()
       setProfile(data)
@@ -24,6 +24,19 @@ export default function UserProfilePage() {
     }
     if (id) fetchProfile()
   }, [id])
+
+  // Helper to get gender symbol
+  function getGenderSymbol(gender: string | undefined) {
+    if (!gender) return "";
+    switch (gender.toLowerCase()) {
+      case "male": return "\u2642\uFE0F"; // ♂️
+      case "female": return "\u2640\uFE0F"; // ♀️
+      case "nonbinary": return "\u26A7\uFE0F"; // ⚧️
+      case "transgender": return "\ud83d\udc68\u200d\u2695\ufe0f"; // 👨‍⚕️ (placeholder)
+      case "other": return "\u2753"; // ❓
+      default: return "";
+    }
+  }
 
   if (loading) return <div className="text-white p-8">Loading...</div>
   if (!profile) return <div className="text-red-500 p-8">Profile not found.</div>
@@ -35,7 +48,14 @@ export default function UserProfilePage() {
           <AvatarImage src={profile.avatar_url} alt={profile.username} />
           <AvatarFallback>{profile.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
         </Avatar>
-        <h2 className="text-3xl font-bold mb-2">{profile.username}</h2>
+        <h2 className="text-3xl font-bold mb-2 flex items-center gap-2">
+          {profile.username}
+          {profile.gender && (
+            <span title={profile.gender} className="ml-1 text-lg">
+              {getGenderSymbol(profile.gender)}
+            </span>
+          )}
+        </h2>
         <div className="text-gray-400 mb-2">{profile.relationship_style ? profile.relationship_style.charAt(0).toUpperCase() + profile.relationship_style.slice(1) : "Not set"}</div>
         <div className="mb-4 text-center">{profile.bio}</div>
         <div className="mb-4 text-center text-sm text-gray-300">
