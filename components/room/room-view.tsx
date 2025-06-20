@@ -563,6 +563,16 @@ export const RoomView = () => {
           </div>
         )}
       </div>
+      {/* Host/Mod Live Analytics */}
+      {isModerator && (
+        <div className="mb-4 p-3 bg-gray-800/80 rounded-lg flex flex-col gap-2">
+          <div className="text-sm text-blue-300 font-bold">Live Analytics</div>
+          <div className="flex gap-6">
+            <div className="text-xs text-white">Viewers: <span className="font-bold">{viewers.length}</span></div>
+            <div className="text-xs text-white">Chat Messages: <span className="font-bold">{messages.length}</span></div>
+          </div>
+        </div>
+      )}
       <div className="mt-4 flex gap-2">
         <button
           className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
