@@ -27,10 +27,16 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    setError("");
     const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError('Login failed. Check email and password.');
     } else if (data.user) {
+      if (!data.user.email_confirmed_at) {
+        setError('Please verify your email before logging in. Check your inbox for a verification link.');
+        await supabase.auth.signOut();
+        return;
+      }
       await checkProfileAndRedirect(data.user.id);
     }
   };
@@ -61,6 +67,11 @@ export default function LoginPage() {
         setError("Session error: " + error.message);
       }
       if (data.user) {
+        if (!data.user.email_confirmed_at) {
+          setError('Please verify your email before logging in. Check your inbox for a verification link.');
+          await supabase.auth.signOut();
+          return;
+        }
         await checkProfileAndRedirect(data.user.id);
       } else if (window.location.pathname === "/dashboard") {
         setError("Login failed or session not found after OAuth. Please try again or contact support.");

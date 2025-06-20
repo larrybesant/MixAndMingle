@@ -15,11 +15,29 @@ export default function CreateProfilePage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Helper to sanitize input (remove HTML tags, trim, limit length)
+  function sanitizeInput(input: string, maxLength: number = 100): string {
+    return input.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+  }
+
+  // Helper to validate username (alphanumeric, underscores, 3-20 chars)
+  function isValidUsername(name: string): boolean {
+    return /^[a-zA-Z0-9_]{3,20}$/.test(name);
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!username.trim() || !bio.trim() || !musicPreferences.trim() || !photo) {
+    // Sanitize inputs
+    const cleanUsername = sanitizeInput(username, 20);
+    const cleanBio = sanitizeInput(bio, 160);
+    const cleanMusicPreferences = sanitizeInput(musicPreferences, 100);
+    if (!cleanUsername || !cleanBio || !cleanMusicPreferences || !photo) {
       setError("All fields and a profile photo are required.");
+      return;
+    }
+    if (!isValidUsername(cleanUsername)) {
+      setError("Username must be 3-20 characters, letters, numbers, or underscores only.");
       return;
     }
     if (photo) {
@@ -46,9 +64,9 @@ export default function CreateProfilePage() {
       if (!user) throw new Error("User not authenticated");
       const { error: updateError } = await supabase.from("profiles").upsert({
         id: user.id,
-        username,
-        bio,
-        music_preferences: musicPreferences.split(",").map((g) => g.trim()),
+        username: cleanUsername,
+        bio: cleanBio,
+        music_preferences: cleanMusicPreferences.split(",").map((g) => sanitizeInput(g, 30)),
         avatar_url: photoUrl,
       });
       if (updateError) throw updateError;

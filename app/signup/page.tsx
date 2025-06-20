@@ -14,19 +14,63 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  // Helper to sanitize input (remove HTML tags, trim, limit length)
+  function sanitizeInput(input: string, maxLength: number = 100): string {
+    return input.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, maxLength)
+  }
+
+  // Helper to validate username (alphanumeric, underscores, 3-20 chars)
+  function isValidUsername(name: string): boolean {
+    return /^[a-zA-Z0-9_]{3,20}$/.test(name)
+  }
+
+  // Helper to validate email
+  function isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  }
+
+  // Helper to validate password (min 8 chars)
+  function isValidPassword(pw: string): boolean {
+    return pw.length >= 8
+  }
+
   const handleSignUp = async () => {
     setLoading(true)
     setError("")
-
+    // Sanitize and validate inputs
+    const cleanUsername = sanitizeInput(username, 20)
+    const cleanEmail = sanitizeInput(email, 100)
+    const cleanPassword = password.trim()
+    if (!cleanUsername || !cleanEmail || !cleanPassword) {
+      setError("All fields are required.")
+      setLoading(false)
+      return
+    }
+    if (!isValidUsername(cleanUsername)) {
+      setError(
+        "Username must be 3-20 characters, letters, numbers, or underscores only."
+      )
+      setLoading(false)
+      return
+    }
+    if (!isValidEmail(cleanEmail)) {
+      setError("Please enter a valid email address.")
+      setLoading(false)
+      return
+    }
+    if (!isValidPassword(cleanPassword)) {
+      setError("Password must be at least 8 characters.")
+      setLoading(false)
+      return
+    }
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: cleanEmail,
+      password: cleanPassword,
       options: {
         emailRedirectTo: `${window.location.origin}/verify-email`,
-        data: { username },
+        data: { username: cleanUsername },
       },
     })
-
     if (error) {
       setError(error.message)
     } else {
