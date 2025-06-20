@@ -73,6 +73,18 @@ export function LiveStream({ isHost = false, roomId }: LiveStreamProps) {
     }
   }
 
+  // --- WebRTC Signaling Scaffold ---
+  // This is a placeholder for real WebRTC signaling using Supabase Realtime.
+  // TODO: Implement offer/answer exchange and ICE candidate relay via Supabase channel.
+  // TODO: On host, create offer and publish to channel. On viewer, listen for offer and send answer.
+  // TODO: On both, exchange ICE candidates for NAT traversal.
+  // TODO: Attach remote stream to video element for viewers.
+  // Example:
+  // const signalingChannel = supabase.channel(`webrtc-room-${roomId}`);
+  // signalingChannel.on('broadcast', { event: 'offer' }, (payload) => { ... });
+  // signalingChannel.send({ type: 'broadcast', event: 'offer', payload: { ... } });
+  // ...existing code...
+
   return (
     <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
       {/* Stream Display */}

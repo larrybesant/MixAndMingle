@@ -63,10 +63,16 @@ export const RoomView = () => {
     }
   }, [roomId]);
 
+  // Helper to sanitize chat input (remove HTML tags, trim, limit length)
+  function sanitizeInput(input: string, maxLength: number = 300): string {
+    return input.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+  }
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !userId) return;
-    await supabase.from('chat_messages').insert({ room_id: roomId, user_id: userId, message });
+    const cleanMsg = sanitizeInput(message);
+    if (!cleanMsg || !userId) return;
+    await supabase.from('chat_messages').insert({ room_id: roomId, user_id: userId, message: cleanMsg });
     setMessage("");
   };
 
