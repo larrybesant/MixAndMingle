@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { Send } from "lucide-react"
+import { supabase } from "@/lib/supabase/client"
 
 interface Message {
   id: string
@@ -23,71 +24,83 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
   const [username] = useState(`User${Math.floor(Math.random() * 1000)}`)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Simulate incoming messages
+  // Helper to sanitize chat input (remove HTML tags, trim, limit length)
+  function sanitizeInput(input: string, maxLength: number = 300): string {
+    return input.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, maxLength)
+  }
+
+  // Fetch messages from Supabase on mount
   useEffect(() => {
-    const interval = setInterval(() => {
-      const randomMessages = [
-        "🔥 This beat is fire!",
-        "Love this track! 💜",
-        "Can you play some house music?",
-        "Greetings from Brazil! 🇧🇷",
-        "This is my jam! 🎵",
-        "Amazing set! Keep it up! ⚡",
-        "What's the name of this song?",
-        "The bass is incredible! 🔊",
-      ]
-
-      if (Math.random() > 0.7) {
-        const randomUser = `Fan${Math.floor(Math.random() * 100)}`
-        const randomMsg = randomMessages[Math.floor(Math.random() * randomMessages.length)]
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            username: randomUser,
-            message: randomMsg,
-            timestamp: new Date(),
-            type: "message",
-          },
-        ])
+    async function fetchMessages() {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("id, username, message, timestamp, type")
+        .eq("room_id", roomId)
+        .order("timestamp", { ascending: true })
+      if (!error && data) {
+        setMessages(
+          data.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }))
+        )
       }
-    }, 3000)
+    }
+    fetchMessages()
+  }, [roomId])
 
-    return () => clearInterval(interval)
-  }, [])
+  // Subscribe to new messages in real time
+  useEffect(() => {
+    const channel = supabase
+      .channel(`room-messages-${roomId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` },
+        (payload) => {
+          const msg = payload.new
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: msg.id,
+              username: msg.username,
+              message: msg.message,
+              timestamp: new Date(msg.timestamp),
+              type: msg.type,
+            },
+          ])
+        }
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [roomId])
 
   // Auto scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const sendMessage = (e: React.FormEvent) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim()) return
-
-    const message: Message = {
-      id: Date.now().toString(),
+    const cleanMsg = sanitizeInput(newMessage)
+    if (!cleanMsg) return
+    const { error } = await supabase.from("messages").insert({
+      room_id: roomId,
       username,
-      message: newMessage,
-      timestamp: new Date(),
+      message: cleanMsg,
       type: "message",
-    }
-
-    setMessages((prev) => [...prev, message])
-    setNewMessage("")
+    })
+    if (!error) setNewMessage("")
   }
 
-  const sendReaction = (emoji: string) => {
-    const message: Message = {
-      id: Date.now().toString(),
+  const sendReaction = async (emoji: string) => {
+    const { error } = await supabase.from("messages").insert({
+      room_id: roomId,
       username,
       message: emoji,
-      timestamp: new Date(),
       type: "reaction",
-    }
-
-    setMessages((prev) => [...prev, message])
+    })
   }
 
   return (
