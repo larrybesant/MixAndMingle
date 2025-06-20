@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function CreateProfilePage() {
   const [username, setUsername] = useState("");
@@ -79,37 +80,39 @@ export default function CreateProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
-      <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
-      <form className="flex flex-col gap-4 w-full max-w-xs" onSubmit={handleSubmit}>
-        <Input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
-        />
-        <Input
-          type="text"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          placeholder="Bio"
-        />
-        <Input
-          type="text"
-          value={musicPreferences}
-          onChange={(e) => setMusicPreferences(e.target.value)}
-          placeholder="Favorite Genres (comma separated)"
-        />
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-        />
-        {error && <div className="text-red-500 text-sm">{error}</div>}
-        <Button type="submit" className="bg-blue-600" disabled={loading}>
-          {loading ? "Saving..." : "Finish Setup"}
-        </Button>
-      </form>
-    </main>
+    <ErrorBoundary>
+      <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
+        <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
+        <form className="flex flex-col gap-4 w-full max-w-xs" onSubmit={handleSubmit}>
+          <Input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+          />
+          <Input
+            type="text"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Bio"
+          />
+          <Input
+            type="text"
+            value={musicPreferences}
+            onChange={(e) => setMusicPreferences(e.target.value)}
+            placeholder="Favorite Genres (comma separated)"
+          />
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+          />
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+          <Button type="submit" className="bg-blue-600" disabled={loading}>
+            {loading ? "Saving..." : "Finish Setup"}
+          </Button>
+        </form>
+      </main>
+    </ErrorBoundary>
   );
 }
