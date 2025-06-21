@@ -46,6 +46,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "latest",
+    "dotenv": "^16.5.0",
     "embla-carousel-react": "latest",
     "esbuild-register": "latest",
     "fs": "latest",

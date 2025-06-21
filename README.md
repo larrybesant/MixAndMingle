@@ -78,6 +78,32 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Environment Variables
 See `.env.example` for Firebase setup.
 
+## Database Setup & Migration
+
+To initialize the database schema for Mix & Mingle:
+
+1. Ensure your Supabase and Neon credentials are set in your environment variables (see below).
+2. Run the migration script:
+
+\`\`\`bash
+npm run db:init
+# or
+npx ts-node scripts/init-database.ts
+\`\`\`
+
+This will apply the schema in `database/schema.sql` to your database.
+
+## Required Environment Variables
+
+Set these in your `.env.local` (for local dev) and in Vercel dashboard (for production):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- (add any Neon/Postgres vars as needed)
+
+If any are missing, the app will throw a clear error at startup.
+
 ---
 
 ## Beta Tester Instructions
