@@ -8,7 +8,10 @@ import { ArrowLeft, Share2 } from "lucide-react"
 
 export default function StreamPage() {
   const params = useParams()
-  const roomId = params.id as string
+  const roomId = params?.id as string
+  if (!roomId) {
+    return <div>Room not found.</div>
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4">
