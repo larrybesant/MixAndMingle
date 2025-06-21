@@ -115,6 +115,7 @@ export default function SignupPage() {
         />
         {error && <div className="text-red-500 mb-2">{error}</div>}
         <Button
+          type="button"
           onClick={handleSignUp}
           disabled={loading || !username || !email || !password}
           className="w-full mb-2"
@@ -122,6 +123,7 @@ export default function SignupPage() {
           {loading ? "Creating Account..." : "Sign Up"}
         </Button>
         <Button
+          type="button"
           onClick={() => handleOAuth("google")}
           className="w-full mb-2"
         >

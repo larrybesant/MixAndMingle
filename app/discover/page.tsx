@@ -39,19 +39,39 @@ export default function DiscoverPage() {
   }, []);
 
   const handleSignUp = async (email: string, password: string, name: string, avatarUrl: string) => {
+    // Sanitize and validate inputs
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+    const cleanName = name.trim();
+    const cleanAvatarUrl = avatarUrl ? avatarUrl.trim() : "";
+    if (!cleanEmail || !cleanPassword || !cleanName) {
+      console.error("All fields are required.");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      console.error("Invalid email address.");
+      return;
+    }
+    if (cleanPassword.length < 8) {
+      console.error("Password must be at least 8 characters.");
+      return;
+    }
+    // Supabase signup
     const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: cleanEmail,
+      password: cleanPassword,
       options: {
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/verify-email` : undefined,
         data: {
-          full_name: name, // get this from your form
-          avatar_url: avatarUrl // optional, or set to null/empty string
+          full_name: cleanName,
+          avatar_url: cleanAvatarUrl
         }
       }
     });
     if (error) {
       console.error("Error signing up:", error.message);
     } else {
+      // Optionally redirect to check-email page or show a message
       console.log("Sign up successful:", data);
     }
   };

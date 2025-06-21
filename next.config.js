@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['images.unsplash.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'your-image-domain.com',
+        port: '',
+        pathname: '/**',
+      },
+      // Add more patterns as needed
+    ],
   },
   eslint: {
     ignoreDuringBuilds: true,
