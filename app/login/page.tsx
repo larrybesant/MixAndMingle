@@ -63,7 +63,8 @@ export default function LoginPage() {
   useEffect(() => {
     async function checkOnMount() {
       const { data, error } = await supabase.auth.getUser();
-      if (error && error.message !== 'User not found') {
+      // Only show error if user is on a protected page, not on /login
+      if (error && error.message !== 'User not found' && window.location.pathname !== '/login') {
         setError("There was a problem with your session. Please sign in again or contact support if this continues.");
       }
       if (data.user) {
@@ -73,8 +74,6 @@ export default function LoginPage() {
           return;
         }
         await checkProfileAndRedirect(data.user.id);
-      } else if (window.location.pathname === "/dashboard") {
-        setError("Login failed or session not found after OAuth. Please try again or contact support.");
       }
     }
     checkOnMount();
