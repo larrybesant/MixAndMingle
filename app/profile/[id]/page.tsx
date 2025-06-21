@@ -7,8 +7,12 @@ import Link from "next/link"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 export default function UserProfilePage() {
-  const params = useParams()
-  const id = params.id as string
+  const params = useParams();
+  const id = params?.id as string;
+  if (!id) {
+    return <div>User not found.</div>;
+  }
+
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
