@@ -19,6 +19,21 @@ export const Navbar = () => {
     }
     fetchNotifications();
   }, []);
+
+  async function markAsRead(id: string) {
+    await supabase.from('notifications').update({ read: true }).eq('id', id);
+    setNotifications(notifications => notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  }
+
+  async function handleFollowBack(n: any) {
+    // TODO: Implement follow back logic
+    markAsRead(n.id);
+  }
+  async function handleThankTip(n: any) {
+    // TODO: Implement thank for tip logic
+    markAsRead(n.id);
+  }
+
   return (
     <nav className={cn('w-full flex items-center justify-between px-6 py-4 bg-stone-900 text-white')}> 
       <Link href="/" className="font-bold text-xl">Mix & Mingle</Link>
@@ -43,10 +58,21 @@ export const Navbar = () => {
               {notifications.length === 0 && <div className="p-2 text-gray-500">No notifications</div>}
               {notifications.map((n, i) => (
                 <div key={i} className={`p-2 border-b last:border-b-0 ${!n.read ? 'bg-blue-100' : ''}`}>
-                  <div className="font-semibold">{n.title}</div>
+                  <div className="font-semibold flex items-center gap-2">
+                    {n.title}
+                    {!n.read && (
+                      <button onClick={() => markAsRead(n.id)} className="ml-auto text-xs text-blue-600 underline">Mark as read</button>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-700">{n.message}</div>
                   {n.type === 'room_invite' && n.data?.room_id && (
                     <Link href={`/room/${n.data.room_id}`} className="text-blue-600 underline text-xs">Join Room</Link>
+                  )}
+                  {n.type === 'follow' && (
+                    <button onClick={() => handleFollowBack(n)} className="text-xs text-green-700 underline mt-1">Follow Back</button>
+                  )}
+                  {n.type === 'tip' && (
+                    <button onClick={() => handleThankTip(n)} className="text-xs text-purple-700 underline mt-1">Thank</button>
                   )}
                 </div>
               ))}
