@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
@@ -13,12 +13,25 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const checkProfileAndRedirect = async (userId: string) => {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    if (!profileData || !profileData.username || !profileData.bio || !profileData.genres || !profileData.avatar_url) {
+      router.push("/create-profile");
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError('Login failed. Check email and password.');
-    } else {
-      router.push('/dashboard');
+    } else if (data.user) {
+      await checkProfileAndRedirect(data.user.id);
     }
   };
 
@@ -29,22 +42,32 @@ export default function LoginPage() {
     }
   };
 
+  useEffect(() => {
+    async function checkOnMount() {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        await checkProfileAndRedirect(data.user.id);
+      }
+    }
+    checkOnMount();
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
-      <div className="max-w-sm w-full space-y-6">
+    <div className="min-h-screen flex items-center justify-center px-2 sm:px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="max-w-xs sm:max-w-sm w-full space-y-6">
         <h1 className="text-center text-2xl font-bold text-white">Sign In</h1>
 
         <Input
           type="email"
           placeholder="Email"
-          className="w-full text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
+          className="w-full bg-black/40 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <Input
           type="password"
           placeholder="Password"
-          className="w-full text-white placeholder-white/40 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
+          className="w-full bg-black/40 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -58,7 +81,8 @@ export default function LoginPage() {
           Sign In
         </Button>
 
-        <div className="space-y-3">
+        {/* Social Sign-In Buttons */}
+        <div className="space-y-3 mt-4">
           <Button
             type="button"
             variant="outline"
@@ -85,8 +109,8 @@ export default function LoginPage() {
             Sign Up
           </a>
         </p>
-        <p className="text-center text-xs text-gray-400">
-          <a href="/forgot-password" className="hover:underline">
+        <p className="text-center text-xs text-gray-400 mt-2">
+          <a href="/forgot-password" className="hover:underline text-blue-400">
             Forgot Password?
           </a>
         </p>

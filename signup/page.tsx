@@ -49,8 +49,8 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
-      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 backdrop-blur-sm rounded-lg">
+    <div className="min-h-screen flex items-center justify-center px-2 sm:px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="w-full max-w-xs sm:max-w-md bg-black/80 border border-purple-500/30 backdrop-blur-sm rounded-lg">
         <div className="text-center p-6 pb-0">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
             Mix 🎵 Mingle
@@ -60,7 +60,7 @@ export default function SignupPage() {
         <div className="space-y-4 p-6">
           <Input
             type="text"
-            placeholder="DJ Name (e.g. DJ MixMaster)"
+            placeholder="Username (e.g. musicfan123)"
             value={djName}
             onChange={(e) => setDjName(e.target.value)}
             className="bg-gray-900/50 border-purple-500/30 text-white placeholder-gray-400 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"

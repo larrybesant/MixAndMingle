@@ -195,8 +195,8 @@ export default function BetaTestingPage() {
         <div className="text-center mt-12 text-gray-400">
           <p>
             Need help? Contact us at{" "}
-            <a href="mailto:beta@mixandmingle.live" className="text-blue-400 hover:underline">
-              beta@mixandmingle.live
+            <a href="mailto:beta@djmixandmingle.com" className="text-blue-400 hover:underline">
+              beta@djmixandmingle.com
             </a>
           </p>
           <p className="text-sm mt-2">Beta Version 1.0 | Build Date: {new Date().toLocaleDateString()}</p>
