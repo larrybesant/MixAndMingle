@@ -38,6 +38,24 @@ export default function DiscoverPage() {
     checkDJ();
   }, []);
 
+  const handleSignUp = async (email: string, password: string, name: string, avatarUrl: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name, // get this from your form
+          avatar_url: avatarUrl // optional, or set to null/empty string
+        }
+      }
+    });
+    if (error) {
+      console.error("Error signing up:", error.message);
+    } else {
+      console.log("Sign up successful:", data);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-black text-white px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">Browse Live Rooms</h1>
@@ -101,3 +119,16 @@ export default function DiscoverPage() {
     </main>
   )
 }
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, avatar_url)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'full_name', ''),
+    COALESCE(new.raw_user_meta_data->>'avatar_url', '')
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
