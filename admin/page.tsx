@@ -31,7 +31,7 @@ export default function AdminPage() {
     async function fetchData() {
       const { data: usersData } = await supabase
         .from("profiles")
-        .select("id, username, bio, genres, avatar_url");
+        .select("id, username, bio, music_preferences, avatar_url");
       const { data: roomsData } = await supabase
         .from("dj_rooms")
         .select("id, name, is_live, host_id, viewer_count");
@@ -59,7 +59,7 @@ export default function AdminPage() {
               <span className="font-semibold text-white">{user.username}</span>
               <span className="text-xs text-gray-400">{user.bio}</span>
               <span className="text-xs text-purple-400">
-                {user.genres?.join(", ")}
+                {user.music_preferences?.join(", ")}
               </span>
             </li>
           ))}

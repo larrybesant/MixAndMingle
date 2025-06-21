@@ -1,9 +1,11 @@
 "use client";
 
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 export default function MessagesPage() {
+  const [user, setUser] = useState<any>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [recipientId, setRecipientId] = useState("");
@@ -11,24 +13,34 @@ export default function MessagesPage() {
   const [sendStatus, setSendStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchConversations() {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) return;
-      const { data } = await supabase
+    async function fetchUserAndMessages() {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+      setUser(userData.user);
+      // Fetch recent conversations (grouped by user)
+      const { data: messagesData } = await supabase
         .from("messages")
-        .select("id, sender_id, receiver_id, message, created_at")
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order("created_at", { ascending: false });
-      setConversations(data || []);
+        .select("*, sender:sender_id(username, avatar_url), receiver:receiver_id(username, avatar_url)")
+        .or(`sender_id.eq.${userData.user.id},receiver_id.eq.${userData.user.id}`)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setConversations(messagesData || []);
       setLoading(false);
     }
-    fetchConversations();
+    fetchUserAndMessages();
   }, []);
+
+  // Helper to sanitize message input (remove HTML tags, trim, limit length)
+  function sanitizeInput(input: string, maxLength: number = 500): string {
+    return input.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+  }
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setSendStatus(null);
-    if (!recipientId.trim() || !newMessage.trim()) {
+    const cleanRecipient = sanitizeInput(recipientId, 64);
+    const cleanMessage = sanitizeInput(newMessage, 500);
+    if (!cleanRecipient || !cleanMessage) {
       setSendStatus("Recipient and message required.");
       return;
     }
@@ -39,13 +51,13 @@ export default function MessagesPage() {
     }
     const { error } = await supabase.from("messages").insert({
       sender_id: user.id,
-      receiver_id: recipientId,
-      message: newMessage,
+      receiver_id: cleanRecipient,
+      message: cleanMessage,
     });
     if (!error) {
       // Insert notification for recipient
       await supabase.from("notifications").insert({
-        user_id: recipientId,
+        user_id: cleanRecipient,
         type: "Message",
         message: `New message from ${user.id}`,
         read: false,
@@ -61,39 +73,51 @@ export default function MessagesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-white px-2 sm:px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">Messages</h1>
-      {loading ? (
-        <div className="text-gray-400">Loading...</div>
-      ) : conversations.length === 0 ? (
-        <div className="text-gray-400">No messages yet.</div>
-      ) : (
-        <ul className="space-y-4">
-          {conversations.map((msg) => (
-            <li key={msg.id} className="bg-gray-800 rounded-xl p-4">
-              <div className="text-xs text-gray-400 mb-1">{new Date(msg.created_at).toLocaleString()}</div>
-              <div className="text-white font-semibold">{msg.sender_id === msg.receiver_id ? "You" : msg.sender_id}:</div>
-              <div className="text-white">{msg.message}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-      <form onSubmit={handleSend} className="flex flex-col md:flex-row gap-2 mb-6 w-full max-w-xs sm:max-w-2xl mx-auto">
-        <input
-          className="flex-1 p-2 rounded bg-gray-700 text-white"
-          value={recipientId}
-          onChange={e => setRecipientId(e.target.value)}
-          placeholder="Recipient User ID"
-        />
-        <input
-          className="flex-1 p-2 rounded bg-gray-700 text-white"
-          value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
-          placeholder="Type a message..."
-        />
-        <button type="submit" className="bg-blue-600 px-4 py-2 rounded text-white font-bold" disabled={!recipientId.trim() || !newMessage.trim()}>Send</button>
-      </form>
-      {sendStatus && <div className="text-sm text-white bg-black/60 rounded p-2 mb-4">{sendStatus}</div>}
-    </main>
+    <ErrorBoundary>
+      <main className="min-h-screen bg-black text-white flex flex-col items-center px-2 py-8">
+        <h1 className="text-3xl font-bold mb-6">Messenger</h1>
+        {loading ? (
+          <div className="text-gray-400">Loading...</div>
+        ) : (
+          <section className="w-full max-w-md mb-8">
+            <h2 className="text-xl font-bold mb-2">Recent Conversations</h2>
+            {conversations.length === 0 ? (
+              <div className="text-gray-400 italic">No messages yet.</div>
+            ) : (
+              <ul className="bg-gray-800 rounded-lg p-4 divide-y divide-gray-700">
+                {conversations.map((msg) => (
+                  <li key={msg.id} className="flex items-center gap-3 py-2">
+                    <img
+                      src={msg.sender?.avatar_url || "/file.svg"}
+                      alt="avatar"
+                      className="w-8 h-8 rounded-full bg-gray-600"
+                    />
+                    <span className="font-semibold">{msg.sender?.username || "Unknown"}</span>
+                    <span className="mx-2 text-gray-500">→</span>
+                    <span>{msg.message.slice(0, 40)}{msg.message.length > 40 ? "..." : ""}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+        <form onSubmit={handleSend} className="flex flex-col md:flex-row gap-2 mb-6 w-full max-w-xs sm:max-w-2xl mx-auto">
+          <input
+            className="flex-1 p-2 rounded bg-gray-700 text-white"
+            value={recipientId}
+            onChange={e => setRecipientId(e.target.value)}
+            placeholder="Recipient User ID"
+          />
+          <input
+            className="flex-1 p-2 rounded bg-gray-700 text-white"
+            value={newMessage}
+            onChange={e => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+          />
+          <button type="submit" className="bg-blue-600 px-4 py-2 rounded text-white font-bold" disabled={!recipientId.trim() || !newMessage.trim()}>Send</button>
+        </form>
+        {sendStatus && <div className="text-sm text-white bg-black/60 rounded p-2 mb-4">{sendStatus}</div>}
+      </main>
+    </ErrorBoundary>
   );
 }

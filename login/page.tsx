@@ -19,7 +19,7 @@ export default function LoginPage() {
       .select("*")
       .eq("id", userId)
       .single();
-    if (!profileData || !profileData.username || !profileData.bio || !profileData.genres || !profileData.avatar_url) {
+    if (!profileData || !profileData.username || !profileData.bio || !profileData.music_preferences || !profileData.avatar_url) {
       router.push("/create-profile");
     } else {
       router.push("/dashboard");
@@ -27,25 +27,52 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    setError("");
     const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError('Login failed. Check email and password.');
     } else if (data.user) {
+      if (!data.user.email_confirmed_at) {
+        setError('Please verify your email before logging in. Check your inbox for a verification link.');
+        await supabase.auth.signOut();
+        return;
+      }
       await checkProfileAndRedirect(data.user.id);
     }
   };
 
   const handleOAuth = async (provider: 'google' | 'facebook') => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) {
-      console.error('OAuth login failed:', error.message);
+    setError("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) {
+        setError(`OAuth login failed: ${error.message}`);
+      } else {
+        // The user will be redirected to /dashboard after OAuth
+      }
+    } catch (err: any) {
+      setError(`OAuth login error: ${err.message || err}`);
     }
   };
 
   useEffect(() => {
     async function checkOnMount() {
-      const { data } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
+      // Only show error if user is on a protected page, not on /login
+      if (error && error.message !== 'User not found' && window.location.pathname !== '/login') {
+        setError("There was a problem with your session. Please sign in again or contact support if this continues.");
+      }
       if (data.user) {
+        if (!data.user.email_confirmed_at) {
+          setError('Please verify your email before logging in. Check your inbox for a verification link.');
+          await supabase.auth.signOut();
+          return;
+        }
         await checkProfileAndRedirect(data.user.id);
       }
     }
@@ -72,7 +99,9 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && <p className="text-red-500 text-sm">{error} <br />
+          <a href="/login" className="underline text-blue-400">Try again</a> or <a href="mailto:beta@djmixandmingle.com" className="underline text-blue-400">Contact support</a>
+        </p>}
 
         <Button
           onClick={handleLogin}

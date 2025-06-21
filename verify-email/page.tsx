@@ -14,8 +14,8 @@ function VerifyEmailContent() {
 
   useEffect(() => {
     const verifyEmail = async () => {
-      const token = searchParams.get("token")
-      const type = searchParams.get("type")
+      const token = searchParams?.get("token")
+      const type = searchParams?.get("type")
 
       if (type === "signup" && token) {
         try {

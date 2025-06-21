@@ -19,8 +19,8 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     // Check if we have the necessary tokens from the URL
-    const accessToken = searchParams.get("access_token")
-    const refreshToken = searchParams.get("refresh_token")
+    const accessToken = searchParams?.get("access_token")
+    const refreshToken = searchParams?.get("refresh_token")
 
     if (accessToken && refreshToken) {
       // Set the session with the tokens

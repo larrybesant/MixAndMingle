@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { BetaTestingEmail } from "@/lib/email/beta-testing"
-import { supabase } from "@/lib/supabase/client"
+import { supabaseAdmin } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Store feedback in database
-    const { error: dbError } = await supabase.from("beta_feedback").insert({
+    // Store feedback in database (server-side client)
+    const { error: dbError } = await supabaseAdmin.from("beta_feedback").insert({
       name,
       email,
       feedback,
@@ -30,4 +30,8 @@ export async function POST(request: NextRequest) {
     console.error("Feedback submission error:", error)
     return NextResponse.json({ error: "Failed to submit feedback" }, { status: 500 })
   }
+}
+
+export function GET() {
+  return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 })
 }
