@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { supabase } from '../lib/supabase/client';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: any;
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     getSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: string, session: any) => {
+      (_event: AuthChangeEvent, session: Session | null) => {
         setUser(session?.user ?? null);
       }
     );
@@ -52,7 +53,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     setLoading(true);
-    await supabase.auth.signUp({ email, password });
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        console.error('Sign up error:', error.message, error.details, error);
+        alert('Sign up failed: ' + (error.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Unexpected sign up error:', err);
+      alert('Sign up failed: ' + (err instanceof Error ? err.message : String(err)));
+    }
     setLoading(false);
   };
 
@@ -80,4 +90,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 // Replace 'any' with 'unknown' for better type safety
 export function useAuth(): unknown {
   return useContext(AuthContext);
+}
+
+// --- Push Notification Subscription Logic (MVP) ---
+// This hook can be used in your layout or navbar to prompt users to enable notifications
+export function usePushNotifications(user: any) {
+  useEffect(() => {
+    if (!user || typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    async function subscribe() {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: '<YOUR_PUBLIC_VAPID_KEY>' // Replace with your VAPID public key
+        });
+
+        // Send subscription to your API
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription })
+        });
+      } catch (err) {
+        // Optionally handle errors
+      }
+    }
+
+    subscribe();
+  }, [user]);
 }
