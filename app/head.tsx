@@ -1,4 +1,4 @@
-<!-- public/favicon.ico already exists, so add meta tags to _app or layout -->
+// public/favicon.ico already exists, so add meta tags to _app or layout
 
 // In Next.js 13+, meta tags go in app/layout.tsx or app/head.tsx
 
