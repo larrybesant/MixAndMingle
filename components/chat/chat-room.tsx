@@ -75,23 +75,43 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
     async function fetchMessages() {
       setLoading(true);
       setError(null);
-      const { data, error } = await supabase
-        .from("chat_messages")
-        .select("id, user_id, message, created_at, room_id")
-        .eq("room_id", roomId)
-        .order("created_at", { ascending: true });
-      if (!error && data) {
-        setMessages(
-          (data as ChatMessage[]).map((msg) => ({
+      
+      try {
+        // Fetch messages with user profile data
+        const { data, error } = await supabase
+          .from("chat_messages")
+          .select(`
+            id,
+            user_id,
+            message,
+            created_at,
+            room_id,
+            profiles:user_id (
+              username,
+              avatar_url
+            )
+          `)
+          .eq("room_id", roomId)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.error('Error fetching messages:', error);
+          setError("Failed to load messages.");
+        } else if (data) {
+          // Transform the data to include profile info
+          const transformedMessages = data.map((msg: any) => ({
             ...msg,
-            username: msg.user_id, // We'll need to join with profiles for actual username
-            avatar_url: undefined,
-          })),
-        );
-      } else {
+            username: msg.profiles?.username || `User ${msg.user_id.slice(0, 8)}`,
+            avatar_url: msg.profiles?.avatar_url || undefined,
+          }));
+          setMessages(transformedMessages);
+        }
+      } catch (err) {
+        console.error('Fetch messages error:', err);
         setError("Failed to load messages.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchMessages();
   }, [roomId]);
@@ -108,8 +128,16 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
           table: "chat_messages",
           filter: `room_id=eq.${roomId}`,
         },
-        (payload: { new: ChatMessage }) => {
+        async (payload: { new: ChatMessage }) => {
           const msg = payload.new;
+          
+          // Fetch the user profile for this message
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', msg.user_id)
+            .single();
+
           setMessages((prev) => [
             ...prev,
             {
@@ -118,9 +146,9 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
               user_id: msg.user_id,
               message: msg.message,
               created_at: msg.created_at,
-              username: msg.user_id, // We'll need to join with profiles for actual username
-              avatar_url: undefined,
-            },
+              username: profile?.username || `User ${msg.user_id.slice(0, 8)}`,
+              avatar_url: profile?.avatar_url || undefined,
+            } as Message,
           ]);
         },
       )

@@ -1,3 +1,5 @@
+"use client"
+
 // DailyVideoRoom.tsx
 // A simple Daily.co video room embed for host/viewer
 

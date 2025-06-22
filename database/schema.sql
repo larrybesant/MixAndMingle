@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   full_name TEXT,
   avatar_url TEXT,
   bio TEXT,
+  date_of_birth DATE,
   music_preferences TEXT[],
   is_dj BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -84,6 +85,52 @@ CREATE TABLE IF NOT EXISTS room_history (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- User Swipes table (tracks all swipe actions)
+CREATE TABLE IF NOT EXISTS user_swipes (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  swiper_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  swiped_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  action TEXT NOT NULL CHECK (action IN ('like', 'pass', 'super_like')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(swiper_id, swiped_id)
+);
+
+-- Matches table (when two users like each other)
+CREATE TABLE IF NOT EXISTS matches (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user1_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user2_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  matched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  is_active BOOLEAN DEFAULT true,
+  last_message_at TIMESTAMP WITH TIME ZONE,
+  UNIQUE(user1_id, user2_id),
+  CHECK (user1_id < user2_id) -- Ensure consistent ordering
+);
+
+-- Match Messages table (messages between matched users)
+CREATE TABLE IF NOT EXISTS match_messages (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  match_id UUID REFERENCES matches(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  message_type TEXT DEFAULT 'text', -- 'text', 'emoji', 'image'
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- User Preferences table (for matching algorithm)
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id UUID REFERENCES profiles(id) ON DELETE CASCADE PRIMARY KEY,
+  min_age INTEGER DEFAULT 18,
+  max_age INTEGER DEFAULT 50,
+  preferred_distance INTEGER DEFAULT 50, -- km
+  music_genres TEXT[],
+  show_me TEXT DEFAULT 'all' CHECK (show_me IN ('all', 'djs_only', 'non_djs')),
+  location_lat DECIMAL(10, 8),
+  location_lng DECIMAL(11, 8),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
 CREATE INDEX IF NOT EXISTS idx_dj_rooms_host_id ON dj_rooms(host_id);
@@ -94,6 +141,14 @@ CREATE INDEX IF NOT EXISTS idx_room_participants_room_id ON room_participants(ro
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id);
 CREATE INDEX IF NOT EXISTS idx_follows_following_id ON follows(following_id);
+CREATE INDEX IF NOT EXISTS idx_user_swipes_swiper_id ON user_swipes(swiper_id);
+CREATE INDEX IF NOT EXISTS idx_user_swipes_swiped_id ON user_swipes(swiped_id);
+CREATE INDEX IF NOT EXISTS idx_user_swipes_action ON user_swipes(action);
+CREATE INDEX IF NOT EXISTS idx_matches_user1_id ON matches(user1_id);
+CREATE INDEX IF NOT EXISTS idx_matches_user2_id ON matches(user2_id);
+CREATE INDEX IF NOT EXISTS idx_matches_matched_at ON matches(matched_at);
+CREATE INDEX IF NOT EXISTS idx_match_messages_match_id ON match_messages(match_id);
+CREATE INDEX IF NOT EXISTS idx_match_messages_created_at ON match_messages(created_at);
 
 -- Row Level Security (RLS) policies
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -102,6 +157,10 @@ ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_swipes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE match_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Public profiles are viewable by everyone" ON profiles
@@ -160,6 +219,51 @@ CREATE POLICY "Users can follow others" ON follows
 CREATE POLICY "Users can unfollow others" ON follows
   FOR DELETE USING (auth.uid() = follower_id);
 
+-- User Swipes policies
+CREATE POLICY "Users can view their own swipes" ON user_swipes
+  FOR SELECT USING (auth.uid() = swiper_id);
+
+CREATE POLICY "Users can create their own swipes" ON user_swipes
+  FOR INSERT WITH CHECK (auth.uid() = swiper_id);
+
+-- Matches policies
+CREATE POLICY "Users can view their own matches" ON matches
+  FOR SELECT USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+
+CREATE POLICY "System can create matches" ON matches
+  FOR INSERT WITH CHECK (true); -- Handled by trigger function
+
+-- Match Messages policies
+CREATE POLICY "Match participants can view messages" ON match_messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM matches 
+      WHERE matches.id = match_messages.match_id 
+      AND (matches.user1_id = auth.uid() OR matches.user2_id = auth.uid())
+    )
+  );
+
+CREATE POLICY "Match participants can send messages" ON match_messages
+  FOR INSERT WITH CHECK (
+    auth.uid() = sender_id AND
+    EXISTS (
+      SELECT 1 FROM matches 
+      WHERE matches.id = match_messages.match_id 
+      AND (matches.user1_id = auth.uid() OR matches.user2_id = auth.uid())
+      AND matches.is_active = true
+    )
+  );
+
+-- User Preferences policies
+CREATE POLICY "Users can view their own preferences" ON user_preferences
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own preferences" ON user_preferences
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own preferences" ON user_preferences
+  FOR UPDATE USING (auth.uid() = id);
+
 -- Functions for automatic profile creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -200,3 +304,195 @@ DROP TRIGGER IF EXISTS room_participant_count_trigger ON room_participants;
 CREATE TRIGGER room_participant_count_trigger
   AFTER INSERT OR DELETE ON room_participants
   FOR EACH ROW EXECUTE FUNCTION update_room_viewer_count();
+
+-- Matching System Tables
+
+-- User Swipes table (tracks all swipe actions)
+CREATE TABLE IF NOT EXISTS user_swipes (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  swiper_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  swiped_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  action TEXT NOT NULL CHECK (action IN ('like', 'pass', 'super_like')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(swiper_id, swiped_id)
+);
+
+-- Matches table (when two users like each other)
+CREATE TABLE IF NOT EXISTS matches (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user1_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user2_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  matched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  is_active BOOLEAN DEFAULT true,
+  last_message_at TIMESTAMP WITH TIME ZONE,
+  UNIQUE(user1_id, user2_id),
+  CHECK (user1_id < user2_id) -- Ensure consistent ordering
+);
+
+-- Match Messages table (messages between matched users)
+CREATE TABLE IF NOT EXISTS match_messages (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  match_id UUID REFERENCES matches(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  message_type TEXT DEFAULT 'text', -- 'text', 'emoji', 'image'
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- User Preferences table (for matching algorithm)
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id UUID REFERENCES profiles(id) ON DELETE CASCADE PRIMARY KEY,
+  min_age INTEGER DEFAULT 18,
+  max_age INTEGER DEFAULT 50,
+  preferred_distance INTEGER DEFAULT 50, -- km
+  music_genres TEXT[],
+  show_me TEXT DEFAULT 'all' CHECK (show_me IN ('all', 'djs_only', 'non_djs')),
+  location_lat DECIMAL(10, 8),
+  location_lng DECIMAL(11, 8),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for matching performance
+CREATE INDEX IF NOT EXISTS idx_user_swipes_swiper_id ON user_swipes(swiper_id);
+CREATE INDEX IF NOT EXISTS idx_user_swipes_swiped_id ON user_swipes(swiped_id);
+CREATE INDEX IF NOT EXISTS idx_user_swipes_action ON user_swipes(action);
+CREATE INDEX IF NOT EXISTS idx_matches_user1_id ON matches(user1_id);
+CREATE INDEX IF NOT EXISTS idx_matches_user2_id ON matches(user2_id);
+CREATE INDEX IF NOT EXISTS idx_matches_matched_at ON matches(matched_at);
+CREATE INDEX IF NOT EXISTS idx_match_messages_match_id ON match_messages(match_id);
+CREATE INDEX IF NOT EXISTS idx_match_messages_created_at ON match_messages(created_at);
+
+-- RLS for matching tables
+ALTER TABLE user_swipes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE match_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+
+-- User Swipes policies
+CREATE POLICY "Users can view their own swipes" ON user_swipes
+  FOR SELECT USING (auth.uid() = swiper_id);
+
+CREATE POLICY "Users can create their own swipes" ON user_swipes
+  FOR INSERT WITH CHECK (auth.uid() = swiper_id);
+
+-- Matches policies
+CREATE POLICY "Users can view their own matches" ON matches
+  FOR SELECT USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+
+CREATE POLICY "System can create matches" ON matches
+  FOR INSERT WITH CHECK (true); -- Handled by trigger function
+
+-- Match Messages policies
+CREATE POLICY "Match participants can view messages" ON match_messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM matches 
+      WHERE matches.id = match_messages.match_id 
+      AND (matches.user1_id = auth.uid() OR matches.user2_id = auth.uid())
+    )
+  );
+
+CREATE POLICY "Match participants can send messages" ON match_messages
+  FOR INSERT WITH CHECK (
+    auth.uid() = sender_id AND
+    EXISTS (
+      SELECT 1 FROM matches 
+      WHERE matches.id = match_messages.match_id 
+      AND (matches.user1_id = auth.uid() OR matches.user2_id = auth.uid())
+      AND matches.is_active = true
+    )
+  );
+
+-- User Preferences policies
+CREATE POLICY "Users can view their own preferences" ON user_preferences
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own preferences" ON user_preferences
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own preferences" ON user_preferences
+  FOR UPDATE USING (auth.uid() = id);
+
+-- Function to create matches when mutual likes occur
+CREATE OR REPLACE FUNCTION create_match_on_mutual_like()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Only create match if this is a 'like' action
+  IF NEW.action = 'like' THEN
+    -- Check if the swiped user has already liked the swiper
+    IF EXISTS (
+      SELECT 1 FROM user_swipes 
+      WHERE swiper_id = NEW.swiped_id 
+      AND swiped_id = NEW.swiper_id 
+      AND action = 'like'
+    ) THEN
+      -- Create a match (ensure consistent ordering)
+      INSERT INTO matches (user1_id, user2_id)
+      VALUES (
+        LEAST(NEW.swiper_id, NEW.swiped_id),
+        GREATEST(NEW.swiper_id, NEW.swiped_id)
+      )
+      ON CONFLICT (user1_id, user2_id) DO NOTHING;
+      
+      -- Create notifications for both users
+      INSERT INTO notifications (user_id, title, message, type, data)
+      VALUES 
+        (NEW.swiper_id, 'New Match! 🎉', 'You have a new match!', 'match', 
+         jsonb_build_object('match_user_id', NEW.swiped_id)),
+        (NEW.swiped_id, 'New Match! 🎉', 'You have a new match!', 'match', 
+         jsonb_build_object('match_user_id', NEW.swiper_id));
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger for automatic match creation
+DROP TRIGGER IF EXISTS create_match_trigger ON user_swipes;
+CREATE TRIGGER create_match_trigger
+  AFTER INSERT ON user_swipes
+  FOR EACH ROW EXECUTE FUNCTION create_match_on_mutual_like();
+
+-- Function to get potential matches for a user
+CREATE OR REPLACE FUNCTION get_potential_matches(user_id UUID, limit_count INTEGER DEFAULT 10)
+RETURNS TABLE (
+  id UUID,
+  username TEXT,
+  full_name TEXT,
+  avatar_url TEXT,
+  bio TEXT,
+  music_preferences TEXT[],
+  is_dj BOOLEAN,
+  age INTEGER
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.id,
+    p.username,
+    p.full_name,
+    p.avatar_url,
+    p.bio,
+    p.music_preferences,
+    p.is_dj,
+    EXTRACT(YEAR FROM AGE(COALESCE(p.date_of_birth, CURRENT_DATE - INTERVAL '25 years')))::INTEGER as age
+  FROM profiles p
+  WHERE p.id != user_id
+    AND p.id NOT IN (
+      -- Exclude users already swiped on
+      SELECT us.swiped_id 
+      FROM user_swipes us 
+      WHERE us.swiper_id = user_id
+    )
+    AND p.id NOT IN (
+      -- Exclude users who have already swiped on this user
+      SELECT us.swiper_id 
+      FROM user_swipes us 
+      WHERE us.swiped_id = user_id AND us.action = 'pass'
+    )
+  ORDER BY RANDOM()
+  LIMIT limit_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

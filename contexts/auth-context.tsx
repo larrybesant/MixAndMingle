@@ -1,124 +1,329 @@
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
-import { supabase } from '../lib/supabase/client';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, Session, AuthError } from '@supabase/supabase-js';
+import { supabase, authHelpers } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
-interface AuthContextType {
-  user: any;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signInWithProvider: (provider: 'google' | 'github') => Promise<void>;
-  signOut: () => Promise<void>;
+interface UserProfile {
+  id: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  email?: string;
+  location?: string;
+  website?: string;
+  music_preferences?: string[];
+  is_dj?: boolean;
+  privacy_settings?: any;
+  profile_completed?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Replace 'any' with 'unknown' for better type safety
-const AuthContext = createContext<unknown>(null);
+interface AuthContextType {
+  // State
+  user: User | null;
+  profile: UserProfile | null;
+  session: Session | null;
+  loading: boolean;
+  error: string | null;
+
+  // Auth methods
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: AuthError | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<{ error: AuthError | null }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (password: string) => Promise<{ error: AuthError | null }>;
+  resendVerification: (email: string) => Promise<{ error: AuthError | null }>;
+
+  // Profile methods
+  updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
+
+  // Utility methods
+  clearError: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
+  // Fetch user profile from Supabase
+  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      return null;
+    }
+  };
+
+  // Update user profile
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) {
+      return { error: new Error('No user logged in') };
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          ...updates,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        return { error };
+      }
+
+      // Refresh profile
+      await refreshProfile();
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  // Refresh profile data
+  const refreshProfile = async () => {
+    if (user) {
+      const profileData = await fetchProfile(user.id);
+      setProfile(profileData);
+    }
+  };
+
+  // Initialize auth state
   useEffect(() => {
-    const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user ?? null);
-      setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { session } = await authHelpers.getCurrentSession();
+        
+        if (session?.user) {
+          setUser(session.user);
+          setSession(session);
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        setError('Failed to initialize authentication');
+      } finally {
+        setLoading(false);
+      }
     };
-    getSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
+    initializeAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+        } else {
+          setProfile(null);
+        }
+        
+        setLoading(false);
       }
     );
 
     return () => {
-      listener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
+  // Auth methods
+  const signUp = async (email: string, password: string, metadata?: any) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await authHelpers.signUp(email, password, metadata);
+      
+      if (result.error) {
+        setError(result.error.message);
+      }
+      
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected signup error') as AuthError;
+      setError(error.message);
+      return { error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-  };
-
-  const signUp = async (email: string, password: string) => {
-    setLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });      if (error) {
-        console.error('Sign up error:', error.message, error);
-        alert('Sign up failed: ' + (error.message || 'Unknown error'));
+      const result = await authHelpers.signIn(email, password);
+      
+      if (result.error) {
+        setError(result.error.message);
       }
-    } catch (err) {
-      console.error('Unexpected sign up error:', err);
-      alert('Sign up failed: ' + (err instanceof Error ? err.message : String(err)));
+      
+      return { error: result.error };
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const signInWithProvider = async (provider: 'google' | 'github') => {
+  const signInWithOAuth = async (provider: 'google' | 'github' | 'discord') => {
     setLoading(true);
-    await supabase.auth.signInWithOAuth({ provider });
-    setLoading(false);
+    setError(null);
+    
+    try {
+      const result = await authHelpers.signInWithOAuth(provider);
+      
+      if (result.error) {
+        setError(result.error.message);
+      }
+      
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected OAuth error') as AuthError;
+      setError(error.message);
+      return { error };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signOut = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
-    setLoading(false);
+    
+    try {
+      await authHelpers.signOut();
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      router.push('/');
+    } catch (err) {
+      setError('Failed to sign out');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{ user, loading, signIn, signUp, signInWithProvider, signOut }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const resetPassword = async (email: string) => {
+    setError(null);
+    
+    try {
+      const result = await authHelpers.resetPassword(email);
+      
+      if (result.error) {
+        setError(result.error.message);
+      }
+      
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected password reset error') as AuthError;
+      setError(error.message);
+      return { error };
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    setError(null);
+    
+    try {
+      const result = await authHelpers.updatePassword(password);
+      
+      if (result.error) {
+        setError(result.error.message);
+      }
+      
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected password update error') as AuthError;
+      setError(error.message);
+      return { error };
+    }
+  };
+
+  const resendVerification = async (email: string) => {
+    setError(null);
+    
+    try {
+      const result = await authHelpers.resendVerification(email);
+      
+      if (result.error) {
+        setError(result.error.message);
+      }
+      
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected verification error') as AuthError;
+      setError(error.message);
+      return { error };
+    }
+  };
+
+  const clearError = () => setError(null);
+
+  const value: AuthContextType = {
+    // State
+    user,
+    profile,
+    session,
+    loading,
+    error,
+
+    // Auth methods
+    signUp,
+    signIn,
+    signInWithOAuth,
+    signOut,
+    resetPassword,
+    updatePassword,
+    resendVerification,
+
+    // Profile methods
+    updateProfile,
+    refreshProfile,
+
+    // Utility methods
+    clearError,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Replace 'any' with 'unknown' for better type safety
-export function useAuth(): unknown {
-  return useContext(AuthContext);
-}
-
-// --- Push Notification Subscription Logic (MVP) ---
-// This hook can be used in your layout or navbar to prompt users to enable notifications
-export function usePushNotifications(user: any) {
-  useEffect(() => {
-    if (!user || typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-
-    async function subscribe() {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') return;
-
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        const subscription = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: '<YOUR_PUBLIC_VAPID_KEY>' // Replace with your VAPID public key
-        });
-
-        // Send subscription to your API
-        await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscription })
-        });
-      } catch (err) {
-        // Optionally handle errors
-      }
-    }
-
-    subscribe();
-  }, [user]);
-}
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
