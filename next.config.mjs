@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // Harden: fail build on lint errors
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // Harden: fail build on type errors
   },
   images: {
     remotePatterns: [
@@ -14,7 +14,7 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      // Add more patterns as needed
+      // Add more patterns as needed for production
     ],
   },
 }
