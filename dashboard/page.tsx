@@ -5,10 +5,23 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useFriends, useRecentMessages } from "@/lib/friends-messages-hooks";
+import type { Profile } from "@/types/database";
+import Image from "next/image";
+import Link from "next/link";
+import type { User } from "@supabase/supabase-js";
+
+// Extend Profile for dashboard (temporary until unified in types/database.ts)
+type DashboardProfile = Profile & {
+  relationship_style?: string | null;
+  bdsm_preferences?: string | null;
+  show_bdsm_public?: boolean;
+  is_dating_visible?: boolean;
+  profiles?: { avatar_url?: string | null; username?: string | null };
+};
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -26,10 +39,31 @@ export default function DashboardPage() {
       setUser(data.user);
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, full_name, username, avatar_url, bio, music_preferences, created_at, gender, relationship_style, bdsm_preferences, show_bdsm_public, is_dating_visible")
         .eq("id", data.user.id)
         .single();
-      setProfile(profileData);
+      if (profileData) {
+        setProfile({
+          id: String(profileData.id),
+          full_name: typeof profileData.full_name === "string" ? profileData.full_name : null,
+          username: typeof profileData.username === "string" ? profileData.username : null,
+          avatar_url: typeof profileData.avatar_url === "string" ? profileData.avatar_url : null,
+          bio: typeof profileData.bio === "string" ? profileData.bio : null,
+          music_preferences: Array.isArray(profileData.music_preferences)
+            ? profileData.music_preferences
+            : (typeof profileData.music_preferences === "string"
+                ? [profileData.music_preferences]
+                : []),
+          created_at: String(profileData.created_at),
+          gender: typeof profileData.gender === "string" ? profileData.gender : undefined,
+          relationship_style: typeof profileData.relationship_style === "string" ? profileData.relationship_style : null,
+          bdsm_preferences: typeof profileData.bdsm_preferences === "string" ? profileData.bdsm_preferences : null,
+          show_bdsm_public: Boolean(profileData.show_bdsm_public),
+          is_dating_visible: Boolean(profileData.is_dating_visible),
+        });
+      } else {
+        setProfile(null);
+      }
       // Redirect to onboarding if profile is incomplete
       if (!profileData || !profileData.username || !profileData.bio || !profileData.music_preferences || !profileData.avatar_url) {
         router.replace("/create-profile");
@@ -41,7 +75,7 @@ export default function DashboardPage() {
   }, [router]);
 
   // Profile completeness logic
-  function getProfileCompleteness(profile: any) {
+  function getProfileCompleteness(profile: DashboardProfile | null) {
     if (!profile) return 0;
     let complete = 0;
     let total = 6; // username, bio, music_preferences, avatar_url, gender, relationship_style
@@ -71,7 +105,7 @@ export default function DashboardPage() {
       <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2 sm:px-0">
         <header>
           <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
-          <div className="mb-2">Welcome, {profile?.username || user.email}!</div>
+          <div className="mb-2">Welcome, {profile?.username || user?.email || "User"}!</div>
           <div className="mb-8 text-gray-400">Your Profile</div>
         </header>
         {/* Profile Editing Form */}
@@ -84,7 +118,7 @@ export default function DashboardPage() {
               setFormMessage("Username is required.");
               return;
             }
-            const { error } = await supabase.from("profiles").update({ username: profile.username }).eq("id", user.id);
+            const { error } = await supabase.from("profiles").update({ username: profile.username }).eq("id", user?.id ?? "");
             if (error) {
               setFormMessage("Failed to update profile. Try again.");
             } else {
@@ -98,7 +132,7 @@ export default function DashboardPage() {
             type="text"
             id="username"
             value={profile?.username || ""}
-            onChange={e => setProfile({ ...profile, username: e.target.value })}
+            onChange={e => setProfile(profile ? { ...profile, username: e.target.value } : null)}
             required
             aria-required="true"
             aria-label="Username"
@@ -112,7 +146,7 @@ export default function DashboardPage() {
           <span className="font-semibold">Relationship Style:</span> {profile?.relationship_style ? profile.relationship_style.charAt(0).toUpperCase() + profile.relationship_style.slice(1) : "Not set"}
         </section>
         <section className="mb-4 text-center text-sm text-gray-300">
-          <span className="font-semibold">Music Preferences:</span> {Array.isArray(profile?.music_preferences) ? profile.music_preferences.join(", ") : profile.music_preferences}
+          <span className="font-semibold">Music Preferences:</span> {profile && Array.isArray(profile.music_preferences) ? profile.music_preferences.join(", ") : profile?.music_preferences}
         </section>
         <section className="mb-4 text-center text-sm text-gray-300">
           <span className="font-semibold">Dating/Matchmaking:</span> {profile?.is_dating_visible ? "Opted In" : "Not Listed"}
@@ -139,22 +173,22 @@ export default function DashboardPage() {
               {missingFields.map((field) => (
                 <span key={field}>
                   Missing: {field} {field === "Username" ? <a href="#username" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</a> : null}
-                  {field === "Bio" ? <a href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</a> : null}
-                  {field === "Music Preferences" ? <a href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</a> : null}
-                  {field === "Avatar" ? <a href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</a> : null}
-                  {field === "Gender" ? <a href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</a> : null}
-                  {field === "Relationship Style" ? <a href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</a> : null}
+                  {field === "Bio" ? <Link href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</Link> : null}
+                  {field === "Music Preferences" ? <Link href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</Link> : null}
+                  {field === "Avatar" ? <Link href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</Link> : null}
+                  {field === "Gender" ? <Link href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</Link> : null}
+                  {field === "Relationship Style" ? <Link href="/create-profile" className="underline text-blue-400 ml-2 focus:outline-none focus:ring-2 focus:ring-blue-400">Edit</Link> : null}
                 </span>
               ))}
             </div>
           )}
           {completeness < 100 && (
-            <a href="/create-profile" className="block mt-2 bg-blue-700 text-white px-4 py-2 rounded font-bold text-center hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400">Complete Profile</a>
+            <Link href="/create-profile" className="block mt-2 bg-blue-700 text-white px-4 py-2 rounded font-bold text-center hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400">Complete Profile</Link>
           )}
         </section>
         <nav className="flex gap-4 mb-8">
-          <a href="/dashboard/history" className="bg-purple-700 text-white px-4 py-2 rounded font-bold hover:bg-purple-800 transition focus:outline-none focus:ring-2 focus:ring-purple-400">My Stream History</a>
-          <a href="/settings" className="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-gray-400">Settings</a>
+          <Link href="/dashboard/history" className="bg-purple-700 text-white px-4 py-2 rounded font-bold hover:bg-purple-800 transition focus:outline-none focus:ring-2 focus:ring-purple-400">My Stream History</Link>
+          <Link href="/settings" className="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-gray-400">Settings</Link>
         </nav>
         {/* Friends List Section */}
         <section className="w-full max-w-md mb-8">
@@ -165,15 +199,15 @@ export default function DashboardPage() {
             <div className="bg-gray-800 rounded-lg p-4 min-h-[60px] text-gray-300 italic">You have no friends yet.</div>
           ) : (
             <ul className="bg-gray-800 rounded-lg p-4 min-h-[60px] text-gray-300 divide-y divide-gray-700">
-              {friends.map((f) => (
+              {friends.map((f: { id: string; avatar_url?: string | null; username?: string | null }) => (
                 <li key={f.id} className="flex items-center gap-3 py-2">
-                  <img src={f.profiles?.avatar_url || "/file.svg"} alt="avatar" className="w-8 h-8 rounded-full bg-gray-600" />
-                  <span>{f.profiles?.username || "Unknown"}</span>
+                  <Image src={f.avatar_url || "/file.svg"} alt="avatar" width={32} height={32} className="w-8 h-8 rounded-full bg-gray-600" />
+                  <span>{f.username || "Unknown"}</span>
                 </li>
               ))}
             </ul>
           )}
-          <a href="/friends" className="block mt-2 bg-blue-700 text-white px-4 py-2 rounded font-bold text-center hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400">Manage Friends</a>
+          <Link href="/friends" className="block mt-2 bg-blue-700 text-white px-4 py-2 rounded font-bold text-center hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400">Manage Friends</Link>
         </section>
         {/* Messenger Section */}
         <section className="w-full max-w-md mb-8">
@@ -184,17 +218,17 @@ export default function DashboardPage() {
             <div className="bg-gray-800 rounded-lg p-4 min-h-[60px] text-gray-300 italic">No recent direct messages.</div>
           ) : (
             <ul className="bg-gray-800 rounded-lg p-4 min-h-[60px] text-gray-300 divide-y divide-gray-700">
-              {conversations.map((msg) => (
+              {conversations.map((msg: { id: string; sender?: { avatar_url?: string | null; username?: string | null }; content?: string; message: string }) => (
                 <li key={msg.id} className="flex items-center gap-3 py-2">
-                  <img src={msg.sender?.avatar_url || "/file.svg"} alt="avatar" className="w-8 h-8 rounded-full bg-gray-600" />
+                  <Image src={msg.sender?.avatar_url || "/file.svg"} alt="avatar" width={32} height={32} className="w-8 h-8 rounded-full bg-gray-600" />
                   <span className="font-semibold">{msg.sender?.username || "Unknown"}</span>
                   <span className="mx-2 text-gray-500">→</span>
-                  <span>{msg.content.slice(0, 40)}{msg.content.length > 40 ? "..." : ""}</span>
+                  <span>{msg.content ? msg.content.slice(0, 40) : msg.message.slice(0, 40)}{(msg.content ? msg.content.length : msg.message.length) > 40 ? "..." : ""}</span>
                 </li>
               ))}
             </ul>
           )}
-          <a href="/messages" className="block mt-2 bg-blue-700 text-white px-4 py-2 rounded font-bold text-center hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400">Open Messenger</a>
+          <Link href="/messages" className="block mt-2 bg-blue-700 text-white px-4 py-2 rounded font-bold text-center hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400">Open Messenger</Link>
         </section>
         <button
           className="bg-red-600 px-4 py-2 rounded font-bold mt-4 focus:outline-none focus:ring-2 focus:ring-red-400"

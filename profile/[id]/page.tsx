@@ -5,29 +5,56 @@ import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import type { Profile } from "@/types/database"
+
+// Extend Profile type for this page (temporary until unified in types/database.ts)
+type ExtendedProfile = Profile & {
+  relationship_style?: string | null;
+  bdsm_preferences?: string | null;
+  show_bdsm_public?: boolean;
+  username?: string | null;
+  avatar_url?: string | null;
+  gender?: string | null;
+  bio?: string | null;
+  music_preferences?: string[] | string | null;
+};
 
 export default function UserProfilePage() {
   const params = useParams();
   const id = params?.id as string;
-  if (!id) {
-    return <div>User not found.</div>;
-  }
-
-  const [profile, setProfile] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState<ExtendedProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchProfile() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("username, bio, music_preferences, relationship_style, bdsm_preferences, show_bdsm_public, avatar_url, gender")
-        .eq("id", id)
-        .single()
-      setProfile(data)
-      setLoading(false)
+    if (!id) {
+      setError("User not found.");
+      setLoading(false);
+      return;
     }
-    if (id) fetchProfile()
-  }, [id])
+
+    async function fetchProfile() {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, username, bio, music_preferences, relationship_style, bdsm_preferences, show_bdsm_public, avatar_url, gender")
+          .eq("id", id)
+          .single();
+        if (error) throw error;
+        setProfile(data as ExtendedProfile);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch profile.";
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, [id]);
+
+  if (!id || error) {
+    return <div>{error || "User not found."}</div>;
+  }
 
   // Helper to get gender symbol
   function getGenderSymbol(gender: string | undefined) {
@@ -43,13 +70,14 @@ export default function UserProfilePage() {
   }
 
   if (loading) return <div className="text-white p-8">Loading...</div>
+  if (error) return <div className="text-red-500 p-8">{error}</div>
   if (!profile) return <div className="text-red-500 p-8">Profile not found.</div>
 
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
       <div className="bg-gray-900 rounded-2xl p-8 shadow-lg w-full max-w-md flex flex-col items-center">
         <Avatar className="h-24 w-24 mb-4">
-          <AvatarImage src={profile.avatar_url} alt={profile.username} />
+          <AvatarImage src={profile.avatar_url || undefined} alt={profile.username || undefined} />
           <AvatarFallback>{profile.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
         </Avatar>
         <h2 className="text-3xl font-bold mb-2 flex items-center gap-2">

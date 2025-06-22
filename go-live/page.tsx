@@ -25,14 +25,13 @@ import {
   Lock,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
-import { LiveStream } from "@/components/streaming/live-stream"
+// import { LiveStream } from "@/components/streaming/live-stream"
 
 export default function GoLivePage() {
   const [roomData, setRoomData] = useState({
     name: "",
     description: "",
-    category: "Music",
-    genre: "Electronic",
+    category: "Music",    genre: "Electronic",
     isPrivate: false,
     tags: [] as string[],
     maxViewers: 100,
@@ -184,7 +183,6 @@ export default function GoLivePage() {
   const removeTag = (tagToRemove: string) => {
     setRoomData({ ...roomData, tags: roomData.tags.filter((tag) => tag !== tagToRemove) })
   }
-
   const handleGoLive = async (e: React.FormEvent) => {
     e.preventDefault()
     setGoLiveError(null)
@@ -192,29 +190,89 @@ export default function GoLivePage() {
       setGoLiveError("Room name is required.")
       return
     }
-    // Assume user is authenticated
-    const user = (await supabase.auth.getUser()).data.user
-    if (!user) return
-    const { error } = await supabase.from("dj_rooms").upsert({
-      id: `${user.id}-${roomData.name}`.replace(/\s+/g, "-"),
-      name: roomData.name,
-      genre: roomData.genre,
-      is_live: true,
-      viewer_count: 1,
-      host_id: user.id,
-      description: roomData.description,
-      category: roomData.category,
-      tags: roomData.tags,
-    })
-    if (error) {
-      setGoLiveError("Failed to create room. Try again.")
-      return
-    }
-    // Optionally redirect to the room page
-    window.location.href = `/room/${user.id}-${roomData.name}`.replace(/\s+/g, "-")
-  }
+    
+    try {
+      // Check user authentication
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError || !user) {
+        setGoLiveError("Please log in to create a room.")
+        return
+      }
 
-  const handleStopStream = () => {
+      // Create a unique room ID
+      const roomId = `room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        // Create the room in database
+      const { error } = await supabase
+        .from("dj_rooms")
+        .insert({
+          id: roomId,
+          name: roomData.name,
+          genre: roomData.genre,
+          is_live: true,
+          viewer_count: 0,
+          host_id: user.id,
+          description: roomData.description,
+          tags: roomData.tags,
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Room creation error:', error)
+        setGoLiveError("Failed to create room. Please try again.")
+        return
+      }      // Start the live stream UI
+      setIsLive(true)
+      setViewers(1)
+      
+      // Create Daily.co room immediately
+      try {
+        const dailyResponse = await fetch('/api/daily-room', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId }),
+        });
+
+        if (dailyResponse.ok) {
+          const dailyData = await dailyResponse.json();
+          // Update room with Daily.co URL
+          await supabase
+            .from("dj_rooms")
+            .update({ stream_url: dailyData.url })
+            .eq('id', roomId);
+        }
+      } catch (dailyError) {
+        console.warn('Daily.co room creation failed:', dailyError);
+      }
+      
+      // Optionally redirect to room view after a short delay
+      setTimeout(() => {
+        window.location.href = `/room/${roomId}`
+      }, 2000)
+      
+    } catch (err) {
+      console.error('Go live error:', err)
+      setGoLiveError("An error occurred. Please try again.")
+    }
+  }
+  const handleStopStream = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // Update room status to not live
+        await supabase
+          .from("dj_rooms")
+          .update({ 
+            is_live: false, 
+            viewer_count: 0 
+          })
+          .eq('host_id', user.id)
+          .eq('is_live', true)
+      }
+    } catch (error) {
+      console.error('Error stopping stream:', error)
+    }
+    
     setIsLive(false)
     setViewers(0)
   }
@@ -501,7 +559,7 @@ export default function GoLivePage() {
                     disabled={!roomData.name.trim()}
                   >
                     <Play className="w-5 h-5 mr-2" />
-                    Go Live with "{roomData.name || "Your Room"}"!
+                    Go Live with &quot;{roomData.name || "Your Room"}&quot;!
                   </Button>
                 </CardContent>
               </Card>
@@ -513,7 +571,7 @@ export default function GoLivePage() {
             <div className="mb-8">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-4xl font-bold mb-2 neon-text">🔴 You're Live!</h1>
+                  <h1 className="text-4xl font-bold mb-2 neon-text">🔴 You&apos;re Live!</h1>
                   <p className="text-gray-400">{roomData.name}</p>
                   <div className="flex items-center space-x-4 mt-2">
                     <Badge className="bg-neon-purple/20 text-neon-purple">{roomData.category}</Badge>
