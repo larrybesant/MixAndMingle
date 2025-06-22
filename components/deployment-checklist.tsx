@@ -8,14 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Rocket, 
   CheckCircle, 
-  Clock,
   ExternalLink,
-  Database,
-  Settings,
-  Video,
-  Globe,
-  Users,
-  Terminal
+  Settings
 } from 'lucide-react';
 
 interface ChecklistItem {

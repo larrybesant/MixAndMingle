@@ -51,20 +51,21 @@ export function RoomView({ roomId }: RoomViewProps) {
 
       // Then get host profile
       const { data: hostData, error: hostError } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .eq('id', (roomData as any).host_id)
+        .from('profiles')        .select('id, username, avatar_url')
+        .eq('id', roomData.host_id)
         .single();
 
       if (hostError || !hostData) {
         console.error('Error fetching host:', hostError);
         return;
-      }      setRoomData({
+      }
+
+      setRoomData({
         ...roomData,
         host: hostData
-      } as RoomData);
-    } catch (error) {
-      console.error('Error:', error);    } finally {
+      } as RoomData);    } catch (error) {
+      console.error('Error fetching room data:', error);
+    } finally {
       setIsLoading(false);
     }
   }, [roomId]);

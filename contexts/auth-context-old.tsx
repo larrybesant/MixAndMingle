@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase, authHelpers } from '@/lib/supabase/client';
+// Update the path below to the correct relative path if needed
+import { supabase, authHelpers } from '../lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 interface UserProfile {
@@ -12,12 +13,6 @@ interface UserProfile {
   avatar_url?: string;
   bio?: string;
   email?: string;
-  location?: string;
-  website?: string;
-  music_preferences?: string[];
-  is_dj?: boolean;
-  privacy_settings?: Record<string, boolean>;
-  profile_completed?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -29,8 +24,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   error: string | null;
+
   // Auth methods
-  signUp: (email: string, password: string, metadata?: Record<string, unknown>) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -160,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Auth methods
-  const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
+  const signUp = async (email: string, password: string, metadata?: any) => {
     setLoading(true);
     setError(null);
     
@@ -171,10 +167,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(result.error.message);
       }
       
-      return { error: result.error };    } catch (error) {
-      const authError = new Error('Unexpected signup error') as AuthError;
-      setError(authError.message);
-      return { error: authError };
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected signup error') as AuthError;
+      setError(error.message);
+      return { error };
     } finally {
       setLoading(false);
     }
@@ -192,6 +189,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected signin error') as AuthError;
+      setError(error.message);
+      return { error };
     } finally {
       setLoading(false);
     }
@@ -208,11 +209,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(result.error.message);
       }
       
-      return { error: result.error };    } catch (error) {
-      console.error('Unexpected OAuth error:', error);
-      const authError = new Error('Unexpected OAuth error') as AuthError;
-      setError(authError.message);
-      return { error: authError };
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected OAuth error') as AuthError;
+      setError(error.message);
+      return { error };
     } finally {
       setLoading(false);
     }
@@ -226,8 +227,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setProfile(null);
       setSession(null);
-      router.push('/');    } catch (error) {
-      console.error('Failed to sign out:', error);
+      router.push('/');
+    } catch (err) {
       setError('Failed to sign out');
     } finally {
       setLoading(false);
@@ -244,11 +245,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(result.error.message);
       }
       
-      return { error: result.error };    } catch (error) {
-      console.error('Unexpected password reset error:', error);
-      const authError = new Error('Unexpected password reset error') as AuthError;
-      setError(authError.message);
-      return { error: authError };
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected password reset error') as AuthError;
+      setError(error.message);
+      return { error };
     }
   };
 
@@ -262,11 +263,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(result.error.message);
       }
       
-      return { error: result.error };    } catch (error) {
-      console.error('Unexpected password update error:', error);
-      const authError = new Error('Unexpected password update error') as AuthError;
-      setError(authError.message);
-      return { error: authError };
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected password update error') as AuthError;
+      setError(error.message);
+      return { error };
     }
   };
 
@@ -280,11 +281,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(result.error.message);
       }
       
-      return { error: result.error };    } catch (error) {
-      console.error('Unexpected verification error:', error);
-      const authError = new Error('Unexpected verification error') as AuthError;
-      setError(authError.message);
-      return { error: authError };
+      return { error: result.error };
+    } catch (err) {
+      const error = new Error('Unexpected verification error') as AuthError;
+      setError(error.message);
+      return { error };
     }
   };
 
@@ -321,7 +322,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+    throw new Error('useAuth must be used within an AuthProvider');  }
   return context;
 };

@@ -36,9 +36,8 @@ export const authHelpers = {
     const { data: { session }, error } = await supabase.auth.getSession();
     return { session, error };
   },
-
   // Sign up with email/password
-  signUp: async (email: string, password: string, metadata?: any) => {
+  signUp: async (email: string, password: string, metadata?: Record<string, unknown>) => {
     return await supabase.auth.signUp({
       email,
       password,

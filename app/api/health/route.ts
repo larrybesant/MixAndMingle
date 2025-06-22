@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
 
 export async function GET() {
@@ -6,21 +6,18 @@ export async function GET() {
     // Test all major app features
     const results = {
       timestamp: new Date().toISOString(),
-      tests: [] as any[],
+      tests: [] as Array<{ name: string; status: string; error?: string }>,
       summary: {
         passed: 0,
         failed: 0,
         total: 0
       }
-    };
-
-    // Helper function to add test result
-    const addTest = (name: string, success: boolean, details?: any) => {
+    };    // Helper function to add test result
+    const addTest = (name: string, success: boolean, details?: unknown) => {
       results.tests.push({
         name,
-        success,
-        details: details || null,
-        timestamp: new Date().toISOString()
+        status: success ? 'passed' : 'failed',
+        error: success ? undefined : (details as string) || 'Test failed'
       });
       if (success) results.summary.passed++;
       else results.summary.failed++;

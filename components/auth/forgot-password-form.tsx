@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { Input } from '@/components/ui/input';
@@ -15,9 +15,7 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
-  
-  const { resetPassword } = useAuth();
-  const router = useRouter();
+    const { resetPassword } = useAuth();
   const searchParams = useSearchParams();
   useEffect(() => {
     // Pre-fill email if provided in URL
@@ -31,7 +29,6 @@ export default function ForgotPasswordPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -54,6 +51,10 @@ export default function ForgotPasswordPage() {
       if (resetError) {
         if (resetError.message.includes('User not found')) {
           setError('No account found with this email address');
+        } else if (resetError.message.includes('405') || resetError.message.includes('hook')) {
+          setError('There\'s a temporary issue with password reset. Please contact support at support@mixandmingle.com or try again later.');
+        } else if (resetError.message.includes('too many requests')) {
+          setError('Too many reset attempts. Please wait a few minutes before trying again.');
         } else {
           setError(resetError.message);
         }
@@ -61,7 +62,8 @@ export default function ForgotPasswordPage() {
         setIsSuccess(true);
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Reset password error:', err);
+      setError('An unexpected error occurred. Please try again or contact support.');
     } finally {
       setIsLoading(false);
     }
@@ -78,13 +80,13 @@ export default function ForgotPasswordPage() {
               </div>
               <h2 className="text-2xl font-bold text-white">Check Your Email</h2>
               <p className="text-gray-400">
-                We've sent a password reset link to <span className="text-white font-medium">{email}</span>
+                We&apos;ve sent a password reset link to <span className="text-white font-medium">{email}</span>
               </p>
               <p className="text-sm text-gray-500">
                 Click the link in the email to reset your password. The link will expire in 1 hour.
               </p>
               <div className="space-y-2 pt-4">
-                <p className="text-xs text-gray-500">Didn't receive the email?</p>
+                <p className="text-xs text-gray-500">Didn&apos;t receive the email?</p>
                 <Button
                   variant="outline"
                   size="sm"
@@ -120,15 +122,26 @@ export default function ForgotPasswordPage() {
             Reset Password
           </CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we&apos;ll send you a link to reset your password
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* Error Alert */}
+        <CardContent className="space-y-4">          {/* Error Alert */}
           {error && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {error}
+                {error.includes('405') || error.includes('hook') || error.includes('support@') ? (
+                  <div className="mt-2 pt-2 border-t border-red-700/50">
+                    <p className="text-sm text-red-300">
+                      <strong>Quick Fix:</strong> This is a known issue that can be resolved. 
+                      <br />• Try refreshing the page and attempting again
+                      <br />• Contact us at <a href="mailto:support@mixandmingle.com" className="underline">support@mixandmingle.com</a>
+                      <br />• Or try signing in with your current password
+                    </p>
+                  </div>
+                ) : null}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -180,7 +193,7 @@ export default function ForgotPasswordPage() {
 
         <CardFooter>
           <p className="text-sm text-gray-400 text-center w-full">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-purple-400 hover:text-purple-300 underline">
               Sign up
             </Link>

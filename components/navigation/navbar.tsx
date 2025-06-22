@@ -5,19 +5,28 @@ import Link from 'next/link';
 import { cn } from '../../lib/utils';
 import { supabase } from '@/lib/supabase/client';
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+  type: string;
+  data?: Record<string, unknown>;
+}
+
 export const Navbar = () => {
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   useEffect(() => {
     async function fetchNotifications() {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-      const { data } = await supabase
+      if (!userData.user) return;      const { data } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', userData.user.id)
         .order('created_at', { ascending: false });
-      setNotifications(data || []);
+      setNotifications((data as Notification[]) || []);
     }
     fetchNotifications();
   }, []);
@@ -26,12 +35,12 @@ export const Navbar = () => {
     await supabase.from('notifications').update({ read: true }).eq('id', id);
     setNotifications(notifications => notifications.map(n => n.id === id ? { ...n, read: true } : n));
   }
-
-  async function handleFollowBack(n: any) {
+  async function handleFollowBack(n: Notification) {
     // TODO: Implement follow back logic
     markAsRead(n.id);
   }
-  async function handleThankTip(n: any) {
+  
+  async function handleThankTip(n: Notification) {
     // TODO: Implement thank for tip logic
     markAsRead(n.id);
   }
@@ -67,10 +76,9 @@ export const Navbar = () => {
                       <button onClick={() => markAsRead(n.id)} className="ml-auto text-xs text-blue-600 underline">Mark as read</button>
                     )}
                   </div>
-                  <div className="text-xs text-gray-700">{n.message}</div>
-                  {n.type === 'room_invite' && n.data?.room_id && (
-                    <Link href={`/room/${n.data.room_id}`} className="text-blue-600 underline text-xs">Join Room</Link>
-                  )}
+                  <div className="text-xs text-gray-700">{n.message}</div>                  {n.type === 'room_invite' && n.data?.room_id ? (
+                    <Link href={`/room/${String(n.data.room_id)}`} className="text-blue-600 underline text-xs">Join Room</Link>
+                  ) : null}
                   {n.type === 'follow' && (
                     <button onClick={() => handleFollowBack(n)} className="text-xs text-green-700 underline mt-1">Follow Back</button>
                   )}

@@ -96,9 +96,9 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
 
         if (error) {
           console.error('Error fetching messages:', error);
-          setError("Failed to load messages.");
-        } else if (data) {
+          setError("Failed to load messages.");        } else if (data) {
           // Transform the data to include profile info
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const transformedMessages = data.map((msg: any) => ({
             ...msg,
             username: msg.profiles?.username || `User ${msg.user_id.slice(0, 8)}`,
