@@ -11,9 +11,8 @@ export async function GET(request: NextRequest) {
     }, { status: 400 });
   }
 
-  try {
-    // Check if user exists in auth.users (we can't query this directly, so we'll try a password reset)
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+  try {    // Check if user exists in auth.users (we can't query this directly, so we'll try a password reset)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'http://localhost:3000/reset-password',
     });
 
@@ -42,11 +41,11 @@ export async function GET(request: NextRequest) {
       error: error.message,
       email: email
     });
-
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     return NextResponse.json({
       error: 'Failed to check user',
-      details: err.message,
+      details: errorMessage,
       email: email
     }, { status: 500 });
   }
@@ -90,11 +89,11 @@ export async function POST(request: NextRequest) {
       userId: data.user?.id,
       emailConfirmed: data.user?.email_confirmed_at ? true : false
     });
-
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
     return NextResponse.json({
       error: 'Failed to create test user',
-      details: err.message
+      details: errorMessage
     }, { status: 500 });
   }
 }

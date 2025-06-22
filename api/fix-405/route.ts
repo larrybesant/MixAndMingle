@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     console.log('🔧 Starting 405 Auth Error Fix...');
     
@@ -92,9 +92,8 @@ export async function POST(request: NextRequest) {
       
       try {
         console.log(`⚙️  Executing fix query ${i + 1}/${fixQueries.length}`);
-        
-        // Execute the query using supabase admin client
-        const { data, error } = await supabaseAdmin.rpc('exec_sql', { 
+          // Execute the query using supabase admin client
+        const { error } = await supabaseAdmin.rpc('exec_sql', { 
           sql_statement: query 
         });
         
@@ -103,10 +102,10 @@ export async function POST(request: NextRequest) {
           errors.push(`Query ${i + 1}: ${error.message}`);
         } else {
           results.push(`Query ${i + 1}: Success`);
-        }
-      } catch (error: any) {
+        }      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         console.warn(`⚠️  Exception on query ${i + 1}:`, error);
-        errors.push(`Query ${i + 1}: ${error.message}`);
+        errors.push(`Query ${i + 1}: ${errorMessage}`);
       }
     }
     
@@ -117,12 +116,12 @@ export async function POST(request: NextRequest) {
       errors,
       note: 'If there are errors, you may need to run the SQL manually in Supabase Dashboard'
     });
-    
-  } catch (error: any) {
+      } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     console.error('❌ Fix failed:', error);
     return NextResponse.json({
       success: false,
-      error: error.message,
+      error: errorMessage,
       note: 'Please run the SQL file manually in your Supabase Dashboard'
     }, { status: 500 });
   }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase/client';
+import Auth405FixComponent from '@/components/auth/auth-405-fix';
 import { 
   CheckCircle, 
   AlertTriangle, 
@@ -394,7 +395,16 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key`}
                   <li>• Check spam folder for confirmation emails</li>
                   <li>• Disable email confirmation for testing</li>
                 </ul>
-              </div>
+              </div>            </div>
+          </div>
+        </Card>
+
+        {/* 405 Auth Fix Component */}
+        <Card className="bg-slate-800/50 border-white/10">
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-white mb-4">🔧 Database Fixes</h2>
+            <div className="bg-slate-900/50 p-4 rounded-lg">
+              <Auth405FixComponent />
             </div>
           </div>
         </Card>
