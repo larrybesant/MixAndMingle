@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { z } from "zod"
+import type { ChatMessage } from "@/types/database"
 
 import { useState, useRef, useEffect } from "react"
 import { Send } from "lucide-react"
@@ -10,10 +11,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 interface Message {
   id: string
-  username: string
+  room_id: string
+  user_id: string
   message: string
-  timestamp: Date
-  type: "message" | "tip" | "reaction"
+  created_at: string
+  username?: string
   avatar_url?: string
 }
 
@@ -69,15 +71,16 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
     async function fetchMessages() {
       setLoading(true)
       setError(null)
-      const { data, error } = await supabase
-        .from("messages")
-        .select("id, username, message, timestamp, type, avatar_url")        .eq("room_id", roomId)
-        .order("timestamp", { ascending: true })
+      const { data, error } = await supabase        .from("chat_messages")
+        .select("id, user_id, message, created_at, room_id")
+        .eq("room_id", roomId)
+        .order("created_at", { ascending: true });
       if (!error && data) {
         setMessages(
-          data.map((msg: ChatMessage) => ({
+          data.map((msg: any) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp),
+            username: msg.user_id, // We'll need to join with profiles for actual username
+            avatar_url: undefined,
           }))
         )
       } else {
@@ -93,18 +96,19 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
     const channel = supabase
       .channel(`room-messages-${roomId}`)      .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` },
+        { event: "INSERT", schema: "public", table: "chat_messages", filter: `room_id=eq.${roomId}` },
         (payload: { new: ChatMessage }) => {
           const msg = payload.new
           setMessages((prev) => [
             ...prev,
             {
               id: msg.id,
-              username: msg.username,
+              room_id: msg.room_id,
+              user_id: msg.user_id,
               message: msg.message,
-              timestamp: new Date(msg.timestamp),
-              type: msg.type,
-              avatar_url: msg.avatar_url,
+              created_at: msg.created_at,
+              username: msg.user_id, // We'll need to join with profiles for actual username
+              avatar_url: undefined,
             },
           ])
         }
@@ -132,15 +136,13 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
       setError("You must have a username to chat.")
       return
     }
-    const cleanMsg = sanitizeInput(newMessage)
-    if (!cleanMsg) return
-    setSending(true)
-    const { error } = await supabase.from("messages").insert({
+    const cleanMsg = sanitizeInput(newMessage);
+    if (!cleanMsg) return;
+    setSending(true);
+    const { error } = await supabase.from("chat_messages").insert({
       room_id: roomId,
-      username: userProfile.username,
-      avatar_url: userProfile.avatar_url,
+      user_id: userProfile.username || "anonymous", // This should be actual user ID
       message: cleanMsg,
-      type: "message",
     })
     setSending(false)
     if (!error) setNewMessage("")
@@ -150,16 +152,14 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
   const sendReaction = async (emoji: string) => {
     setError(null)
     if (!userProfile?.username) {
-      setError("You must have a username to chat.")
-      return
+      setError("You must have a username to chat.");
+      return;
     }
-    setSending(true)
-    const { error } = await supabase.from("messages").insert({
+    setSending(true);
+    const { error } = await supabase.from("chat_messages").insert({
       room_id: roomId,
-      username: userProfile.username,
-      avatar_url: userProfile.avatar_url,
+      user_id: userProfile.username || "anonymous", // This should be actual user ID
       message: emoji,
-      type: "reaction",
     })
     setSending(false)
     if (error) setError("Failed to send reaction.")
@@ -192,14 +192,13 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
               {/* Avatar */}
               <Avatar className="h-8 w-8">
                 <AvatarImage src={msg.avatar_url} alt={msg.username} />
-                <AvatarFallback>{msg.username[0]}</AvatarFallback>
+                <AvatarFallback>{msg.username?.[0] || "?"}</AvatarFallback>
               </Avatar>
               <div
                 className={`min-w-0 ${msg.username === userProfile?.username ? "bg-blue-600/20 border-blue-500/30" : "bg-slate-700/30"} rounded-lg p-3 border border-white/10 w-fit max-w-[80vw] sm:max-w-xs`}
-              >
-                <div className="flex items-center gap-2 mb-1">
+              >                <div className="flex items-center gap-2 mb-1">
                   <span className="font-semibold text-sm text-purple-300">{msg.username}</span>
-                  <span className="text-xs text-gray-400">{msg.timestamp.toLocaleTimeString()}</span>
+                  <span className="text-xs text-gray-400">{new Date(msg.created_at).toLocaleTimeString()}</span>
                 </div>
                 <p className="text-white text-sm break-words">{msg.message}</p>
               </div>

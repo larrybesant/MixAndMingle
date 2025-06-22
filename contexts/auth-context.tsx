@@ -54,9 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signUp = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        console.error('Sign up error:', error.message, error.details, error);
+      const { data, error } = await supabase.auth.signUp({ email, password });      if (error) {
+        console.error('Sign up error:', error.message, error);
         alert('Sign up failed: ' + (error.message || 'Unknown error'));
       }
     } catch (err) {
