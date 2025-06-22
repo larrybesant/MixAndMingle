@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, metadata } = await request.json();
+    const body = await request.json();
+    const { email, password, metadata } = body;
     
     if (!email || !password) {
       return NextResponse.json({ 
@@ -14,6 +15,12 @@ export async function POST(request: Request) {
     // Create Supabase client
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json({ 
+        error: 'Supabase configuration missing' 
+      }, { status: 500 });
+    }
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

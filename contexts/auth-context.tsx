@@ -232,9 +232,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const resetPassword = async (email: string) => {
+  };  const resetPassword = async (email: string) => {
     setError(null);
     
     try {
@@ -244,9 +242,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setError(result.error.message);
       }
       
-      return { error: result.error };    } catch (error) {
+      return { error: result.error as AuthError | null };
+    } catch (error) {
       console.error('Unexpected password reset error:', error);
-      const authError = new Error('Unexpected password reset error') as AuthError;
+      // Create a proper AuthError-like object
+      const authError = {
+        message: 'Unexpected password reset error',
+        name: 'AuthError',
+        code: 'unexpected_error',
+        status: 500
+      } as AuthError;
       setError(authError.message);
       return { error: authError };
     }

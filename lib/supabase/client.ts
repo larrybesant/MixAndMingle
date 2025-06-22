@@ -73,8 +73,7 @@ export const authHelpers = {
   // Sign out
   signOut: async () => {
     return await supabase.auth.signOut();
-  },
-  // Reset password
+  },  // Reset password
   resetPassword: async (email: string) => {
     try {
       // First try the API endpoint to avoid hook issues
@@ -93,10 +92,16 @@ export const authHelpers = {
       // If API fails, fall back to direct Supabase call
       return await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
-      });    } catch (error) {
+      });
+    } catch (error) {
       console.error('Reset password error:', error);
-      const authError = new Error('Failed to send reset email. Please try again.') as Error & { __isAuthError?: boolean };
-      authError.__isAuthError = true;
+      // Return a proper AuthError object
+      const authError = {
+        message: 'Failed to send reset email. Please try again.',
+        name: 'AuthError',
+        code: 'reset_password_failed',
+        status: 500
+      } as any; // Use 'as any' to bypass strict typing
       return { error: authError };
     }
   },

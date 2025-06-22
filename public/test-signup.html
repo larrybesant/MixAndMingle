@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Signup</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; }
+        form { max-width: 400px; }
+        input, button { margin: 10px 0; padding: 10px; width: 100%; }
+        #result { margin-top: 20px; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Test Signup API</h1>
+    <form id="signupForm">
+        <input type="email" id="email" placeholder="Email" value="test@example.com" required>
+        <input type="password" id="password" placeholder="Password" value="TestPass123!" required>
+        <input type="text" id="fullName" placeholder="Full Name" value="Test User" required>
+        <input type="text" id="username" placeholder="Username" value="testuser123" required>
+        <button type="submit">Sign Up</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing signup...';
+            
+            const data = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                metadata: {
+                    full_name: document.getElementById('fullName').value,
+                    username: document.getElementById('username').value
+                }
+            };
+            
+            console.log('Sending data:', data);
+            
+            try {
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.text();
+                
+                resultDiv.innerHTML = `
+                    <h3>Response</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Headers:</strong> ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}</p>
+                    <p><strong>Body:</strong></p>
+                    <pre>${result}</pre>
+                `;
+                
+                console.log('Response:', response.status, result);
+                
+                try {
+                    const jsonResult = JSON.parse(result);
+                    console.log('Parsed JSON:', jsonResult);
+                } catch (e) {
+                    console.log('Response is not JSON');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -47,14 +47,21 @@ export default function Page() {
             <span className="text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)] font-extrabold">MIX</span>
             <span className="text-orange-400 text-5xl mx-2 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)]">🎵</span>
             <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-extrabold">MINGLE</span>
-          </div>
+          </div>        </div>
+        <div className="flex gap-4">
+          <Link
+            href="/signup"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl px-6 py-3 text-white font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            Sign Up
+          </Link>
+          <Link
+            href="/login"
+            className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all duration-300 font-semibold"
+          >
+            Sign In
+          </Link>
         </div>
-        <Link
-          href="/login"
-          className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all duration-300 font-semibold"
-        >
-          Sign In
-        </Link>
       </header>
 
       {/* Hero Section */}
