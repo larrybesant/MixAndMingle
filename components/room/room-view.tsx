@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card } from "../ui/card";
+import { useState, useEffect, useCallback } from 'react';
 import { DailyLiveStream } from "../streaming/daily-live-stream";
 import { ChatRoom } from "../chat/chat-room";
 import { Button } from "../ui/button";
@@ -33,13 +32,10 @@ interface RoomData {
 export function RoomView({ roomId }: RoomViewProps) {
   const [roomData, setRoomData] = useState<RoomData | null>(null);
   const [isHost, setIsHost] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRoomData();
-    checkUserStatus();
-  }, [roomId]);  const fetchRoomData = async () => {
+  const fetchRoomData = useCallback(async () => {
     try {
       // First get room data
       const { data: roomData, error: roomError } = await supabase
@@ -63,30 +59,31 @@ export function RoomView({ roomId }: RoomViewProps) {
       if (hostError || !hostData) {
         console.error('Error fetching host:', hostError);
         return;
-      }
-
-      setRoomData({
-        ...(roomData as any),
+      }      setRoomData({
+        ...roomData,
         host: hostData
       } as RoomData);
     } catch (error) {
-      console.error('Error:', error);
-    } finally {
+      console.error('Error:', error);    } finally {
       setIsLoading(false);
     }
-  };
+  }, [roomId]);
 
-  const checkUserStatus = async () => {
+  const checkUserStatus = useCallback(async () => {
     const { data: user } = await supabase.auth.getUser();
     if (user.user) {
       setCurrentUser(user.user);
       if (roomData) {
-        setIsHost(user.user.id === roomData.host_id);
-      }
+        setIsHost(user.user.id === roomData.host_id);      }
     }
-  };
+  }, [roomData]);
 
-  const joinRoom = async () => {
+  useEffect(() => {
+    fetchRoomData();
+    checkUserStatus();
+  }, [fetchRoomData, checkUserStatus]);
+
+  const joinRoom = useCallback(async () => {
     if (!currentUser) return;
 
     await supabase
@@ -94,19 +91,8 @@ export function RoomView({ roomId }: RoomViewProps) {
       .upsert({
         room_id: roomId,
         user_id: currentUser.id,
-        joined_at: new Date().toISOString()
-      });
-  };
-
-  const leaveRoom = async () => {
-    if (!currentUser) return;
-
-    await supabase
-      .from('room_participants')
-      .delete()
-      .eq('room_id', roomId)
-      .eq('user_id', currentUser.id);
-  };
+        joined_at: new Date().toISOString()      });
+  }, [currentUser, roomId]);
 
   useEffect(() => {
     if (roomData && currentUser) {
@@ -115,7 +101,7 @@ export function RoomView({ roomId }: RoomViewProps) {
         joinRoom();
       }
     }
-  }, [roomData, currentUser]);
+  }, [roomData, currentUser, isHost, joinRoom]);
 
   if (isLoading) {
     return (
