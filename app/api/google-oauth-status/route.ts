@@ -63,9 +63,8 @@ export async function POST() {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    
-    // Try to list users to confirm admin access
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      // Try to list users to confirm admin access
+    const { error } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
       perPage: 1
     });

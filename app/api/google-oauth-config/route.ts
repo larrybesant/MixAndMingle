@@ -50,9 +50,8 @@ export async function POST() {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    
-    // Test admin access for OAuth provider management
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      // Test admin access for OAuth provider management
+    const { error } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
       perPage: 1
     });

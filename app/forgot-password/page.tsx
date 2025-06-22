@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import { supabase } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -35,8 +34,7 @@ export default function ForgotPasswordPage() {
         setError(data.error || 'Failed to send reset email');
       } else {
         setMessage("Check your email for the password reset link!");
-      }
-    } catch (err) {
+      }    } catch {
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)

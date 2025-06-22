@@ -1,4 +1,10 @@
-import { test, expect, Browser, Page } from '@playwright/test';
+interface TestResult {
+  test: string;
+  status: string;
+  duration?: number;
+  error?: string;
+  timestamp: string;
+}
 
 class QATestSuite {
   private browser!: Browser;
@@ -6,7 +12,7 @@ class QATestSuite {
   private baseUrl = 'http://localhost:3001';
   private testEmail = `qa.test.${Date.now()}@example.com`;
   private testPassword = 'QATest123!';
-  private testResults: any[] = [];
+  private testResults: TestResult[] = [];
 
   async init(browser: Browser) {
     this.browser = browser;

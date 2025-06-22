@@ -95,7 +95,7 @@ export const authHelpers = {
         redirectTo: `${window.location.origin}/reset-password`,
       });    } catch (error) {
       console.error('Reset password error:', error);
-      const authError = new Error('Failed to send reset email. Please try again.') as any;
+      const authError = new Error('Failed to send reset email. Please try again.') as Error & { __isAuthError?: boolean };
       authError.__isAuthError = true;
       return { error: authError };
     }

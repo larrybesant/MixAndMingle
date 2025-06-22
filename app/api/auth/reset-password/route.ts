@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   try {
@@ -99,12 +98,10 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ 
         message: 'Password reset email sent successfully. Please check your inbox and spam folder.' 
-      });
-
-    } catch (error: any) {
+      });    } catch (error: unknown) {
       console.error('Reset method error:', error);
       
-      if (error.message.includes('405')) {
+      if (error instanceof Error && error.message.includes('405')) {
         return NextResponse.json({ 
           message: 'Password reset request received. Due to system maintenance, there may be a delay in email delivery.',
           status: 'processed_with_delays'

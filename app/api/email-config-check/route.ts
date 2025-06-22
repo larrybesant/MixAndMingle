@@ -44,9 +44,8 @@ export async function POST() {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    
-    // Try to get auth settings (this will tell us if emails are configured)
-    const { data: settings, error } = await supabaseAdmin.auth.admin.listUsers({
+      // Try to get auth settings (this will tell us if emails are configured)
+    const { error } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
       perPage: 1
     });
