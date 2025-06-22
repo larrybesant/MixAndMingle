@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     console.log('🚀 Starting database initialization...');
     
