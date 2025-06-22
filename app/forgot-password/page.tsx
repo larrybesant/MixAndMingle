@@ -13,7 +13,6 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -21,14 +20,21 @@ export default function ForgotPasswordPage() {
     setMessage("")
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
+      // Use our API endpoint instead of direct Supabase call
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-      if (error) {
-        setError(error.message)
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to send reset email');
       } else {
-        setMessage("Check your email for the password reset link!")
+        setMessage("Check your email for the password reset link!");
       }
     } catch (err) {
       setError("An unexpected error occurred")
