@@ -41,7 +41,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleOAuth = async (provider: 'google' | 'facebook') => {
+  const handleOAuth = async (provider: 'google') => {
     setError("");
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -120,15 +120,6 @@ export default function LoginPage() {
           >
             <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
             Continue with Google
-          </Button>
-
-          <Button
-            type="button"
-            onClick={() => handleOAuth('facebook')}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm"
-          >
-            <Image src="/icons/facebook.svg" alt="Facebook" width={20} height={20} />
-            Continue with Facebook
           </Button>
         </div>
 

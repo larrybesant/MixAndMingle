@@ -34,7 +34,8 @@ export default function SignupPage() {
     return pw.length >= 8
   }
 
-  const handleSignUp = async () => {
+  const handleSignUp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setLoading(true)
     setError("")
     // Sanitize and validate inputs
@@ -94,34 +95,38 @@ export default function SignupPage() {
         <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-4">
           Mix & Mingle Signup
         </h1>
-        <Input
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="mb-2"
-        />
-        <Input
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mb-2"
-        />
-        <Input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-2"
-        />
-        {error && <div className="text-red-500 mb-2">{error}</div>}
-        <Button
-          type="button"
-          onClick={handleSignUp}
-          disabled={loading || !username || !email || !password}
-          className="w-full mb-2"
-        >
-          {loading ? "Creating Account..." : "Sign Up"}
-        </Button>
+        <form onSubmit={handleSignUp}>
+          <Input
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="mb-2"
+            autoComplete="username"
+          />
+          <Input
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mb-2"
+            autoComplete="email"
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mb-2"
+            autoComplete="new-password"
+          />
+          {error && <div className="text-red-500 mb-2">{error}</div>}
+          <Button
+            type="submit"
+            disabled={loading || !username || !email || !password}
+            className="w-full mb-2"
+          >
+            {loading ? "Creating Account..." : "Sign Up"}
+          </Button>
+        </form>
         <Button
           type="button"
           onClick={() => handleOAuth("google")}
