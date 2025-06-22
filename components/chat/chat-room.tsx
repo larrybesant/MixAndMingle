@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { z } from "zod"
 
 import { useState, useRef, useEffect } from "react"
 import { Send } from "lucide-react"
@@ -19,6 +20,11 @@ interface Message {
 interface ChatRoomProps {
   roomId: string
 }
+
+const UserProfileSchema = z.object({
+  username: z.string(),
+  avatar_url: z.string().nullable().optional(),
+})
 
 export function ChatRoom({ roomId }: ChatRoomProps) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -39,7 +45,21 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
         .select("username, avatar_url")
         .eq("id", auth.user.id)
         .single()
-      if (profile) setUserProfile(profile)
+      if (profile) {
+        // Validate profile at runtime
+        const parsed = UserProfileSchema.safeParse(profile)
+        if (parsed.success) {
+          // Convert null avatar_url to undefined for type compatibility
+          setUserProfile({
+            ...parsed.data,
+            avatar_url: parsed.data.avatar_url ?? undefined,
+          })
+        } else {
+          setUserProfile(null)
+          // Optionally log or show error
+          // console.error("Invalid user profile", parsed.error);
+        }
+      }
     }
     fetchUserProfile()
   }, [])
@@ -51,12 +71,11 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
       setError(null)
       const { data, error } = await supabase
         .from("messages")
-        .select("id, username, message, timestamp, type, avatar_url")
-        .eq("room_id", roomId)
+        .select("id, username, message, timestamp, type, avatar_url")        .eq("room_id", roomId)
         .order("timestamp", { ascending: true })
       if (!error && data) {
         setMessages(
-          data.map((msg: any) => ({
+          data.map((msg: ChatMessage) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
           }))
@@ -72,11 +91,10 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
   // Subscribe to new messages in real time
   useEffect(() => {
     const channel = supabase
-      .channel(`room-messages-${roomId}`)
-      .on(
+      .channel(`room-messages-${roomId}`)      .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` },
-        (payload: any) => {
+        (payload: { new: ChatMessage }) => {
           const msg = payload.new
           setMessages((prev) => [
             ...prev,

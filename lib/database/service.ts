@@ -1,4 +1,5 @@
 import { supabase, sql } from "./connection"
+import { ProfileSchema } from "@/lib/zod-schemas-shared"
 import type { Profile, UserRoom, ChatMessage } from "@/types/database"
 
 export class DatabaseService {
@@ -11,7 +12,13 @@ export class DatabaseService {
       return null
     }
 
-    return data
+    // Validate with Zod before returning
+    const parsed = ProfileSchema.safeParse(data)
+    if (!parsed.success) {
+      console.error("Invalid profile data:", parsed.error)
+      return null
+    }
+    return parsed.data
   }
 
   static async updateProfile(userId: string, updates: Partial<Profile>) {
@@ -24,18 +31,11 @@ export class DatabaseService {
 
     return data
   }
-
   // User Room operations
   static async getLiveRooms(): Promise<UserRoom[]> {
     const { data, error } = await supabase
       .from("user_rooms")
-      .select(`
-        *,
-        profiles:host_id (
-          username,
-          avatar_url
-        )
-      `)
+      .select("*")
       .eq("is_live", true)
       .order("viewer_count", { ascending: false })
 
@@ -44,7 +44,7 @@ export class DatabaseService {
       return []
     }
 
-    return data || []
+    return (data as UserRoom[]) || []
   }
 
   static async createRoom(hostId: string, roomData: Partial<UserRoom>) {
@@ -80,18 +80,11 @@ export class DatabaseService {
 
     return data
   }
-
   // Chat operations
   static async getChatMessages(roomId: string, limit = 50): Promise<ChatMessage[]> {
     const { data, error } = await supabase
       .from("chat_messages")
-      .select(`
-        *,
-        profiles:user_id (
-          username,
-          avatar_url
-        )
-      `)
+      .select("*")
       .eq("room_id", roomId)
       .order("created_at", { ascending: false })
       .limit(limit)
@@ -101,9 +94,8 @@ export class DatabaseService {
       return []
     }
 
-    return data?.reverse() || []
+    return ((data as ChatMessage[])?.reverse()) || []
   }
-
   static async sendChatMessage(roomId: string, userId: string, message: string) {
     const { data, error } = await supabase
       .from("chat_messages")
@@ -112,13 +104,7 @@ export class DatabaseService {
         user_id: userId,
         message,
       })
-      .select(`
-        *,
-        profiles:user_id (
-          username,
-          avatar_url
-        )
-      `)
+      .select("*")
       .single()
 
     if (error) {
@@ -128,36 +114,35 @@ export class DatabaseService {
 
     return data
   }
-
   // Real-time subscriptions
-  static subscribeToRoom(roomId: string, onMessage: (message: any) => void) {
+  static subscribeToRoom(roomId: string, onMessage: (message: ChatMessage) => void) {
     return supabase
       .channel(`room:${roomId}`)
       .on(
-        "postgres_changes",
+        "postgres_changes" as any,
         {
           event: "INSERT",
           schema: "public",
           table: "chat_messages",
           filter: `room_id=eq.${roomId}`,
         },
-        onMessage,
+        (payload: { new: ChatMessage }) => onMessage(payload.new as ChatMessage),
       )
       .subscribe()
   }
 
-  static subscribeToRoomUpdates(roomId: string, onUpdate: (update: any) => void) {
+  static subscribeToRoomUpdates(roomId: string, onUpdate: (update: UserRoom) => void) {
     return supabase
       .channel(`room_updates:${roomId}`)
       .on(
-        "postgres_changes",
+        "postgres_changes" as any,
         {
           event: "UPDATE",
           schema: "public",
           table: "user_rooms",
           filter: `id=eq.${roomId}`,
         },
-        onUpdate,
+        (payload: { new: UserRoom }) => onUpdate(payload.new as UserRoom),
       )
       .subscribe()
   }

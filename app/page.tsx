@@ -4,14 +4,23 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
+import { UserListSchema, type UserList } from "@/lib/zod-schemas-shared"
 
 export default function Page() {
-  const [users, setUsers] = useState<{ id: string; username: string }[]>([])
+  const [, setUsers] = useState<UserList>([])
 
   useEffect(() => {
     async function fetchUsers() {
       const { data } = await supabase.from("profiles").select("id, username")
-      setUsers(data || [])
+      // Validate and filter users at runtime
+      const parsed = UserListSchema.safeParse(data || [])
+      if (parsed.success) {
+        setUsers(parsed.data)
+      } else {
+        setUsers([])
+        // Optionally log or show error
+        // console.error("Invalid user data", parsed.error)
+      }
     }
     fetchUsers()
   }, [])

@@ -3,29 +3,56 @@
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
+import { ConversationListSchema } from "@/lib/zod-schemas-shared";
+
+type MessageUser = {
+  username: string | null;
+  avatar_url: string | null;
+};
+type Conversation = {
+  id: string;
+  sender: MessageUser;
+  receiver: MessageUser;
+  message: string;
+  created_at: string;
+};
 
 export default function MessagesPage() {
-  const [user, setUser] = useState<any>(null);
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [, setUser] = useState<User | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [recipientId, setRecipientId] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [sendStatus, setSendStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUserAndMessages() {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-      setUser(userData.user);
-      // Fetch recent conversations (grouped by user)
-      const { data: messagesData } = await supabase
-        .from("messages")
-        .select("*, sender:sender_id(username, avatar_url), receiver:receiver_id(username, avatar_url)")
-        .or(`sender_id.eq.${userData.user.id},receiver_id.eq.${userData.user.id}`)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      setConversations(messagesData || []);
-      setLoading(false);
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!userData.user) return;
+        setUser(userData.user);
+        const { data: messagesData, error: msgError } = await supabase
+          .from("messages")
+          .select("id, message, created_at, sender:sender_id(username, avatar_url), receiver:receiver_id(username, avatar_url)")
+          .or(`sender_id.eq.${userData.user.id},receiver_id.eq.${userData.user.id}`)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        if (msgError) throw msgError;
+        const parsed = ConversationListSchema.safeParse(messagesData || []);
+        if (!parsed.success) {
+          setError("Invalid data received from server. Please try again later.");
+          setConversations([]);
+          return;
+        }
+        setConversations(parsed.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch messages.");
+      } finally {
+        setLoading(false);
+      }
     }
     fetchUserAndMessages();
   }, []);
@@ -78,6 +105,8 @@ export default function MessagesPage() {
         <h1 className="text-3xl font-bold mb-6">Messenger</h1>
         {loading ? (
           <div className="text-gray-400">Loading...</div>
+        ) : error ? (
+          <div className="text-red-400">{error}</div>
         ) : (
           <section className="w-full max-w-md mb-8">
             <h2 className="text-xl font-bold mb-2">Recent Conversations</h2>
@@ -121,3 +150,4 @@ export default function MessagesPage() {
     </ErrorBoundary>
   );
 }
+// TODO: Modularize message list and add E2E tests.

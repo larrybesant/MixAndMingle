@@ -9,12 +9,18 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 let _supabase: ReturnType<typeof createClient> | undefined = undefined;
 
+declare global {
+  interface Window {
+    _supabase?: ReturnType<typeof createClient>;
+  }
+}
+
 export const supabase = (() => {
   if (typeof window !== 'undefined') {
-    if (!(window as any)._supabase) {
-      (window as any)._supabase = createClient(supabaseUrl, supabaseAnonKey);
+    if (!window._supabase) {
+      window._supabase = createClient(supabaseUrl, supabaseAnonKey);
     }
-    return (window as any)._supabase;
+    return window._supabase;
   } else {
     if (!_supabase) {
       _supabase = createClient(supabaseUrl, supabaseAnonKey);

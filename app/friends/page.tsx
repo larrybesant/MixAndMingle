@@ -2,33 +2,54 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { FriendListSchema, FriendRequestListSchema } from "@/lib/zod-schemas-shared";
+
+type FriendProfile = {
+  username: string | null;
+  avatar_url: string | null;
+};
+type Friend = {
+  id: string;
+  profiles: FriendProfile;
+};
+type FriendRequest = {
+  id: string;
+  profiles: FriendProfile;
+};
 
 export default function FriendsPage() {
-  const [user, setUser] = useState<any>(null);
-  const [friends, setFriends] = useState<any[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUserAndFriends() {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-      setUser(userData.user);
-      // Fetch accepted friends
-      const { data: friendsData } = await supabase
-        .from("friends")
-        .select("*, profiles:friend_id(username, avatar_url)")
-        .or(`user_id.eq.${userData.user.id},friend_id.eq.${userData.user.id}`)
-        .eq("status", "accepted");
-      setFriends(friendsData || []);
-      // Fetch pending requests
-      const { data: requestsData } = await supabase
-        .from("friends")
-        .select("*, profiles:user_id(username, avatar_url)")
-        .eq("friend_id", userData.user.id)
-        .eq("status", "pending");
-      setRequests(requestsData || []);
-      setLoading(false);
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!userData.user) return;
+        const { data: friendsData, error: friendsError } = await supabase
+          .from("friends")
+          .select("id, profiles:friend_id(username, avatar_url)")
+          .or(`user_id.eq.${userData.user.id},friend_id.eq.${userData.user.id}`)
+          .eq("status", "accepted");
+        if (friendsError) throw friendsError;
+        const parsedFriends = FriendListSchema.safeParse(friendsData || []);
+        setFriends(parsedFriends.success ? parsedFriends.data : []);
+        const { data: requestsData, error: reqError } = await supabase
+          .from("friends")
+          .select("id, profiles:user_id(username, avatar_url)")
+          .eq("friend_id", userData.user.id)
+          .eq("status", "pending");
+        if (reqError) throw reqError;
+        const parsedRequests = FriendRequestListSchema.safeParse(requestsData || []);
+        setRequests(parsedRequests.success ? parsedRequests.data : []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch friends.");
+      } finally {
+        setLoading(false);
+      }
     }
     fetchUserAndFriends();
   }, []);
@@ -47,7 +68,7 @@ export default function FriendsPage() {
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center px-2 py-8">
       <h1 className="text-3xl font-bold mb-6">Friends</h1>
-      {loading ? <div className="text-gray-400">Loading...</div> : (
+      {loading ? <div className="text-gray-400">Loading...</div> : error ? <div className="text-red-400">{error}</div> : (
         <>
           <section className="w-full max-w-md mb-8">
             <h2 className="text-xl font-bold mb-2">Pending Requests</h2>
@@ -82,3 +103,4 @@ export default function FriendsPage() {
     </main>
   );
 }
+// TODO: Modularize friend/request list and add E2E tests.
