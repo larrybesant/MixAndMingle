@@ -77,6 +77,32 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: 'Verification email sent successfully' });
       }
 
+      case 'signup': {
+        const { email, password, metadata } = params;
+        if (!email || !password) {
+          return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: metadata || {},
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+          },
+        });
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+
+        return NextResponse.json({ 
+          message: 'User created successfully. Please check your email for verification.',
+          user: data.user,
+          requiresVerification: !data.session
+        });
+      }
+
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
@@ -92,6 +118,6 @@ export async function POST(request: Request) {
 export async function GET() {
   return NextResponse.json({ 
     message: 'Auth API',
-    actions: ['reset-password', 'update-password', 'verify-email']
+    actions: ['reset-password', 'update-password', 'verify-email', 'signup']
   });
 }

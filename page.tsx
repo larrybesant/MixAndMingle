@@ -49,12 +49,27 @@ export default function Page() {
             <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-extrabold">MINGLE</span>
           </div>
         </div>
-        <Link
-          href="/login"
-          className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all duration-300 font-semibold"
-        >
-          Sign In
-        </Link>
+
+        {/* EMERGENCY ACCESS BUTTONS */}
+        <div className="flex flex-col gap-2">
+          <div className="bg-red-600 text-white p-2 rounded border-2 border-red-400 text-center animate-pulse">
+            <div className="text-xs font-bold">🚨 EMERGENCY ACCESS</div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.location.href = '/dashboard'}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-bold"
+            >
+              🏠 DASHBOARD
+            </button>
+            <button
+              onClick={() => window.location.href = '/api/instant-access'}
+              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-bold"
+            >
+              ⚡ INSTANT ACCESS
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Hero Section */}
@@ -89,6 +104,34 @@ export default function Page() {
               <span className="relative z-10">Go Live</span>
               <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
             </Link>
+          </div>
+
+          {/* EMERGENCY ACCESS SECTION */}
+          <div className="mb-16 p-6 bg-red-900/20 border-2 border-red-500/50 rounded-3xl max-w-2xl mx-auto">
+            <div className="text-red-400 font-bold text-lg mb-4 animate-pulse">🚨 EMERGENCY LOGIN ACCESS</div>
+            <p className="text-gray-300 mb-6 text-sm">
+              Having login issues? Use these emergency access buttons to get into your app immediately.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => window.location.href = '/dashboard'}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg"
+              >
+                🏠 Go to Dashboard
+              </button>
+              <button
+                onClick={() => window.location.href = '/api/instant-access'}
+                className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg animate-pulse"
+              >
+                ⚡ Instant Access
+              </button>
+              <button
+                onClick={() => window.location.href = '/create-profile'}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg"
+              >
+                👤 Create Profile
+              </button>
+            </div>
           </div>
         </div>
       </section>

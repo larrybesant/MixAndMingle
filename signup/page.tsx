@@ -71,14 +71,17 @@ export default function SignupPage() {
         setLoading(false)
         return
       }      console.log("🔐 Attempting signup with Supabase..."); // Debug log
-        // Try signup with minimal options to bypass webhook issues
+      
+      // Try signup with standard options first
       const signupResult = await supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
         options: {
-          data: { username: cleanUsername },
-          emailRedirectTo: undefined, // Explicitly disable email redirect
-          captchaToken: undefined,    // Disable captcha
+          data: { 
+            username: cleanUsername,
+            full_name: cleanUsername // Add this for profile creation
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       
@@ -90,22 +93,24 @@ export default function SignupPage() {
         console.log("✅ Signup successful! User:", signupResult.data.user.id); // Debug log
         setError("") // Clear any errors
         
+        // Show clear success message
+        setError("✅ Account created successfully! Redirecting to your dashboard...")
+        
         // Check if user needs email confirmation
         if (!signupResult.data.user.email_confirmed_at) {
-          setError("✅ Account created! Redirecting to email verification...")
+          // User needs email verification
           setTimeout(() => {
             router.push("/signup/check-email")
-          }, 1000)
+          }, 2000)
         } else {
           // User is immediately confirmed, redirect to dashboard
-          setError("✅ Account created! Redirecting to dashboard...")
           setTimeout(() => {
             router.push("/dashboard")
-          }, 1000)
+          }, 2000)
         }
       } else {
         console.log("⚠️ Signup completed but no user data returned"); // Debug log
-        setError("Account may have been created. Please check your email or try logging in.")
+        setError("Account may have been created successfully. Please try logging in or check your email.")
       }
     } catch (err: any) {
       console.error("💥 Unexpected error:", err); // Debug log
