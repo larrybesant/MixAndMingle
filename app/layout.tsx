@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { AuthProvider } from "@/contexts/auth-context";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
+import { SafetyProvider } from "@/contexts/safety-context";
 import { ThemeProvider } from "@/contexts/theme-provider";
 // import { Analytics } from "@vercel/analytics/react"; // Uncomment if you install this package
 
@@ -24,11 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>      <body className={`${inter.className} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <html lang="en" suppressHydrationWarning>      <body className={`${inter.className} antialiased`}>        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             <OnboardingProvider>
-              {children}
+              <SafetyProvider>
+                {children}
+              </SafetyProvider>
             </OnboardingProvider>
           </AuthProvider>
         </ThemeProvider>
