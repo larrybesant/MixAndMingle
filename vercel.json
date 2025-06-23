@@ -1,4 +1,15 @@
 {
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "env": {
     "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl"
   }
