@@ -72,8 +72,7 @@ export default function SignupPage() {
       }
       
       // Attempt signup with Supabase
-      
-      // Try signup with standard options first
+        // Try signup with email confirmation disabled for testing
       const signupResult = await supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
@@ -82,7 +81,8 @@ export default function SignupPage() {
             username: cleanUsername,
             full_name: cleanUsername
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          // Remove email redirect to avoid magic link issues
+          // emailRedirectTo: `${window.location.origin}/auth/callback`,
         },      })
       
       if (signupResult.error) {
@@ -114,22 +114,13 @@ export default function SignupPage() {
         }
         
         setError("") // Clear any errors
+          // Show clear success message
+        setError("✅ Account created successfully! Testing language feature...")
         
-        // Show clear success message
-        setError("✅ Account created successfully! Redirecting to setup your profile...")
-        
-        // Check if user needs email confirmation
-        if (!signupResult.data.user.email_confirmed_at) {
-          // User needs email verification
-          setTimeout(() => {
-            router.push("/signup/check-email")
-          }, 2000)
-        } else {
-          // User is immediately confirmed, redirect to profile setup
-          setTimeout(() => {
-            router.push("/setup-profile")
-          }, 2000)
-        }      } else {
+        // For testing: go directly to dashboard since email confirmation might be disabled
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 2000)} else {
         setError("Account may have been created successfully. Please try logging in or check your email.")
       }
     } catch (err: unknown) {
