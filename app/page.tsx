@@ -6,8 +6,13 @@ import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
 import { UserListSchema, type UserList } from "@/lib/zod-schemas-shared"
 
-export default function Page() {
-  const [, setUsers] = useState<UserList>([])
+export default function Page() {  const [, setUsers] = useState<UserList>([])
+  const [room1Viewers, setRoom1Viewers] = useState(129)
+  const [room2Viewers, setRoom2Viewers] = useState(69)
+  const [room3Viewers, setRoom3Viewers] = useState(78)
+  const [totalMatches, setTotalMatches] = useState(1247)
+  const [totalSongs, setTotalSongs] = useState(52389)
+  const [liveStreams, setLiveStreams] = useState(523)
 
   useEffect(() => {
     async function fetchUsers() {
@@ -22,7 +27,21 @@ export default function Page() {
         // console.error("Invalid user data", parsed.error)
       }
     }
-    fetchUsers()
+    fetchUsers()    // Real-time viewer count updates (simulated for demo)
+    const interval = setInterval(() => {
+      setRoom1Viewers(prev => Math.max(50, prev + Math.floor(Math.random() * 21) - 10))
+      setRoom2Viewers(prev => Math.max(30, prev + Math.floor(Math.random() * 15) - 7))
+      setRoom3Viewers(prev => Math.max(40, prev + Math.floor(Math.random() * 18) - 9))
+      
+      // Update social proof stats occasionally
+      if (Math.random() < 0.3) { // 30% chance per update
+        setTotalMatches(prev => prev + Math.floor(Math.random() * 3))
+        setTotalSongs(prev => prev + Math.floor(Math.random() * 15))
+        setLiveStreams(prev => Math.max(500, prev + Math.floor(Math.random() * 7) - 3))
+      }
+    }, 3000) // Update every 3 seconds
+
+    return () => clearInterval(interval)
   }, [])
 
   return (
@@ -154,19 +173,22 @@ export default function Page() {
 
           {/* Social Proof */}
           <div className="text-center bg-black/40 backdrop-blur-md rounded-3xl p-8 border border-white/10">
-            <p className="text-2xl text-white mb-4 font-semibold">Join thousands finding love through music</p>
-            <div className="flex justify-center items-center gap-8 text-gray-300">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <p className="text-2xl text-white font-semibold">Join thousands finding love through music</p>
+              <span className="text-xs text-green-400 font-medium">LIVE</span>
+            </div>            <div className="flex justify-center items-center gap-8 text-gray-300">
+              <div className="flex items-center gap-2 transition-all duration-500">
                 <span className="text-3xl">🎵</span>
-                <span>50K+ Songs Shared</span>
+                <span>{totalSongs.toLocaleString()}+ Songs Shared</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 transition-all duration-500">
                 <span className="text-3xl">💕</span>
-                <span>1K+ Matches Made</span>
+                <span>{totalMatches.toLocaleString()}+ Matches Made</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 transition-all duration-500">
                 <span className="text-3xl">🎪</span>
-                <span>500+ Live Streams</span>
+                <span>{liveStreams}+ Live Streams</span>
               </div>
             </div>
           </div>
@@ -229,11 +251,10 @@ export default function Page() {
                     <div className="text-cyan-200 text-sm">@Synthwave</div>
                   </div>
                 </div>
-                <div className="p-6 bg-black/40 backdrop-blur-sm">
-                  <div className="flex items-center justify-between">
+                <div className="p-6 bg-black/40 backdrop-blur-sm">                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm font-semibold">129 viewers</span>
+                      <span className="text-green-400 text-sm font-semibold">{room1Viewers} viewers</span>
                     </div>
                     <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
                       LIVE
@@ -255,11 +276,10 @@ export default function Page() {
                     <div className="text-pink-200 text-sm">@Bassline</div>
                   </div>
                 </div>
-                <div className="p-6 bg-black/40 backdrop-blur-sm">
-                  <div className="flex items-center justify-between">
+                <div className="p-6 bg-black/40 backdrop-blur-sm">                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm font-semibold">69 viewers</span>
+                      <span className="text-green-400 text-sm font-semibold">{room2Viewers} viewers</span>
                     </div>
                     <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
                       LIVE
@@ -281,11 +301,10 @@ export default function Page() {
                     <div className="text-green-200 text-sm">@Melody</div>
                   </div>
                 </div>
-                <div className="p-6 bg-black/40 backdrop-blur-sm">
-                  <div className="flex items-center justify-between">
+                <div className="p-6 bg-black/40 backdrop-blur-sm">                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm font-semibold">78 viewers</span>
+                      <span className="text-green-400 text-sm font-semibold">{room3Viewers} viewers</span>
                     </div>
                     <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
                       LIVE
