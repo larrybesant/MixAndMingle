@@ -6,16 +6,12 @@ import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useLanguagePreference, useTranslation } from '@/hooks/useLanguagePreference';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { language, setLanguage, availableLanguages, getCurrentLanguage } = useLanguagePreference();
-  const { t } = useTranslation();
   const router = useRouter();
 
   const checkProfileAndRedirect = async (userId: string) => {
@@ -136,36 +132,9 @@ export default function LoginPage() {
     }
     checkOnMount();
   }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-2 sm:px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
-      {/* Language Selector in top-right */}
-      <div className="absolute top-4 right-4">
-        <Select value={language} onValueChange={setLanguage}>
-          <SelectTrigger className="w-auto bg-black/40 border-gray-600 text-white text-sm">
-            <SelectValue>
-              <div className="flex items-center gap-2">
-                <span>{getCurrentLanguage().flag}</span>
-                <span className="hidden sm:inline">{getCurrentLanguage().name}</span>
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="bg-gray-900 border-gray-600">
-            {availableLanguages.map((lang) => (
-              <SelectItem 
-                key={lang.code} 
-                value={lang.code}
-                className="text-white hover:bg-gray-800 focus:bg-gray-800"
-              >
-                <div className="flex items-center gap-2">
-                  <span>{lang.flag}</span>
-                  <span>{lang.name}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       <div className="max-w-xs sm:max-w-sm w-full space-y-6">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -173,8 +142,9 @@ export default function LoginPage() {
             <span className="text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)] font-extrabold">MIX</span>
             <span className="text-orange-400 text-5xl mx-2 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)] font-serif transform rotate-6 inline-block">𝄞</span>
             <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-extrabold">MINGLE</span>
-          </div>          <h1 className="text-2xl font-bold text-white">{t('login.title')}</h1>
-          <p className="text-gray-400 text-sm mt-2">{t('login.subtitle')}</p>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
+          <p className="text-gray-400 text-sm mt-2">Sign in to continue your musical journey</p>
         </div>
 
         {/* Error Message */}
@@ -184,10 +154,11 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Login Form */}        <div className="space-y-4">
+        {/* Login Form */}
+        <div className="space-y-4">
           <Input
             type="email"
-            placeholder={t('login.email')}
+            placeholder="Email"
             className="w-full bg-black/40 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -196,7 +167,7 @@ export default function LoginPage() {
 
           <Input
             type="password"
-            placeholder={t('login.password')}
+            placeholder="Password"
             className="w-full bg-black/40 text-white placeholder-white/60 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -220,9 +191,9 @@ export default function LoginPage() {
             {loading ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                {t('login.signingIn')}
+                Signing In...
               </div>
-            ) : t('login.signIn')}
+            ) : 'Sign In'}
           </Button>
         </div>
 
@@ -230,8 +201,9 @@ export default function LoginPage() {
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-gray-600" />
-          </div>          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-black px-2 text-gray-400">{t('login.continueWith')}</span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-black px-2 text-gray-400">Or continue with</span>
           </div>
         </div>
 
@@ -250,21 +222,21 @@ export default function LoginPage() {
           ) : (
             <>
               <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
-              {t('login.continueWithGoogle')}
+              Continue with Google
             </>
           )}
         </Button>
 
         <div className="text-center space-y-2">
           <p className="text-sm text-gray-400">
-            {t('login.noAccount')}{' '}
+            Don't have an account?{' '}
             <a href="/signup" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
-              {t('login.signUp')}
+              Sign Up
             </a>
           </p>
           <p className="text-xs text-gray-500">
             <a href="/forgot-password" className="hover:text-gray-400 transition-colors">
-              {t('login.forgotPassword')}
+              Forgot Password?
             </a>
           </p>
         </div>

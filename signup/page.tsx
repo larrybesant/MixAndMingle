@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useLanguagePreference, useTranslation, LANGUAGES } from "@/hooks/useLanguagePreference"
 
 export default function SignupPage() {
   const [username, setUsername] = useState("")
@@ -12,6 +14,8 @@ export default function SignupPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const { language, setLanguage, availableLanguages } = useLanguagePreference()
+  const { t } = useTranslation()
   const router = useRouter()
 
   // Helper to sanitize input (remove HTML tags, trim, limit length)
@@ -31,20 +35,15 @@ export default function SignupPage() {
   // Helper to validate password (min 8 chars)
   function isValidPassword(pw: string): boolean {
     return pw.length >= 8
-  }
-  const handleSignUp = async (e: React.FormEvent) => {
+  }  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🚀 Form submitted!"); // Debug log
     setLoading(true)
     setError("")
-    
-    try {
+      try {
       // Sanitize and validate inputs
       const cleanUsername = sanitizeInput(username, 20)
       const cleanEmail = sanitizeInput(email, 100)
       const cleanPassword = password.trim()
-      
-      console.log("📝 Form data:", { cleanUsername, cleanEmail, passwordLength: cleanPassword.length }); // Debug log
       
       if (!cleanUsername || !cleanEmail || !cleanPassword) {
         setError("All fields are required.")
@@ -70,51 +69,63 @@ export default function SignupPage() {
         setError("Password must be at least 8 characters.")
         setLoading(false)
         return
-      }      console.log("🔐 Attempting signup with Supabase..."); // Debug log
+      }
       
-      // Try signup with standard options first
+      // Attempt signup with Supabase
+        // Try signup with email confirmation disabled for testing
       const signupResult = await supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
         options: {
           data: { 
             username: cleanUsername,
-            full_name: cleanUsername // Add this for profile creation
+            full_name: cleanUsername
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      
-      console.log("📧 Signup result:", signupResult); // Debug log
+          // Remove email redirect to avoid magic link issues
+          // emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },      })
       
       if (signupResult.error) {
-        console.error("❌ Signup error:", signupResult.error); // Debug log
         setError(`Signup failed: ${signupResult.error.message}`)      } else if (signupResult.data?.user) {
-        console.log("✅ Signup successful! User:", signupResult.data.user.id); // Debug log
-        setError("") // Clear any errors
-        
-        // Show clear success message
-        setError("✅ Account created successfully! Redirecting to your dashboard...")
-        
-        // Check if user needs email confirmation
-        if (!signupResult.data.user.email_confirmed_at) {
-          // User needs email verification
-          setTimeout(() => {
-            router.push("/signup/check-email")
-          }, 2000)
-        } else {
-          // User is immediately confirmed, redirect to dashboard
-          setTimeout(() => {
-            router.push("/dashboard")
-          }, 2000)
+        try {
+          // Create profile record immediately after successful signup
+            const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: signupResult.data.user.id,
+                username: cleanUsername,
+                full_name: cleanUsername,
+                avatar_url: null,
+                bio: null,
+                music_preferences: [],
+                preferred_language: language,
+                is_dj: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }
+            ]);
+            if (profileError) {
+            // Don't fail completely, but let user know they may need to complete profile
+            setError("⚠️ Account created but profile setup incomplete. You'll be prompted to complete your profile.");
+          }
+        } catch (profileErr: unknown) {
+          // Continue with signup flow even if profile creation fails
         }
-      } else {
-        console.log("⚠️ Signup completed but no user data returned"); // Debug log
+        
+        setError("") // Clear any errors
+          // Show clear success message
+        setError("✅ Account created successfully! Testing language feature...")
+        
+        // For testing: go directly to dashboard since email confirmation might be disabled
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 2000)} else {
         setError("Account may have been created successfully. Please try logging in or check your email.")
       }
-    } catch (err: any) {
-      console.error("💥 Unexpected error:", err); // Debug log
-      setError(`Unexpected error: ${err.message || err}`)
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Unexpected error: ${errorMessage}`)
     } finally {
       setLoading(false)
     }
@@ -130,20 +141,13 @@ export default function SignupPage() {
   }
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900/20 to-black px-4">
-      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 rounded-lg p-8">
-        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-6">
-          Mix & Mingle Signup
+      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 rounded-lg p-8">        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-6">
+          {t('signup.title')}
         </h1>
         
-        {/* Debug info */}
-        <div className="mb-4 text-xs text-gray-500 bg-gray-900/30 p-2 rounded">
-          Debug: Username: {username.length}, Email: {email.length}, Password: {password.length}, Loading: {loading ? 'true' : 'false'}
-        </div>
-        
-        <form onSubmit={handleSignUp} className="space-y-4">
-          <div>
+        <form onSubmit={handleSignUp} className="space-y-4">          <div>
             <Input
-              placeholder="Username (3-20 characters)"
+              placeholder={t('signup.username')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
@@ -158,7 +162,7 @@ export default function SignupPage() {
           <div>
             <Input
               type="email"
-              placeholder="Email address"
+              placeholder={t('signup.email')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
@@ -173,15 +177,45 @@ export default function SignupPage() {
           <div>
             <Input
               type="password"
-              placeholder="Password (minimum 8 characters)"
+              placeholder={t('signup.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
               autoComplete="new-password"
               required
-            />            {password && !isValidPassword(password) && (
+            />
+            {password && !isValidPassword(password) && (
               <p className="text-red-400 text-xs mt-1">Password must be at least 8 characters.</p>
             )}
+          </div>
+          
+          {/* Language Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              {t('signup.language')}
+            </label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger className="w-full bg-gray-900/50 border-gray-600 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 border-gray-600">
+                {availableLanguages.map((lang) => (
+                  <SelectItem 
+                    key={lang.code} 
+                    value={lang.code}
+                    className="text-white hover:bg-gray-800 focus:bg-gray-800"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{lang.flag}</span>
+                      <span>{lang.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-gray-400 text-xs mt-1">
+              {t('signup.languageHint')}
+            </p>
           </div>
           
           {error && (
@@ -193,34 +227,20 @@ export default function SignupPage() {
               {error}
             </div>
           )}
-          
-          {/* Main signup button */}
-          <Button
+            {/* Main signup button */}          <Button
             type="submit"
-            onClick={handleSignUp}
             disabled={loading}
             className="w-full mb-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Creating Account...
+                {t('signup.creatingAccount')}
               </div>
             ) : (
-              "Sign Up"
+              t('signup.createAccount')
             )}
           </Button>
-            {/* Test button for debugging */}
-          <button
-            type="button"
-            onClick={() => {
-              console.log("Test button clicked!");
-              alert('Test button works!');
-            }}
-            className="w-full mb-2 p-2 bg-gray-700 text-white rounded text-sm hover:bg-gray-600"
-          >
-            Test Button (Click to test if buttons work)
-          </button>
         </form>
         
         <Button
@@ -228,13 +248,13 @@ export default function SignupPage() {
           onClick={() => handleOAuth("google")}
           className="w-full mb-4 bg-white text-black hover:bg-gray-100 border border-gray-300"
         >
-          Sign Up with Google
+          {t('signup.signUpWithGoogle')}
         </Button>
         
         <div className="text-center text-sm text-gray-400">
-          Already have an account?{" "}
+          {t('signup.alreadyHaveAccount')}{" "}
           <a href="/login" className="text-purple-400 hover:text-purple-300 underline">
-            Sign In
+            {t('signup.signIn')}
           </a>
         </div>
       </div>
