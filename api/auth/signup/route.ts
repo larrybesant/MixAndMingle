@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { sendEmail, isEmailConfigured } from '@/lib/resend/client';
-import { welcomeEmailTemplate } from '@/lib/resend/templates';
+import { emailService } from '@/lib/email-client';
 
 export async function POST(request: Request) {
   try {
@@ -56,33 +55,23 @@ export async function POST(request: Request) {
         error: error.message,
         details: error
       }, { status: 400 });
-    }
-
-    // Check if user was created successfully
+    }    // Check if user was created successfully
     if (data.user) {
       let emailSent = false;
+      let emailProvider = null;
       let emailError = null;
 
-      // Try to send welcome email with Resend if configured
-      if (isEmailConfigured() && data.user.email_confirmed_at === null) {
+      // Try to send welcome email if email confirmation is required
+      if (data.user.email_confirmed_at === null) {
         try {
-          // Generate confirmation URL (this would typically come from Supabase, but we'll create a fallback)
+          // Generate confirmation URL
           const confirmationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback?type=signup&email=${encodeURIComponent(email)}`;
           
-          const emailData = welcomeEmailTemplate({
-            name: metadata?.name || metadata?.username || email.split('@')[0],
-            confirmationUrl,
-            email
-          });
-
-          const emailResult = await sendEmail({
-            to: email,
-            subject: emailData.subject,
-            html: emailData.html,
-            text: emailData.text
-          });
-
+          const emailResult = await emailService.sendSignupConfirmation(email, confirmationUrl);
+          
           emailSent = emailResult.success;
+          emailProvider = emailResult.provider;
+          
           if (!emailResult.success) {
             emailError = emailResult.error;
           }
@@ -91,6 +80,8 @@ export async function POST(request: Request) {
           emailError = error instanceof Error ? error.message : 'Unknown email error';
         }
       }
+
+      const emailStatus = emailService.getStatus();
 
       return NextResponse.json({ 
         message: 'User created successfully',
@@ -102,7 +93,8 @@ export async function POST(request: Request) {
         session: data.session ? 'Created' : 'Pending email confirmation',
         email: {
           sent: emailSent,
-          configured: isEmailConfigured(),
+          provider: emailProvider,
+          configured: emailStatus.resend.configured || emailStatus.supabase.configured,
           error: emailError
         },
         next_steps: data.user.email_confirmed_at 

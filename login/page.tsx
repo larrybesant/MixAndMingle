@@ -18,40 +18,57 @@ export default function LoginPage() {
   useEffect(() => {
     console.log('🌐 Current origin:', window.location.origin);
     console.log('🔗 OAuth redirect will be:', `${window.location.origin}/auth/callback`);
-  }, []);
-  const checkProfileAndRedirect = async (userId: string) => {
+  }, []);  const checkProfileAndRedirect = async (userId: string) => {
     try {
       console.log("🔍 Checking user profile for:", userId);
+      
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, username, bio, music_preferences, avatar_url, gender, relationship_style")
         .eq("id", userId)
         .single();
       
-      if (profileError) {
-        console.log("⚠️ Profile fetch error (will redirect to create-profile):", profileError.message);
+      if (profileError && profileError.code === 'PGRST116') {
+        // No profile exists - redirect to create profile
+        console.log("📝 No profile found, redirecting to create-profile");
         router.push("/create-profile");
+        return;
+      } else if (profileError) {
+        console.log("⚠️ Profile fetch error:", profileError.message);
+        // On error, let user access dashboard but show a notification
+        router.push("/dashboard?profile_error=true");
         return;
       }
       
-      console.log("📊 Profile data:", {
-        hasUsername: !!profileData?.username,
-        hasBio: !!profileData?.bio,
-        hasMusicPrefs: !!profileData?.music_preferences,
-        hasAvatar: !!profileData?.avatar_url
+      // Check profile completion - simplified logic
+      const profileComplete = !!(
+        profileData?.username?.trim() && 
+        profileData?.bio?.trim() && 
+        profileData?.music_preferences?.trim() &&
+        profileData?.avatar_url?.trim() &&
+        profileData?.gender?.trim()
+      );
+      
+      console.log("📊 Profile completion check:", {
+        hasUsername: !!profileData?.username?.trim(),
+        hasBio: !!profileData?.bio?.trim(),
+        hasMusicPrefs: !!profileData?.music_preferences?.trim(),
+        hasAvatar: !!profileData?.avatar_url?.trim(),
+        hasGender: !!profileData?.gender?.trim(),
+        isComplete: profileComplete
       });
       
-      if (!profileData || !profileData.username || !profileData.bio || !profileData.music_preferences || !profileData.avatar_url) {
-        console.log("🔧 Profile incomplete, redirecting to create-profile");
-        router.push("/create-profile");
+      if (!profileComplete) {
+        console.log("🔧 Profile incomplete, redirecting to setup");
+        router.push("/setup-profile");
       } else {
         console.log("✅ Profile complete, redirecting to dashboard");
         router.push("/dashboard");
       }
     } catch (error: any) {
       console.error("💥 Error checking profile:", error);
-      setError("Error checking profile. Redirecting to dashboard...");
-      router.push("/dashboard");
+      // Fallback to dashboard with error flag
+      router.push("/dashboard?login_error=true");
     }
   };const handleLogin = async () => {
     setError("");
