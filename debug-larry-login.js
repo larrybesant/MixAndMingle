@@ -80,14 +80,13 @@ async function debugLarryLogin() {
   }
   
   console.log('\\n💡 TROUBLESHOOTING STEPS:');
-  console.log('');
-  console.log('📧 If account exists but password is wrong:');
+  console.log('');  console.log('📧 If account exists but password is wrong:');
   console.log('1. Try password reset:');
-  console.log('   node -e "fetch(\\'http://localhost:3001/api/auth/reset-password\\', {method:\\'POST\\', headers:{\\'Content-Type\\':\\'application/json\\'}, body:JSON.stringify({email:\\'larrybesant@gmail.com\\'})}).then(r=>r.json()).then(console.log)"');
+  console.log('   node -e "fetch(\'http://localhost:3001/api/auth/reset-password\', {method:\'POST\', headers:{\'Content-Type\':\'application/json\'}, body:JSON.stringify({email:\'larrybesant@gmail.com\'})}).then(r=>r.json()).then(console.log)"');
   console.log('');
   console.log('🆕 If no account exists:');
   console.log('1. Create account first:');
-  console.log('   node -e "fetch(\\'http://localhost:3001/api/auth/signup\\', {method:\\'POST\\', headers:{\\'Content-Type\\':\\'application/json\\'}, body:JSON.stringify({email:\\'larrybesant@gmail.com\\',password:\\'newpassword123\\'})}).then(r=>r.json()).then(console.log)"');
+  console.log('   node -e "fetch(\'http://localhost:3001/api/auth/signup\', {method:\'POST\', headers:{\'Content-Type\':\'application/json\'}, body:JSON.stringify({email:\'larrybesant@gmail.com\',password:\'newpassword123\'})}).then(r=>r.json()).then(console.log)"');
   console.log('');
   console.log('🔧 If backend works but frontend fails:');
   console.log('1. Check browser console for JavaScript errors');

@@ -67,11 +67,11 @@ const tourSteps: TourStep[] = [
 ];
 
 interface OnboardingTourProps {
-  onComplete: () => void;
-  onSkip: () => void;
+  onCompleteAction: () => void;
+  onSkipAction: () => void;
 }
 
-export function OnboardingTour({ onComplete, onSkip }: OnboardingTourProps) {
+export function OnboardingTour({ onCompleteAction, onSkipAction }: OnboardingTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const { unlockAchievement, markTourComplete } = useOnboarding();
@@ -111,17 +111,16 @@ export function OnboardingTour({ onComplete, onSkip }: OnboardingTourProps) {
       setCurrentStep(prev => prev - 1);
     }
   };
-
   const handleComplete = async () => {
     await markTourComplete();
     await unlockAchievement('tour_master');
     setIsVisible(false);
-    onComplete();
+    onCompleteAction();
   };
 
   const handleSkip = () => {
     setIsVisible(false);
-    onSkip();
+    onSkipAction();
   };
 
   if (!isVisible) return null;

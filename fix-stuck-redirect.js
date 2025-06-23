@@ -70,11 +70,10 @@ async function fixStuckRedirect() {
   console.log('2. Look for error: "Profile check failed" or similar');
   console.log('3. Check Network tab for failed /profiles requests');
   console.log('4. Try incognito mode to avoid cached issues');
-  console.log('');
-  console.log('💻 DEVELOPER FIX:');
+  console.log('');  console.log('💻 DEVELOPER FIX:');
   console.log('The issue is in checkProfileAndRedirect() function');
-  console.log('It\\'s trying to check profiles table which may not exist');
-  console.log('or user doesn\\'t have permission to access it.');
+  console.log('It\'s trying to check profiles table which may not exist');
+  console.log('or user doesn\'t have permission to access it.');
   console.log('');
   console.log('🎯 RECOMMENDED ACTION:');
   console.log('Since your authentication is working perfectly,');
