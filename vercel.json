@@ -11,6 +11,10 @@
     }
   },
   "env": {
-    "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl"
+    "LIGHTNINGCSS_BINARY_TARGET": "linux-x64-musl",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://ywfjmsbyksehjgwalqum.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3Zmptc2J5a3NlaGpnd2FscXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczMzIwNjgsImV4cCI6MjA2MjkwODA2OH0.fXx5d7iRXgpJDB_jAKgtRa2pVoAPBHU9Rly0T14HsVs",
+    "NEXT_PUBLIC_APP_URL": "https://djmixandmingle.com",
+    "NODE_ENV": "production"
   }
 }
