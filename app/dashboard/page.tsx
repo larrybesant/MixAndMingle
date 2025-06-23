@@ -2,9 +2,12 @@
 
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useFriends, useRecentMessages } from "@/lib/friends-messages-hooks";
+import { useOnboarding } from "@/contexts/onboarding-context";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import ProgressTracker from "@/components/onboarding/ProgressTracker";
 import type { Profile } from "@/types/database";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,12 +26,18 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [formMessage, setFormMessage] = useState<string | null>(null);
+  const [formMessage, setFormMessage] = useState<string | null>(null);  const [showTour, setShowTour] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const { friends, loading: friendsLoading } = useFriends(user?.id || null);
   const { conversations, loading: messagesLoading } = useRecentMessages(user?.id || null);
-
+  const { 
+    onboardingState, 
+    getOnboardingProgress, 
+    markFirstLoginComplete,
+    shouldShowRetentionNudge 
+  } = useOnboarding();
   useEffect(() => {
     async function getUser() {
       const { data } = await supabase.auth.getUser();
@@ -37,11 +46,13 @@ export default function DashboardPage() {
         return;
       }
       setUser(data.user);
+      
       const { data: profileData } = await supabase
         .from("profiles")
         .select("id, full_name, username, avatar_url, bio, music_preferences, created_at, gender, relationship_style, bdsm_preferences, show_bdsm_public, is_dating_visible")
         .eq("id", data.user.id)
         .single();
+        
       if (profileData) {
         setProfile({
           id: String(profileData.id),
@@ -64,15 +75,54 @@ export default function DashboardPage() {
       } else {
         setProfile(null);
       }
-      // Redirect to onboarding if profile is incomplete
+      
+      // Redirect to profile setup if incomplete
       if (!profileData || !profileData.username || !profileData.bio || !profileData.music_preferences || !profileData.avatar_url) {
-        router.replace("/create-profile");
+        router.replace("/setup-profile");
         return;
       }
+      
       setLoading(false);
     }
     getUser();
   }, [router]);
+  // Check for tour trigger from URL params
+  useEffect(() => {
+    if (!searchParams) return;
+    
+    const showTourParam = searchParams.get('show_tour');
+    const loginError = searchParams.get('login_error');
+    const profileError = searchParams.get('profile_error');
+    
+    if (showTourParam === 'true' && !onboardingState.tourComplete) {
+      setShowTour(true);
+    }
+    
+    if (loginError === 'true') {
+      setFormMessage('There was an issue with your login. Please try again if you continue to experience problems.');
+    }
+    
+    if (profileError === 'true') {
+      setFormMessage('There was an issue loading your profile. Some features may not work correctly.');
+    }
+    
+    // Mark first login as complete
+    if (!onboardingState.firstLoginComplete) {
+      markFirstLoginComplete();
+    }
+  }, [searchParams, onboardingState, markFirstLoginComplete]);
+
+  // Auto-show tour for new users
+  useEffect(() => {
+    if (!loading && profile && !onboardingState.tourComplete && !showTour) {
+      // Show tour after a brief delay for new users
+      const timer = setTimeout(() => {
+        setShowTour(true);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, profile, onboardingState.tourComplete, showTour]);
 
   // Profile completeness logic
   function getProfileCompleteness(profile: DashboardProfile | null) {
@@ -99,15 +149,48 @@ export default function DashboardPage() {
   }
 
   if (loading) return <div className="text-white p-8 animate-pulse">Loading...</div>;
-
   return (
     <ErrorBoundary>
+      {/* Onboarding Tour */}
+      {showTour && (
+        <OnboardingTour
+          onComplete={() => {
+            setShowTour(false);
+            // Clean up URL param
+            const url = new URL(window.location.href);
+            url.searchParams.delete('show_tour');
+            window.history.replaceState({}, '', url.toString());
+          }}
+          onSkip={() => {
+            setShowTour(false);
+            // Clean up URL param
+            const url = new URL(window.location.href);
+            url.searchParams.delete('show_tour');
+            window.history.replaceState({}, '', url.toString());
+          }}
+        />
+      )}
+
       <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2 sm:px-0">
         <header>
           <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
           <div className="mb-2">Welcome, {profile?.username || user?.email || "User"}!</div>
           <div className="mb-8 text-gray-400">Your Profile</div>
         </header>
+
+        {/* Onboarding Progress Tracker */}
+        {shouldShowRetentionNudge() && getOnboardingProgress() < 100 && (
+          <div className="w-full max-w-md mb-6">
+            <ProgressTracker compact={true} />
+          </div>
+        )}
+
+        {/* Status Messages */}
+        {formMessage && (
+          <div className="mb-4 p-4 bg-blue-600 text-white rounded-lg max-w-md text-center">
+            {formMessage}
+          </div>
+        )}
         {/* Profile Editing Form */}
         <form
           className="flex flex-col gap-2 mb-6 w-full max-w-xs sm:max-w-md"
@@ -184,10 +267,43 @@ export default function DashboardPage() {
           )}
           {completeness < 100 && (
             <Link href="/create-profile" className="block mt-2 bg-blue-700 text-white px-4 py-2 rounded font-bold text-center hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400">Complete Profile</Link>
-          )}
-        </section>
+          )}        </section>
+        
+        {/* Main Navigation with Tour Targets */}
+        <nav className="flex flex-wrap gap-4 mb-8">
+          <Link 
+            href="/discover" 
+            data-tour="discover"
+            className="bg-purple-700 text-white px-4 py-2 rounded font-bold hover:bg-purple-800 transition focus:outline-none focus:ring-2 focus:ring-purple-400"
+          >
+            🎵 Discover Music
+          </Link>
+          <Link 
+            href="/friends" 
+            data-tour="friends"
+            className="bg-pink-700 text-white px-4 py-2 rounded font-bold hover:bg-pink-800 transition focus:outline-none focus:ring-2 focus:ring-pink-400"
+          >
+            👥 Find Friends
+          </Link>
+          <Link 
+            href="/messages" 
+            data-tour="messages"
+            className="bg-blue-700 text-white px-4 py-2 rounded font-bold hover:bg-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            💬 Messages
+          </Link>
+          <Link 
+            href="/go-live" 
+            data-tour="events"
+            className="bg-green-700 text-white px-4 py-2 rounded font-bold hover:bg-green-800 transition focus:outline-none focus:ring-2 focus:ring-green-400"
+          >
+            🎪 Go Live
+          </Link>
+        </nav>
+        
+        {/* Secondary Navigation */}
         <nav className="flex gap-4 mb-8">
-          <Link href="/dashboard/history" className="bg-purple-700 text-white px-4 py-2 rounded font-bold hover:bg-purple-800 transition focus:outline-none focus:ring-2 focus:ring-purple-400">My Stream History</Link>
+          <Link href="/dashboard/history" className="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-gray-400">My Stream History</Link>
           <Link href="/settings" className="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-gray-400">Settings</Link>
         </nav>
         {/* Friends List Section */}
