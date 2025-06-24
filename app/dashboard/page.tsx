@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useEffect, useState, Suspense } from "react";
@@ -529,4 +530,11 @@ function DashboardWithSearchParams() {
   );
 }
 
-export default DashboardWithSearchParams;
+// Fix: Export as default a function, not a value
+export default function Page() {
+  return (
+    <Suspense>
+      <DashboardWithSearchParams />
+    </Suspense>
+  );
+}

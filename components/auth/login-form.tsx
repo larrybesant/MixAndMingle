@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Eye, EyeOff, Mail, Lock, Github, Loader2 } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
-import { useToast } from '@/components/ui/toast-context';
+import { toast } from '@/hooks/use-toast';
 
 interface FormData {
   email: string;
@@ -40,7 +40,6 @@ export default function LoginPage() {
   
   const { signIn, signInWithOAuth, error, clearError } = useAuth();
   const router = useRouter();
-  const { showToast } = useToast();
 
   // Validation functions
   const validateEmail = (email: string): boolean => {
@@ -97,7 +96,7 @@ export default function LoginPage() {
       }, 15000);
       const { error: signInError } = await signIn(formData.email, formData.password);
       if (signInError) {
-        showToast(signInError.message, 'error');
+        toast({ title: 'Login Error', description: signInError.message, variant: 'destructive' });
         if (signInError.message.includes('Invalid login credentials')) {
           setErrors({ general: 'Invalid email or password. Please check your credentials.' });
         } else if (signInError.message.includes('Email not confirmed')) {
@@ -108,7 +107,7 @@ export default function LoginPage() {
           setErrors({ general: signInError.message });
         }
       } else {
-        showToast('Login successful! Redirecting...', 'success');
+        toast({ title: 'Login successful!', description: 'Redirecting to your dashboard...', variant: 'success' });
         if (typeof window !== 'undefined') console.log('Redirecting to /dashboard...');
         router.push('/dashboard');
         setTimeout(() => {

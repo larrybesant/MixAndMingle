@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Eye, EyeOff, Mail, Lock, User, Github, Loader2 } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
-import { useToast } from '@/components/ui/toast-context';
+import { toast } from '@/hooks/use-toast';
 
 interface FormData {
   fullName: string;
@@ -47,7 +47,6 @@ export default function SignupPage() {
   
   const { signUp, signInWithOAuth, error, clearError } = useAuth();
   const router = useRouter();
-  const { showToast } = useToast();
 
   // Validation functions
   const validateEmail = (email: string): boolean => {
@@ -157,7 +156,7 @@ export default function SignupPage() {
           setErrors({ general: signUpError.message });
         }
       } else {
-        showToast('Signup successful! Check your email to verify your account.', 'success');
+        toast({ title: 'Signup successful!', description: 'Check your email to verify your account.', variant: 'success' });
         setIsSuccess(true);
         // Redirect to email verification page
         setTimeout(() => {

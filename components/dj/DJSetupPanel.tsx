@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useDJAudio } from '@/lib/audio/use-dj-audio';
+import useDJAudio from '@/lib/audio/use-dj-audio';
 import { getSupportedDJControllers, getAudioLatencyTips } from '@/lib/audio/dj-audio-system';
 import { 
   Headphones, 
