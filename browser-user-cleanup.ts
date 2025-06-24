@@ -21,13 +21,13 @@ export async function clearAllUsersFromBrowser() {
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, username, full_name, email')
-    
-    if (profilesError) {
+      if (profilesError) {
       console.error('❌ Error fetching profiles:', profilesError)
       console.log('🔧 Trying admin API cleanup instead...')
       return await useAdminAPICleanup()
     }
-      console.log(`Found ${profiles?.length || 0} profiles:`)
+
+    console.log(`Found ${profiles?.length || 0} profiles:`)
     profiles?.forEach((profile: any, index: number) => {
       console.log(`${index + 1}. ${profile.username || profile.full_name || 'No name'} (${profile.id})`)
     })
