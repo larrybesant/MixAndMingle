@@ -9,19 +9,20 @@ export default function LanguageTestPage() {
   const { language, setLanguage, availableLanguages, getCurrentLanguage } = useLanguagePreference()
   const { t } = useTranslation()
   const [testMessage, setTestMessage] = useState('')
-
   const testLanguageFeature = () => {
     const currentLang = getCurrentLanguage()
     setTestMessage(`✅ Language feature working! Current: ${currentLang.flag} ${currentLang.name}`)
     
-    // Test localStorage
-    const stored = localStorage.getItem('preferredLanguage')
-    console.log('📦 localStorage test:', stored)
-    
-    // Dispatch language change event
-    window.dispatchEvent(new CustomEvent('languageChanged', { 
-      detail: { language } 
-    }))
+    // Test localStorage (only in browser)
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('preferredLanguage')
+      console.log('📦 localStorage test:', stored)
+      
+      // Dispatch language change event
+      window.dispatchEvent(new CustomEvent('languageChanged', { 
+        detail: { language } 
+      }))
+    }
   }
 
   return (
