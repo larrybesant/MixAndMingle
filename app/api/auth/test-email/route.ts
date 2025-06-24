@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_KEY);
-
 export async function POST(request: NextRequest) {
   try {
     const { to, subject, html } = await request.json();
@@ -13,6 +11,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Only initialize Resend if the key is present
+    const resend = new Resend(process.env.RESEND_KEY);
 
     // Test sending email (in production, we would validate the recipient)
     const { data, error } = await resend.emails.send({
