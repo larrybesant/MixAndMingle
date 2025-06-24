@@ -342,11 +342,20 @@ function DashboardWithSearchParams() {
             <div className="lg:col-span-1 space-y-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
                 <h3 className="text-lg font-bold mb-6 text-center">Explore Mix & Mingle</h3>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-4">                  <Link 
+                    href="/communities" 
+                    data-tour="communities"
+                    className="group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white p-6 rounded-xl font-bold transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 text-center"
+                  >
+                    <div className="text-3xl mb-2">🏘️</div>
+                    <div className="text-lg mb-1">Communities</div>
+                    <div className="text-sm opacity-80">Join groups & connect</div>
+                  </Link>
+                  
                   <Link 
                     href="/discover" 
                     data-tour="discover"
-                    className="group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white p-6 rounded-xl font-bold transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 text-center"
+                    className="group bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-6 rounded-xl font-bold transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 text-center"
                   >
                     <div className="text-3xl mb-2">🎵</div>
                     <div className="text-lg mb-1">Discover Music</div>
