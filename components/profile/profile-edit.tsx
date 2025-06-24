@@ -310,6 +310,7 @@ export default function ProfileEditPage() {
                         size="sm"
                         className="border-purple-400 text-purple-400 hover:bg-purple-400/10"
                         asChild
+                        aria-label="Change profile avatar"
                       >
                         <span>
                           <Upload className="w-4 h-4 mr-2" />
@@ -420,6 +421,7 @@ export default function ProfileEditPage() {
                           type="button"
                           onClick={() => removeMusicGenre(genre)}
                           className="ml-1 hover:bg-purple-400/20 rounded-full p-0.5"
+                          aria-label={`Remove genre ${genre}`}
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -472,7 +474,7 @@ export default function ProfileEditPage() {
                 
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !validateForm()}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                 >
                   {isLoading ? (

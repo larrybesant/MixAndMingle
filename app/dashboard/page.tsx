@@ -12,6 +12,7 @@ import type { Profile } from "@/types/database";
 import Image from "next/image";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
+import { useAuth } from '@/contexts/auth-context';
 
 // Extend Profile for dashboard (temporary until unified in types/database.ts)
 type DashboardProfile = Profile & {
@@ -24,6 +25,7 @@ type DashboardProfile = Profile & {
 
 // Component that handles search params (needs Suspense boundary)
 function DashboardWithSearchParams() {
+  const { user: contextUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,29 +34,48 @@ function DashboardWithSearchParams() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { friends, loading: friendsLoading } = useFriends(user?.id || null);
-  const { conversations, loading: messagesLoading } = useRecentMessages(user?.id || null);
+  // Onboarding hooks
   const { 
     onboardingState, 
     getOnboardingProgress, 
     markFirstLoginComplete,
     shouldShowRetentionNudge 
   } = useOnboarding();
+
+  // Friends and messages hooks
+  const { friends = [], loading: friendsLoading } = useFriends(user?.id || null);
+  const { conversations = [], loading: messagesLoading } = useRecentMessages(user?.id || null);
+
+  // Use context user if available
+  useEffect(() => {
+    if (contextUser) {
+      setUser(contextUser);
+    }
+  }, [contextUser]);
+
+  // Only fetch user from supabase if contextUser is not available
   useEffect(() => {
     async function getUser() {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        router.replace("/login");
-        return;
+      if (!contextUser) {
+        const { data } = await supabase.auth.getUser();
+        if (!data.user) {
+          router.replace("/login");
+          return;
+        }
+        setUser(data.user);
       }
-      setUser(data.user);
-      
+    }
+    getUser();
+  }, [contextUser, router]);
+
+  useEffect(() => {
+    async function getProfile() {
+      if (!user) return;
       const { data: profileData } = await supabase
         .from("profiles")
         .select("id, full_name, username, avatar_url, bio, music_preferences, created_at, gender, relationship_style, bdsm_preferences, show_bdsm_public, is_dating_visible")
-        .eq("id", data.user.id)
+        .eq("id", user.id)
         .single();
-        
       if (profileData) {
         setProfile({
           id: String(profileData.id),
@@ -86,8 +107,8 @@ function DashboardWithSearchParams() {
       
       setLoading(false);
     }
-    getUser();
-  }, [router]);
+    if (user) getProfile();
+  }, [user, router]);
   // Check for tour trigger from URL params
   useEffect(() => {
     if (!searchParams) return;
@@ -148,6 +169,16 @@ function DashboardWithSearchParams() {
     if (!profile.avatar_url) missingFields.push("Avatar");
     if (!profile.gender) missingFields.push("Gender");
     if (!profile.relationship_style) missingFields.push("Relationship Style");
+  }
+
+  // Debug: log user/context state on mount and after login
+  useEffect(() => {
+    console.log('Dashboard mount:', { contextUser, user, profile, loading });
+  }, [contextUser, user, profile, loading]);
+
+  // Show loading spinner if user/context is not ready
+  if (!contextUser && loading) {
+    return <div className="text-white p-8 animate-pulse">Loading user session...</div>;
   }
 
   if (loading) return <div className="text-white p-8 animate-pulse">Loading...</div>;
@@ -498,10 +529,4 @@ function DashboardWithSearchParams() {
   );
 }
 
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={<div className="text-white p-8 animate-pulse">Loading...</div>}>
-      <DashboardWithSearchParams />
-    </Suspense>
-  );
-}
+export default DashboardWithSearchParams;
