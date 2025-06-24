@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useEffect, useState, Suspense } from "react";
@@ -169,6 +170,16 @@ function DashboardWithSearchParams() {
     if (!profile.avatar_url) missingFields.push("Avatar");
     if (!profile.gender) missingFields.push("Gender");
     if (!profile.relationship_style) missingFields.push("Relationship Style");
+  }
+
+  // Debug: log user/context state on mount and after login
+  useEffect(() => {
+    console.log('Dashboard mount:', { contextUser, user, profile, loading });
+  }, [contextUser, user, profile, loading]);
+
+  // Show loading spinner if user/context is not ready
+  if (!contextUser && loading) {
+    return <div className="text-white p-8 animate-pulse">Loading user session...</div>;
   }
 
   if (loading) return <div className="text-white p-8 animate-pulse">Loading...</div>;
@@ -519,4 +530,11 @@ function DashboardWithSearchParams() {
   );
 }
 
-export default DashboardWithSearchParams;
+// Fix: Export as default a function, not a value
+export default function Page() {
+  return (
+    <Suspense>
+      <DashboardWithSearchParams />
+    </Suspense>
+  );
+}
