@@ -310,141 +310,139 @@ export default function SetupProfilePage() {
       setLoading(false);
     }
   };
-
   const renderBasicInfoStep = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium mb-2">Username *</label>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Username *</label>
         <Input
           placeholder="Choose a unique username"
           value={profileData.username}
           onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
           maxLength={20}
-          className="w-full"
+          className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
         />
-        <p className="text-xs text-gray-500 mt-1">3-20 characters, letters, numbers, and underscores only</p>
+        <p className="text-xs text-gray-400 mt-1">3-20 characters, letters, numbers, and underscores only</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Bio *</label>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Bio *</label>
         <textarea
           placeholder="Tell everyone about yourself..."
           value={profileData.bio}
           onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
           maxLength={160}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full px-3 py-2 bg-gray-900/50 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none text-white placeholder-gray-400"
         />
-        <p className="text-xs text-gray-500 mt-1">{profileData.bio.length}/160 characters</p>
+        <p className="text-xs text-gray-400 mt-1">{profileData.bio.length}/160 characters</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Gender *</label>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Gender *</label>
         <select 
           value={profileData.gender} 
           onChange={(e) => setProfileData(prev => ({ ...prev, gender: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-gray-900/50 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
         >
-          <option value="">Select your gender</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="non-binary">Non-binary</option>
-          <option value="other">Other</option>
-          <option value="prefer-not-to-say">Prefer not to say</option>
+          <option value="" className="bg-gray-900 text-gray-400">Select your gender</option>
+          <option value="male" className="bg-gray-900 text-white">Male</option>
+          <option value="female" className="bg-gray-900 text-white">Female</option>
+          <option value="non-binary" className="bg-gray-900 text-white">Non-binary</option>
+          <option value="other" className="bg-gray-900 text-white">Other</option>
+          <option value="prefer-not-to-say" className="bg-gray-900 text-white">Prefer not to say</option>
         </select>
-      </div>      <div>
-        <label className="block text-sm font-medium mb-2">Profile Photo *</label>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Profile Photo *</label>
         <div className="space-y-3">
           <input
             type="file"
             accept="image/*"
             onChange={handlePhotoChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-gray-900/50 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700"
           />
           {photoPreview && (
             <div className="flex justify-center">
               <img 
                 src={photoPreview} 
                 alt="Photo preview" 
-                className="w-24 h-24 object-cover rounded-full border-2 border-gray-200"
+                className="w-24 h-24 object-cover rounded-full border-2 border-purple-500"
               />
             </div>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-400">
             Upload a clear photo of yourself (JPG, PNG, GIF, or WebP, max 5MB)
           </p>
         </div>
       </div>
     </div>
   );
-
   const renderMusicStep = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium mb-2">Music Preferences *</label>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Music Preferences *</label>
         <Input
           placeholder="e.g., House, Techno, Hip-Hop, Jazz..."
           value={profileData.music_preferences}
           onChange={(e) => setProfileData(prev => ({ ...prev, music_preferences: e.target.value }))}
           maxLength={100}
-          className="w-full"
+          className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
         />
-        <p className="text-xs text-gray-500 mt-1">What genres do you love?</p>
+        <p className="text-xs text-gray-400 mt-1">What genres do you love?</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">What are you looking for? *</label>
+        <label className="block text-sm font-medium mb-2 text-gray-300">What are you looking for? *</label>
         <select 
           value={profileData.relationship_style} 
           onChange={(e) => setProfileData(prev => ({ ...prev, relationship_style: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-gray-900/50 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-white"
         >
-          <option value="">Select your interest</option>
-          <option value="friendship">Just friends</option>
-          <option value="dating">Dating</option>
-          <option value="networking">Music networking</option>
-          <option value="casual">Casual connections</option>
-          <option value="serious">Serious relationship</option>
-          <option value="open">Open to anything</option>
+          <option value="" className="bg-gray-900 text-gray-400">Select your interest</option>
+          <option value="friendship" className="bg-gray-900 text-white">Just friends</option>
+          <option value="dating" className="bg-gray-900 text-white">Dating</option>
+          <option value="networking" className="bg-gray-900 text-white">Music networking</option>
+          <option value="casual" className="bg-gray-900 text-white">Casual connections</option>
+          <option value="serious" className="bg-gray-900 text-white">Serious relationship</option>
+          <option value="open" className="bg-gray-900 text-white">Open to anything</option>
         </select>
       </div>
     </div>
   );
-
   const renderLocationStep = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium mb-2">Location (Optional)</label>
+        <label className="block text-sm font-medium mb-2 text-gray-300">Location (Optional)</label>
         <Input
           placeholder="e.g., New York, NY"
           value={profileData.location}
           onChange={(e) => setProfileData(prev => ({ ...prev, location: e.target.value }))}
           maxLength={50}
-          className="w-full"
+          className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
         />
-        <p className="text-xs text-gray-500 mt-1">Help others find local music events and connections</p>
+        <p className="text-xs text-gray-400 mt-1">Help others find local music events and connections</p>
       </div>
 
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="font-medium text-blue-900 mb-2">🎉 You're almost done!</h3>
-        <p className="text-sm text-blue-700">
+      <div className="bg-purple-900/30 border border-purple-500/30 p-4 rounded-lg">
+        <h3 className="font-medium text-purple-300 mb-2">🎉 You're almost done!</h3>
+        <p className="text-sm text-gray-300">
           Your profile is looking great! Click "Complete Setup" to join the community and discover amazing music connections.
         </p>
       </div>
     </div>
   );
-
   const renderCompleteStep = () => (
     <div className="text-center space-y-6">
       <div className="animate-bounce">
         🎉
       </div>
-      <h2 className="text-2xl font-bold text-green-600">Welcome to Mix & Mingle!</h2>
-      <p className="text-gray-600">
+      <h2 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">Welcome to Mix & Mingle!</h2>
+      <p className="text-gray-300">
         Your profile has been created successfully. Get ready to discover amazing music and connect with fellow music lovers!
       </p>
       <div className="animate-pulse">
-        <Badge variant="outline" className="bg-green-50 text-green-700">
+        <Badge variant="outline" className="bg-green-900/30 border-green-500 text-green-400">
           Redirecting to your dashboard...
         </Badge>
       </div>
@@ -460,12 +458,11 @@ export default function SetupProfilePage() {
       default: return 'Profile Setup';
     }
   };
-
   if (currentStep === 'complete') {
     return (
       <ErrorBoundary>
-        <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+        <div className="min-h-screen bg-gradient-to-br from-black via-purple-900/20 to-black flex items-center justify-center p-4">
+          <Card className="w-full max-w-md bg-black/80 border border-purple-500/30">
             <CardContent className="p-8">
               {renderCompleteStep()}
             </CardContent>
@@ -477,45 +474,42 @@ export default function SetupProfilePage() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-black via-purple-900/20 to-black p-4">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">🎵 Complete Your Profile</h1>
-            <p className="text-gray-600">Let's get you set up to connect with the music community</p>
-          </div>
-
-          {/* Progress Bar */}
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">🎵 Complete Your Profile</h1>
+            <p className="text-gray-300">Let's get you set up to connect with the music community</p>
+          </div>          {/* Progress Bar */}
           <div className="mb-8">
-            <div className="flex justify-between text-sm text-gray-500 mb-2">
+            <div className="flex justify-between text-sm text-gray-400 mb-2">
               <span>Step {currentStep === 'basic' ? 1 : currentStep === 'music' ? 2 : 3} of 3</span>
               <span>{getStepProgress()}% complete</span>
             </div>
-            <Progress value={getStepProgress()} className="h-2" />
+            <Progress value={getStepProgress()} className="h-2 bg-gray-800" />
           </div>
 
           {/* Main Card */}
-          <Card>
+          <Card className="bg-black/80 border border-purple-500/30">
             <CardHeader>
-              <CardTitle>{getStepTitle()}</CardTitle>
+              <CardTitle className="text-white">{getStepTitle()}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                <div className="bg-red-900/20 border border-red-500 text-red-400 px-4 py-3 rounded">
                   {error}
                 </div>
               )}
 
               {currentStep === 'basic' && renderBasicInfoStep()}
               {currentStep === 'music' && renderMusicStep()}
-              {currentStep === 'location' && renderLocationStep()}
-
-              {/* Navigation Buttons */}
+              {currentStep === 'location' && renderLocationStep()}              {/* Navigation Buttons */}
               <div className="flex justify-between pt-6">
                 <Button
                   variant="outline"
                   onClick={handleBack}
                   disabled={currentStep === 'basic' || loading}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
                 >
                   Back
                 </Button>
@@ -523,7 +517,7 @@ export default function SetupProfilePage() {
                 <Button
                   onClick={handleNext}
                   disabled={!validateStep() || loading}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                 >
                   {loading ? (
                     <>
