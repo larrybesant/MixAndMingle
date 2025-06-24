@@ -6,7 +6,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
 import { SafetyProvider } from "@/contexts/safety-context";
 import { ThemeProvider } from "@/contexts/theme-provider";
-import { ToastContextProvider } from '@/components/ui/toast-context';
+import ClientProviders from '@/components/ui/ClientProviders';
 // import { Analytics } from "@vercel/analytics/react"; // Uncomment if you install this package
 import Image from 'next/image';
 import { useAuth } from '@/contexts/auth-context';
@@ -115,10 +115,10 @@ export default function RootLayout({
             <AuthProvider>
               <OnboardingProvider>
                 <SafetyProvider>
-                  <ToastContextProvider>
+                  <ClientProviders>
                     <Header />
                     {children}
-                  </ToastContextProvider>
+                  </ClientProviders>
                 </SafetyProvider>
               </OnboardingProvider>
             </AuthProvider>
