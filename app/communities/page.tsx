@@ -10,6 +10,7 @@ import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import Image from "next/image";
 import toast, { Toaster } from 'react-hot-toast';
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export default function CommunitiesPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,7 +33,6 @@ export default function CommunitiesPage() {
     }
     getUser();
   }, [router]);
-
   useEffect(() => {
     async function fetchCommunities() {
       if (!user) return;
@@ -54,6 +54,79 @@ export default function CommunitiesPage() {
     }
 
     fetchCommunities();
+  }, [user, selectedCategory, searchQuery]);
+
+  // Real-time subscriptions for community updates
+  useEffect(() => {
+    if (!user) return;
+
+    // Subscribe to community member changes for real-time member count updates
+    const memberSubscription = supabase
+      .channel('community-members')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'community_members' 
+        }, 
+        (payload: any) => {
+          // Refresh communities when someone joins/leaves
+          setCommunities(prev => prev.map(community => {
+            if (community.id === payload.new?.community_id || community.id === payload.old?.community_id) {
+              // Update member count based on action
+              const isJoin = payload.eventType === 'INSERT';
+              const isLeave = payload.eventType === 'DELETE';
+              return {
+                ...community,
+                member_count: isJoin 
+                  ? community.member_count + 1 
+                  : isLeave 
+                    ? Math.max(0, community.member_count - 1)
+                    : community.member_count
+              };
+            }
+            return community;
+          }));
+        }
+      )
+      .subscribe();
+
+    // Subscribe to new communities
+    const communitySubscription = supabase
+      .channel('communities')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'communities' 
+        }, 
+        async (payload: any) => {
+          // Add new community to the list if it matches current filters
+          if (payload.new) {
+            const newCommunity = payload.new as any;
+            if ((!selectedCategory || newCommunity.category_id === selectedCategory) &&
+                (!searchQuery || newCommunity.name.toLowerCase().includes(searchQuery.toLowerCase()))) {
+              // Fetch full community details
+              try {
+                const communityData = await CommunityService.getPublicCommunities(0, 1, undefined, undefined);
+                const latestCommunity = communityData.find(c => c.id === newCommunity.id);
+                if (latestCommunity) {
+                  setCommunities(prev => [latestCommunity, ...prev]);
+                  toast.success(`New community "${newCommunity.name}" was created!`);
+                }
+              } catch (error) {
+                console.error('Error fetching new community details:', error);
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      memberSubscription.unsubscribe();
+      communitySubscription.unsubscribe();
+    };
   }, [user, selectedCategory, searchQuery]);
 
   const handleCreateCommunity = () => {
@@ -299,15 +372,16 @@ function CreateCommunityModal({
 }: { 
   onClose: () => void;
   onSuccess: () => void;
-}) {
-  const [formData, setFormData] = useState({
+}) {  const [formData, setFormData] = useState({
     name: "",
     description: "",
     category_id: "",
     is_private: false,
     max_members: 1000,
     rules: "",
-    tags: [] as string[]
+    tags: [] as string[],
+    avatar_url: "",
+    banner_url: ""
   });
   const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -368,9 +442,7 @@ function CreateCommunityModal({
               <div className="bg-red-600/20 border border-red-600/30 text-red-300 px-4 py-3 rounded-lg">
                 {error}
               </div>
-            )}
-
-            <div>
+            )}            <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Community Name *
               </label>
@@ -382,6 +454,36 @@ function CreateCommunityModal({
                 placeholder="Enter community name"
                 maxLength={50}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Community Avatar
+              </label>
+              <div className="mb-4">
+                <ImageUpload
+                  onImageUploadedAction={(url) => setFormData(prev => ({ ...prev, avatar_url: url }))}
+                  currentImage={formData.avatar_url}
+                  type="avatar"
+                  className="w-32 h-32 mx-auto"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Community Banner
+              </label>
+              <div className="mb-4">
+                <ImageUpload
+                  onImageUploadedAction={(url) => setFormData(prev => ({ ...prev, banner_url: url }))}
+                  currentImage={formData.banner_url}
+                  type="banner"
+                  className="w-full h-32"
+                  disabled={loading}
+                />
+              </div>
             </div>
 
             <div>

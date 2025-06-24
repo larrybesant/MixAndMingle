@@ -21,12 +21,25 @@ export default function CommunityDetailPage() {  const params = useParams();
   }
   
   const [user, setUser] = useState<User | null>(null);
-  const [community, setCommunity] = useState<CommunityWithDetails | null>(null);  const [loading, setLoading] = useState(true);
+  const [community, setCommunity] = useState<CommunityWithDetails | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'events' | 'members'>('posts');
   const [newPostContent, setNewPostContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [communityMembers, setCommunityMembers] = useState<Array<{
+    id: string;
+    user_id: string;
+    role: string;
+    joined_at: string;
+    user: {
+      id: string;
+      username: string;
+      avatar_url: string | null;
+    };
+  }>>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   useEffect(() => {
     async function getUser() {
@@ -39,7 +52,6 @@ export default function CommunityDetailPage() {  const params = useParams();
     }
     getUser();
   }, [router]);
-
   useEffect(() => {
     async function fetchCommunity() {
       if (!user || !communityId) return;
@@ -58,6 +70,89 @@ export default function CommunityDetailPage() {  const params = useParams();
 
     fetchCommunity();
   }, [user, communityId, router]);
+
+  // Real-time subscriptions for live updates
+  useEffect(() => {
+    if (!user || !communityId) return;
+
+    // Subscribe to new posts in this community
+    const postsSubscription = supabase
+      .channel(`community-posts-${communityId}`)
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'community_posts',
+          filter: `community_id=eq.${communityId}`
+        },
+        async (payload: any) => {
+          if (payload.new) {
+            // Refresh community data to get updated posts
+            try {
+              const updatedCommunity = await CommunityService.getCommunityById(communityId);
+              setCommunity(updatedCommunity);
+              
+              // Show notification if post is from another user
+              if (payload.new.author_id !== user.id) {
+                toast.success('New post added to community!');
+              }
+            } catch (error) {
+              console.error('Error fetching updated community:', error);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to member changes for this community
+    const membersSubscription = supabase
+      .channel(`community-members-${communityId}`)
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'community_members',
+          filter: `community_id=eq.${communityId}`
+        },
+        (payload: any) => {
+          // Update member count
+          setCommunity(prev => {
+            if (!prev) return prev;
+            const isJoin = payload.eventType === 'INSERT';
+            const isLeave = payload.eventType === 'DELETE';
+            return {
+              ...prev,
+              member_count: isJoin 
+                ? prev.member_count + 1 
+                : isLeave 
+                  ? Math.max(0, prev.member_count - 1)
+                  : prev.member_count
+            };
+          });
+
+          // Refresh members list if on members tab
+          if (activeTab === 'members') {
+            fetchCommunityMembers();
+          }
+
+          // Show notification for member changes (except own actions)
+          if (payload.new?.user_id !== user.id && payload.old?.user_id !== user.id) {
+            if (payload.eventType === 'INSERT') {
+              toast.success('New member joined the community!');
+            } else if (payload.eventType === 'DELETE') {
+              toast('A member left the community');
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      postsSubscription.unsubscribe();
+      membersSubscription.unsubscribe();
+    };
+  }, [user, communityId, activeTab]);
+
   const handleJoinCommunity = async () => {
     if (!community || !user) return;
     
@@ -114,6 +209,45 @@ export default function CommunityDetailPage() {  const params = useParams();
       setIsPosting(false);
     }
   };
+
+  // Fetch community members
+  const fetchCommunityMembers = async () => {
+    if (!communityId) return;
+    
+    try {
+      setLoadingMembers(true);
+      const { data, error } = await supabase
+        .from('community_members')
+        .select(`
+          id,
+          user_id,
+          role,
+          joined_at,
+          user:users (
+            id,
+            username,
+            avatar_url
+          )
+        `)
+        .eq('community_id', communityId)
+        .order('joined_at', { ascending: false });
+
+      if (error) throw error;
+      setCommunityMembers(data || []);
+    } catch (error) {
+      console.error('Error fetching community members:', error);
+      toast.error('Failed to load community members');
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  // Load members when switching to members tab
+  useEffect(() => {
+    if (activeTab === 'members' && communityMembers.length === 0) {
+      fetchCommunityMembers();
+    }
+  }, [activeTab, communityId]);
 
   if (loading) {
     return (
@@ -358,15 +492,69 @@ export default function CommunityDetailPage() {  const params = useParams();
         )}
 
         {activeTab === 'members' && (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-4">👥</div>
-            <h3 className="text-xl font-semibold mb-2">Members</h3>
-            <p className="text-gray-400">
-              This community has {community.member_count} members
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Member list feature coming soon
-            </p>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Members ({community.member_count})</h3>
+              
+            </div>
+
+            {/* Members List */}
+            {loadingMembers ? (
+              <div className="animate-pulse flex flex-col gap-4">
+                {[...Array(3)].map((_, index) => (
+                  <div key={index} className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-700 rounded-full" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-700 rounded-full mb-2" />
+                      <div className="h-3 bg-gray-700 rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {communityMembers.length > 0 ? (
+                  communityMembers.map(member => (
+                    <div key={member.id} className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
+                        {member.user.avatar_url ? (
+                          <Image
+                            src={member.user.avatar_url}
+                            alt={member.user.username}
+                            width={48}
+                            height={48}
+                            className="rounded-full"
+                          />
+                        ) : (
+                          <span className="text-xl">👤</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-semibold">{member.user.username}</span>
+                          {member.role === 'admin' && (
+                            <span className="bg-purple-600/20 text-purple-400 text-xs rounded-full px-3 py-1">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          Joined on {new Date(member.joined_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-4xl mb-4">👥</div>
+                    <h3 className="text-xl font-semibold mb-2">No members found</h3>
+                    <p className="text-gray-400">
+                      This community has no members yet. Be the first to join!
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
