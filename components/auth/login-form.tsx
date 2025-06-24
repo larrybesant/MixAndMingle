@@ -107,7 +107,7 @@ export default function LoginPage() {
           setErrors({ general: signInError.message });
         }
       } else {
-        toast({ title: 'Login successful!', description: 'Redirecting to your dashboard...', variant: 'success' });
+        toast({ title: 'Login successful!', description: 'Redirecting to your dashboard...', variant: 'default' });
         if (typeof window !== 'undefined') console.log('Redirecting to /dashboard...');
         router.push('/dashboard');
         setTimeout(() => {

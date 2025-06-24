@@ -156,7 +156,7 @@ export default function SignupPage() {
           setErrors({ general: signUpError.message });
         }
       } else {
-        toast({ title: 'Signup successful!', description: 'Check your email to verify your account.', variant: 'success' });
+        toast({ title: 'Signup successful!', description: 'Check your email to verify your account.', variant: 'default' });
         setIsSuccess(true);
         // Redirect to email verification page
         setTimeout(() => {
