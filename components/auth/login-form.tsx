@@ -150,6 +150,7 @@ export default function LoginPage() {
 
         <CardContent className="space-y-4">
           {/* OAuth Buttons */}
+          {/*
           <div className="space-y-2">
             <Button
               type="button"
@@ -181,6 +182,7 @@ export default function LoginPage() {
               Continue with GitHub
             </Button>
           </div>
+          */}
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -243,17 +245,26 @@ export default function LoginPage() {
                   placeholder="Password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="pl-10 pr-10 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400"
+                  className="pl-10 pr-24 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400"
                   aria-invalid={!!errors.password}
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-white"
+                  className="absolute right-10 top-3 h-4 w-4 text-gray-400 hover:text-white"
                   aria-label="Toggle password visibility"
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => alert(`Password: ${formData.password || '(empty)'}`)}
+                  className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-white"
+                  aria-label="Show password in alert"
+                  tabIndex={0}
+                >
+                  <span role="img" aria-label="Check password">🔍</span>
                 </button>
               </div>
               {errors.password && (

@@ -224,6 +224,7 @@ export default function SignupPage() {
 
         <CardContent className="space-y-4">
           {/* OAuth Buttons */}
+          {/*
           <div className="space-y-2">
             <Button
               type="button"
@@ -255,6 +256,7 @@ export default function SignupPage() {
               Continue with GitHub
             </Button>
           </div>
+          */}
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

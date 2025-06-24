@@ -25,15 +25,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>      <body className={`${inter.className} antialiased`}>        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
-            <OnboardingProvider>
-              <SafetyProvider>
-                {children}
-              </SafetyProvider>
-            </OnboardingProvider>
-          </AuthProvider>
-        </ThemeProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
+        <main id="main-content" role="main">
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <AuthProvider>
+              <OnboardingProvider>
+                <SafetyProvider>
+                  {children}
+                </SafetyProvider>
+              </OnboardingProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </main>
         {/* <Analytics /> */}
       </body>
     </html>
