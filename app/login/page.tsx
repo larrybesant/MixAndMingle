@@ -17,19 +17,30 @@ export default function LoginPage() {
   const { language, setLanguage, availableLanguages, getCurrentLanguage } = useLanguagePreference();
   const { t } = useTranslation();
   const router = useRouter();
-
   const checkProfileAndRedirect = async (userId: string) => {
     try {
-      const { data: profileData, error: profileError } = await supabase
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile check timeout')), 5000)
+      );
+      
+      const profilePromise = supabase
         .from("profiles")
         .select("id, username, bio, music_preferences, avatar_url, gender, relationship_style")
         .eq("id", userId)
         .single();
       
+      const { data: profileData, error: profileError } = await Promise.race([
+        profilePromise,
+        timeoutPromise
+      ]) as any;
+      
       if (profileError && profileError.code === 'PGRST116') {
+        console.log('No profile found, redirecting to create profile');
         router.push("/create-profile");
         return;
       } else if (profileError) {
+        console.log('Profile error, redirecting to dashboard with error flag');
         router.push("/dashboard?profile_error=true");
         return;
       }
@@ -43,13 +54,19 @@ export default function LoginPage() {
       );
       
       if (!profileComplete) {
+        console.log('Profile incomplete, redirecting to setup');
         router.push("/setup-profile");
       } else {
+        console.log('Profile complete, redirecting to dashboard');
         router.push("/dashboard");
       }
     } catch (error: unknown) {
       console.error('Profile check error:', error);
-      router.push("/dashboard?login_error=true");
+      console.log('Fallback: redirecting to dashboard with error flag');
+      // Add longer timeout before redirect as fallback
+      setTimeout(() => {
+        router.push("/dashboard?login_error=true");
+      }, 1000);
     }
   };
 
@@ -68,9 +85,7 @@ export default function LoginPage() {
       setError('Please enter a valid email address.');
       setLoading(false);
       return;
-    }
-
-    try {
+    }    try {
       await supabase.auth.signOut();
       
       const { error, data } = await supabase.auth.signInWithPassword({ 
@@ -253,9 +268,7 @@ export default function LoginPage() {
               {t('login.continueWithGoogle')}
             </>
           )}
-        </Button>
-
-        <div className="text-center space-y-2">
+        </Button>        <div className="text-center space-y-2">
           <p className="text-sm text-gray-400">
             {t('login.noAccount')}{' '}
             <a href="/signup" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
@@ -267,6 +280,22 @@ export default function LoginPage() {
               {t('login.forgotPassword')}
             </a>
           </p>
+          
+          {/* Emergency redirect if stuck */}
+          {loading && (
+            <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+              <p className="text-xs text-yellow-400 mb-2">Stuck on redirecting?</p>
+              <button
+                onClick={() => {
+                  setLoading(false);
+                  router.push('/dashboard');
+                }}
+                className="text-xs text-yellow-300 hover:text-yellow-200 underline"
+              >
+                Force redirect to dashboard
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

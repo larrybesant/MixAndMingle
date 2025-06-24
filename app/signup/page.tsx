@@ -32,14 +32,18 @@ export default function SignupPage() {
   function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
+  
   // Helper to validate password (min 8 chars)
   function isValidPassword(pw: string): boolean {
     return pw.length >= 8
-  }  const handleSignUp = async (e: React.FormEvent) => {
+  }
+
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true)
     setError("")
-      try {
+    
+    try {
       // Sanitize and validate inputs
       const cleanUsername = sanitizeInput(username, 20)
       const cleanEmail = sanitizeInput(email, 100)
@@ -71,59 +75,92 @@ export default function SignupPage() {
         return
       }
       
-      // Attempt signup with Supabase
-        // Try signup with email confirmation disabled for testing
-      const signupResult = await supabase.auth.signUp({
+      // Use direct Supabase signup for consistency with login
+      console.log('🔄 Starting signup process...');
+      
+      const { data: signupData, error: signupError } = await supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
         options: {
           data: { 
             username: cleanUsername,
             full_name: cleanUsername
-          },
-          // Remove email redirect to avoid magic link issues
-          // emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },      })
-      
-      if (signupResult.error) {
-        setError(`Signup failed: ${signupResult.error.message}`)      } else if (signupResult.data?.user) {
-        try {
-          // Create profile record immediately after successful signup
-            const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: signupResult.data.user.id,
-                username: cleanUsername,
-                full_name: cleanUsername,
-                avatar_url: null,
-                bio: null,
-                music_preferences: [],
-                preferred_language: language,
-                is_dj: false,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            ]);
-            if (profileError) {
-            // Don't fail completely, but let user know they may need to complete profile
-            setError("⚠️ Account created but profile setup incomplete. You'll be prompted to complete your profile.");
           }
-        } catch (profileErr: unknown) {
-          // Continue with signup flow even if profile creation fails
         }
+      })
+      
+      if (signupError) {
+        console.error('Signup error:', signupError);
         
-        setError("") // Clear any errors
-          // Show clear success message
-        setError("✅ Account created successfully! Testing language feature...")
-        
-        // For testing: go directly to dashboard since email confirmation might be disabled
-        setTimeout(() => {
-          router.push("/dashboard")
-        }, 2000)} else {
-        setError("Account may have been created successfully. Please try logging in or check your email.")
+        if (signupError.message.includes('User already registered')) {
+          setError('An account with this email already exists. Please try logging in instead.');
+        } else if (signupError.message.includes('Password should be')) {
+          setError('Password does not meet requirements. Please use at least 8 characters.');
+        } else {
+          setError(`Signup failed: ${signupError.message}`);
+        }
+        setLoading(false)
+        return
       }
+      
+      if (!signupData.user) {
+        setError('Signup completed but no user data received. Please try logging in.');
+        setLoading(false)
+        return
+      }
+      
+      console.log('✅ User created:', signupData.user.id);
+      
+      // Create profile record
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: signupData.user.id,
+              username: cleanUsername,
+              full_name: cleanUsername,
+              email: cleanEmail,
+              avatar_url: null,
+              bio: null,
+              music_preferences: [],
+              preferred_language: language,
+              is_dj: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ]);
+          
+        if (profileError) {
+          console.warn('Profile creation warning:', profileError.message);
+          // Continue with signup even if profile creation has issues
+        } else {
+          console.log('✅ Profile created successfully');
+        }
+      } catch (profileErr) {
+        console.warn('Profile creation error:', profileErr);
+        // Continue with signup
+      }
+      
+      // Check if user is automatically signed in (email confirmation disabled)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        console.log('✅ User automatically signed in');
+        setError("✅ Account created successfully! Redirecting...")
+        setTimeout(() => {
+          router.push("/setup-profile")
+        }, 1500)
+      } else {
+        // Email confirmation might be required
+        setError("✅ Account created! Please check your email for verification, or try logging in.")
+        setTimeout(() => {
+          router.push("/login")
+        }, 2000)
+      }
+      
     } catch (err: unknown) {
+      console.error('Unexpected signup error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`Unexpected error: ${errorMessage}`)
     } finally {
@@ -139,13 +176,16 @@ export default function SignupPage() {
     })
     if (error) setError(`OAuth signup failed: ${error.message}`)
   }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900/20 to-black px-4">
-      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 rounded-lg p-8">        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-6">
+      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 rounded-lg p-8">
+        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-6">
           {t('signup.title')}
         </h1>
         
-        <form onSubmit={handleSignUp} className="space-y-4">          <div>
+        <form onSubmit={handleSignUp} className="space-y-4">
+          <div>
             <Input
               placeholder={t('signup.username')}
               value={username}
@@ -227,7 +267,9 @@ export default function SignupPage() {
               {error}
             </div>
           )}
-            {/* Main signup button */}          <Button
+
+          {/* Main signup button */}
+          <Button
             type="submit"
             disabled={loading}
             className="w-full mb-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"

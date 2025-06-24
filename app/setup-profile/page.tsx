@@ -35,6 +35,7 @@ export default function SetupProfilePage() {
     location: ''
   });
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
   const [error, setError] = useState("");  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
@@ -71,6 +72,37 @@ export default function SetupProfilePage() {
     }
     getUser();
   }, [router]);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setPhoto(null);
+      setPhotoPreview("");
+      return;
+    }
+
+    // Validate file size
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Photo must be smaller than 5MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError("Please upload a valid image file");
+      return;
+    }
+
+    setPhoto(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPhotoPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    setError(""); // Clear any previous errors
+  };
 
   const getStepProgress = () => {
     switch (currentStep) {
@@ -126,28 +158,93 @@ export default function SetupProfilePage() {
         break;
     }
   };
+  const uploadPhoto = async (): Promise<{ url: string | null; error: string | null }> => {
+    if (!photo || !user) {
+      return { url: null, error: "No photo or user provided" };
+    }
 
-  const uploadPhoto = async (): Promise<string | null> => {
-    if (!photo || !user) return null;
+    // Validate file size (5MB max)
+    if (photo.size > 5 * 1024 * 1024) {
+      return { url: null, error: "Photo must be smaller than 5MB" };
+    }
 
-    const fileExt = photo.name.split('.').pop();
+    // Validate file type
+    if (!photo.type.startsWith('image/')) {
+      return { url: null, error: "Please upload a valid image file" };
+    }
+
+    const fileExt = photo.name.split('.').pop()?.toLowerCase();
+    if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt || '')) {
+      return { url: null, error: "Supported formats: JPG, PNG, GIF, WebP" };
+    }
+
     const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
+    const filePath = `${user.id}/${fileName}`; // Organize by user ID
 
-    const { error: uploadError } = await supabase.storage
+    console.log('Uploading photo:', { fileName, filePath, size: photo.size, type: photo.type });    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, photo);
+      .upload(filePath, photo, {
+        upsert: true, // Allow overwriting
+        cacheControl: '3600'
+      });
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
-      return null;
+      
+      // If bucket doesn't exist, try to create it
+      if (uploadError.message.includes('The resource was not found')) {
+        console.log('Avatars bucket not found, attempting to create...');
+        
+        try {
+          // Try to setup storage via API
+          const setupResponse = await fetch('/api/admin/setup-storage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          if (setupResponse.ok) {
+            console.log('Storage bucket created, retrying upload...');
+            
+            // Retry the upload
+            const { data: retryData, error: retryError } = await supabase.storage
+              .from('avatars')
+              .upload(filePath, photo, {
+                upsert: true,
+                cacheControl: '3600'
+              });
+            
+            if (retryError) {
+              return { url: null, error: `Upload failed after bucket creation: ${retryError.message}` };
+            } else {
+              const { data: urlData } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+              
+              console.log('Photo uploaded successfully after bucket creation:', urlData.publicUrl);
+              return { url: urlData.publicUrl, error: null };
+            }
+          } else {
+            return { url: null, error: "Storage not configured. Please contact support." };
+          }
+        } catch (setupError) {
+          console.error('Failed to setup storage:', setupError);
+          return { url: null, error: "Failed to setup storage. Please contact support." };
+        }
+      } else if (uploadError.message.includes('not allowed')) {
+        return { url: null, error: "Upload permission denied. Please contact support." };
+      } else if (uploadError.message.includes('exceeded')) {
+        return { url: null, error: "File too large. Please use a smaller image." };
+      } else {
+        return { url: null, error: `Upload failed: ${uploadError.message}` };
+      }
     }
 
-    const { data } = supabase.storage
+    const { data: urlData } = supabase.storage
       .from('avatars')
       .getPublicUrl(filePath);
 
-    return data.publicUrl;
+    console.log('Photo uploaded successfully:', urlData.publicUrl);
+    return { url: urlData.publicUrl, error: null };
   };
 
   const handleSubmit = async () => {
@@ -158,14 +255,16 @@ export default function SetupProfilePage() {
       if (!user) {
         setError("No user found. Please log in again.");
         return;
-      }
-
-      // Upload photo if provided
+      }      // Upload photo if provided
       let avatarUrl = profileData.avatar_url;
       if (photo) {
-        const uploadedUrl = await uploadPhoto();
-        if (uploadedUrl) {
-          avatarUrl = uploadedUrl;
+        const uploadResult = await uploadPhoto();
+        if (uploadResult.error) {
+          setError(uploadResult.error);
+          setLoading(false);
+          return;
+        } else if (uploadResult.url) {
+          avatarUrl = uploadResult.url;
         } else {
           setError("Failed to upload photo. Please try again.");
           setLoading(false);
@@ -253,17 +352,28 @@ export default function SetupProfilePage() {
           <option value="other">Other</option>
           <option value="prefer-not-to-say">Prefer not to say</option>
         </select>
-      </div>
-
-      <div>
+      </div>      <div>
         <label className="block text-sm font-medium mb-2">Profile Photo *</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <p className="text-xs text-gray-500 mt-1">Upload a clear photo of yourself</p>
+        <div className="space-y-3">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {photoPreview && (
+            <div className="flex justify-center">
+              <img 
+                src={photoPreview} 
+                alt="Photo preview" 
+                className="w-24 h-24 object-cover rounded-full border-2 border-gray-200"
+              />
+            </div>
+          )}
+          <p className="text-xs text-gray-500">
+            Upload a clear photo of yourself (JPG, PNG, GIF, or WebP, max 5MB)
+          </p>
+        </div>
       </div>
     </div>
   );

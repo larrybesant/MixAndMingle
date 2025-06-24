@@ -15,11 +15,11 @@ DELETE FROM auth.refresh_tokens;
 -- Delete audit log entries  
 DELETE FROM auth.audit_log_entries;
 
--- Delete profiles (this should cascade or be independent)
-DELETE FROM profiles;
-
 -- Delete all users from auth.users (main auth table)
 DELETE FROM auth.users;
+
+-- Delete profiles (this should cascade or be independent)
+DELETE FROM profiles;
 
 -- Step 3: Reset any auto-increment sequences
 -- Reset refresh token sequence
