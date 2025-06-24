@@ -1,9 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
+
+const ADMIN_EMAIL = "larrybesant@gmail.com"; // Admin email
 
 export default function SimpleTestPage() {
+  const router = useRouter()
+  const [isAuthorized, setIsAuthorized] = useState(false)
   const [testMessage, setTestMessage] = useState("Click button to test")
+
+  // Admin protection
+  useEffect(() => {
+    async function checkAuth() {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user || data.user.email !== ADMIN_EMAIL) {
+        router.replace("/login");
+        return;
+      }
+      setIsAuthorized(true);
+    }
+    checkAuth();
+  }, [router]);
+
+  if (!isAuthorized) {
+    return <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div>Checking authorization...</div>
+    </div>
+  }
 
   const handleClick = () => {
     console.log("Button clicked!")

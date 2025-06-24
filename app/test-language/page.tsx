@@ -1,14 +1,39 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
 import { useLanguagePreference, useTranslation } from '@/hooks/useLanguagePreference'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 
+const ADMIN_EMAIL = "larrybesant@gmail.com"; // Admin email
+
 export default function LanguageTestPage() {
+  const router = useRouter()
+  const [isAuthorized, setIsAuthorized] = useState(false)
   const { language, setLanguage, availableLanguages, getCurrentLanguage } = useLanguagePreference()
   const { t } = useTranslation()
   const [testMessage, setTestMessage] = useState('')
+  
+  // Admin protection
+  useEffect(() => {
+    async function checkAuth() {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user || data.user.email !== ADMIN_EMAIL) {
+        router.replace("/login");
+        return;
+      }
+      setIsAuthorized(true);
+    }
+    checkAuth();
+  }, [router]);
+
+  if (!isAuthorized) {
+    return <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div>Checking authorization...</div>
+    </div>
+  }
   const testLanguageFeature = () => {
     const currentLang = getCurrentLanguage()
     setTestMessage(`✅ Language feature working! Current: ${currentLang.flag} ${currentLang.name}`)
