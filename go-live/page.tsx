@@ -9,29 +9,28 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import {
-  Music,
-  Mic,
-  Camera,
   Settings,
   Play,
   Users,
-  Gamepad2,
-  BookOpen,
-  Coffee,
-  Palette,
   Plus,
   Hash,
   Globe,
   Lock,
+  Camera,
+  ArrowLeft,
+  Music,
+  Mic
 } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
+import { ROOM_CATEGORIES, getCategoryById } from "@/lib/room-categories"
 // import { LiveStream } from "@/components/streaming/live-stream"
 
 export default function GoLivePage() {
   const [roomData, setRoomData] = useState({
     name: "",
     description: "",
-    category: "Music",    genre: "Electronic",
+    category: "music",    
+    genre: "electronic",
     isPrivate: false,
     tags: [] as string[],
     maxViewers: 100,
@@ -41,137 +40,8 @@ export default function GoLivePage() {
   const [newTag, setNewTag] = useState("")
   const [goLiveError, setGoLiveError] = useState<string | null>(null)
 
-  const categories = [
-    {
-      name: "Music",
-      icon: <Music className="w-4 h-4" />,
-      genres: [
-        "Electronic",
-        "Hip-Hop",
-        "House",
-        "Techno",
-        "Ambient",
-        "Jazz",
-        "Rock",
-        "Pop",
-        "R&B",
-        "Reggae",
-        "Country",
-        "Classical",
-        "Blues",
-        "Funk",
-        "Disco",
-        "Trance",
-        "Dubstep",
-        "Drum & Bass",
-        "Garage",
-        "Trap",
-        "Lo-Fi",
-        "Indie",
-        "Alternative",
-        "Punk",
-        "Metal",
-      ],
-    },
-    {
-      name: "Talk Show",
-      icon: <Mic className="w-4 h-4" />,
-      genres: [
-        "Podcast",
-        "Interview",
-        "Comedy",
-        "News",
-        "Politics",
-        "Sports",
-        "Technology",
-        "Lifestyle",
-        "Health",
-        "Business",
-        "Education",
-        "Storytelling",
-        "Debate",
-        "Q&A",
-      ],
-    },
-    {
-      name: "Gaming",
-      icon: <Gamepad2 className="w-4 h-4" />,
-      genres: [
-        "FPS",
-        "RPG",
-        "Strategy",
-        "Racing",
-        "Sports",
-        "Fighting",
-        "Puzzle",
-        "Adventure",
-        "Simulation",
-        "MMO",
-        "Battle Royale",
-        "Indie Games",
-        "Retro Gaming",
-        "Mobile Games",
-      ],
-    },
-    {
-      name: "Creative",
-      icon: <Palette className="w-4 h-4" />,
-      genres: [
-        "Art",
-        "Drawing",
-        "Painting",
-        "Digital Art",
-        "Photography",
-        "Design",
-        "Crafts",
-        "Writing",
-        "Poetry",
-        "Fashion",
-        "Makeup",
-        "Cooking",
-        "Baking",
-        "DIY",
-      ],
-    },
-    {
-      name: "Learning",
-      icon: <BookOpen className="w-4 h-4" />,
-      genres: [
-        "Tutorial",
-        "Language",
-        "Programming",
-        "Math",
-        "Science",
-        "History",
-        "Philosophy",
-        "Self-Help",
-        "Fitness",
-        "Yoga",
-        "Meditation",
-        "Study Session",
-        "Book Club",
-      ],
-    },
-    {
-      name: "Social",
-      icon: <Coffee className="w-4 h-4" />,
-      genres: [
-        "Hangout",
-        "Chat",
-        "Dating",
-        "Networking",
-        "Community",
-        "Support Group",
-        "Virtual Party",
-        "Game Night",
-        "Movie Watch",
-        "Just Chatting",
-        "AMA",
-      ],
-    },
-  ]
-
-  const selectedCategory = categories.find((cat) => cat.name === roomData.category)
+  const selectedCategory = getCategoryById(roomData.category)
+  const selectedGenre = selectedCategory?.genres.find(g => g.id === roomData.genre)
 
   const addTag = () => {
     if (newTag.trim() && !roomData.tags.includes(newTag.trim()) && roomData.tags.length < 5) {
@@ -352,22 +222,21 @@ export default function GoLivePage() {
 
                   {/* Category */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
-                    <select
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>                    <select
                       value={roomData.category}
                       onChange={(e) => {
                         const newCategory = e.target.value
-                        const categoryData = categories.find((cat) => cat.name === newCategory)
+                        const categoryData = ROOM_CATEGORIES.find((cat) => cat.id === newCategory)
                         setRoomData({
                           ...roomData,
                           category: newCategory,
-                          genre: categoryData?.genres[0] || "",
+                          genre: categoryData?.genres[0]?.id || "",
                         })
                       }}
                       className="w-full p-2 bg-black/50 border border-gray-600 rounded-md text-white focus:border-neon-blue"
                     >
-                      {categories.map((category) => (
-                        <option key={category.name} value={category.name}>
+                      {ROOM_CATEGORIES.map((category) => (
+                        <option key={category.id} value={category.id}>
                           {category.name}
                         </option>
                       ))}
@@ -375,9 +244,8 @@ export default function GoLivePage() {
                   </div>
 
                   {/* Genre */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {roomData.category === "Music" ? "Genre" : "Type"}
+                  <div>                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      {roomData.category === "music" ? "Genre" : "Type"}
                     </label>
                     <select
                       value={roomData.genre}
@@ -385,8 +253,8 @@ export default function GoLivePage() {
                       className="w-full p-2 bg-black/50 border border-gray-600 rounded-md text-white focus:border-neon-blue"
                     >
                       {selectedCategory?.genres.map((genre) => (
-                        <option key={genre} value={genre}>
-                          {genre}
+                        <option key={genre.id} value={genre.id}>
+                          {genre.name}
                         </option>
                       ))}
                     </select>
@@ -490,14 +358,13 @@ export default function GoLivePage() {
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400">Name:</span>
                         <span className="text-white font-medium">{roomData.name || "Untitled Room"}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
+                      </div>                      <div className="flex items-center justify-between">
                         <span className="text-gray-400">Category:</span>
-                        <Badge className="bg-neon-purple/20 text-neon-purple">{roomData.category}</Badge>
+                        <Badge className="bg-neon-purple/20 text-neon-purple">{selectedCategory?.name}</Badge>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400">Genre:</span>
-                        <Badge className="bg-neon-blue/20 text-neon-blue">{roomData.genre}</Badge>
+                        <Badge className="bg-neon-blue/20 text-neon-blue">{selectedGenre?.name}</Badge>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400">Privacy:</span>
@@ -573,9 +440,8 @@ export default function GoLivePage() {
                 <div>
                   <h1 className="text-4xl font-bold mb-2 neon-text">🔴 You&apos;re Live!</h1>
                   <p className="text-gray-400">{roomData.name}</p>
-                  <div className="flex items-center space-x-4 mt-2">
-                    <Badge className="bg-neon-purple/20 text-neon-purple">{roomData.category}</Badge>
-                    <Badge className="bg-neon-blue/20 text-neon-blue">{roomData.genre}</Badge>
+                  <div className="flex items-center space-x-4 mt-2">                    <Badge className="bg-neon-purple/20 text-neon-purple">{selectedCategory?.name}</Badge>
+                    <Badge className="bg-neon-blue/20 text-neon-blue">{selectedGenre?.name}</Badge>
                     {roomData.isPrivate && (
                       <Badge className="bg-neon-pink/20 text-neon-pink">
                         <Lock className="w-3 h-3 mr-1" />
@@ -609,13 +475,12 @@ export default function GoLivePage() {
                 <Card className="card-glow">
                   <CardContent className="p-0">
                     <div className="aspect-video bg-black rounded-lg flex items-center justify-center relative">
-                      <div className="text-center">
-                        {selectedCategory?.icon && (
+                      <div className="text-center">                        {selectedCategory && (
                           <div className="text-6xl text-gray-600 mb-4">
-                            {React.cloneElement(selectedCategory.icon, { className: "w-16 h-16 mx-auto" })}
+                            <selectedCategory.icon className="w-16 h-16 mx-auto" />
                           </div>
                         )}
-                        <p className="text-gray-400">Your {roomData.category.toLowerCase()} stream would appear here</p>
+                        <p className="text-gray-400">Your {selectedCategory?.name.toLowerCase()} stream would appear here</p>
                         <p className="text-sm text-gray-500 mt-2">Room: {roomData.name}</p>
                       </div>
                       <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">

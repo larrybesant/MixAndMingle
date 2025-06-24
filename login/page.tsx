@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,19 +16,30 @@ export default function LoginPage() {
   const { language, setLanguage, availableLanguages, getCurrentLanguage } = useLanguagePreference();
   const { t } = useTranslation();
   const router = useRouter();
-
   const checkProfileAndRedirect = async (userId: string) => {
     try {
-      const { data: profileData, error: profileError } = await supabase
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile check timeout')), 5000)
+      );
+      
+      const profilePromise = supabase
         .from("profiles")
         .select("id, username, bio, music_preferences, avatar_url, gender, relationship_style")
         .eq("id", userId)
         .single();
       
+      const { data: profileData, error: profileError } = await Promise.race([
+        profilePromise,
+        timeoutPromise
+      ]) as any;
+      
       if (profileError && profileError.code === 'PGRST116') {
+        console.log('No profile found, redirecting to create profile');
         router.push("/create-profile");
         return;
       } else if (profileError) {
+        console.log('Profile error, redirecting to dashboard with error flag');
         router.push("/dashboard?profile_error=true");
         return;
       }
@@ -43,13 +53,19 @@ export default function LoginPage() {
       );
       
       if (!profileComplete) {
+        console.log('Profile incomplete, redirecting to setup');
         router.push("/setup-profile");
       } else {
+        console.log('Profile complete, redirecting to dashboard');
         router.push("/dashboard");
       }
     } catch (error: unknown) {
       console.error('Profile check error:', error);
-      router.push("/dashboard?login_error=true");
+      console.log('Fallback: redirecting to dashboard with error flag');
+      // Add longer timeout before redirect as fallback
+      setTimeout(() => {
+        router.push("/dashboard?login_error=true");
+      }, 1000);
     }
   };
 
@@ -68,9 +84,7 @@ export default function LoginPage() {
       setError('Please enter a valid email address.');
       setLoading(false);
       return;
-    }
-
-    try {
+    }    try {
       await supabase.auth.signOut();
       
       const { error, data } = await supabase.auth.signInWithPassword({ 
@@ -100,31 +114,7 @@ export default function LoginPage() {
       setError(`Unexpected error: ${errorMessage}`);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleOAuth = async (provider: 'google') => {
-    setError("");
-    setLoading(true);
-    
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      
-      if (error) {
-        setError(`OAuth login failed: ${error.message}`);
-      }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(`OAuth login error: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    }  };
 
   useEffect(() => {
     async function checkOnMount() {
@@ -231,29 +221,8 @@ export default function LoginPage() {
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-gray-600" />
           </div>          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-black px-2 text-gray-400">{t('login.continueWith')}</span>
-          </div>
+            <span className="bg-black px-2 text-gray-400">{t('login.continueWith')}</span>          </div>
         </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => handleOAuth('google')}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2 bg-white/10 border-gray-600 text-white hover:bg-white/20 disabled:opacity-50 py-3 rounded-xl"
-        >
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Redirecting...
-            </>
-          ) : (
-            <>
-              <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
-              {t('login.continueWithGoogle')}
-            </>
-          )}
-        </Button>
 
         <div className="text-center space-y-2">
           <p className="text-sm text-gray-400">
@@ -267,6 +236,22 @@ export default function LoginPage() {
               {t('login.forgotPassword')}
             </a>
           </p>
+          
+          {/* Emergency redirect if stuck */}
+          {loading && (
+            <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+              <p className="text-xs text-yellow-400 mb-2">Stuck on redirecting?</p>
+              <button
+                onClick={() => {
+                  setLoading(false);
+                  router.push('/dashboard');
+                }}
+                className="text-xs text-yellow-300 hover:text-yellow-200 underline"
+              >
+                Force redirect to dashboard
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

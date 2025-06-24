@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 // Fresh, clean login API
 export async function POST(request: Request) {
   try {
-    const { email, password, action = 'login' } = await request.json();
+    const { email, password, action = 'login', metadata } = await request.json();
 
     console.log(`🔄 Fresh auth: ${action} for ${email}`);
 
@@ -29,35 +29,63 @@ export async function POST(request: Request) {
           persistSession: false
         }
       }
-    );
-
-    if (action === 'signup') {
+    );    if (action === 'signup') {
       console.log('📝 Creating new account...');
       
-      // Create user with admin client (auto-confirmed)
-      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
+      // Use regular signup with disabled email confirmation for immediate access
+      const { data: signupData, error: signupError } = await supabase.auth.signUp({
         email: cleanEmail,
         password: password,
-        email_confirm: true // Auto-confirm to skip email verification
+        options: {
+          data: {
+            username: metadata?.username || `user_${Date.now()}`,
+            full_name: metadata?.full_name || metadata?.username || 'New User'
+          }
+        }
       });
 
-      if (userError) {
-        console.error('❌ Signup error:', userError.message);
+      if (signupError) {
+        console.error('❌ Signup error:', signupError.message);
         return NextResponse.json({ 
           success: false,
-          error: userError.message 
+          error: signupError.message 
         }, { status: 400 });
       }
 
-      console.log('✅ User created:', userData.user.id);
+      if (!signupData.user) {
+        return NextResponse.json({ 
+          success: false,
+          error: 'User creation failed' 
+        }, { status: 400 });
+      }
 
-      // Create basic profile
+      console.log('✅ User created:', signupData.user.id);
+
+      // If email confirmation is required, the user won't be immediately confirmed
+      // Let's check if they need email verification
+      const needsEmailVerification = !signupData.user.email_confirmed_at && !signupData.session;
+
+      if (needsEmailVerification) {
+        console.log('📧 Email verification required');
+        return NextResponse.json({
+          success: true,
+          user: {
+            id: signupData.user.id,
+            email: signupData.user.email,
+            emailConfirmed: false
+          },
+          message: 'Account created. Please check your email for verification.',
+          requiresEmailVerification: true
+        });
+      }
+
+      // Create basic profile for confirmed users
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
-          id: userData.user.id,
+          id: signupData.user.id,
           email: cleanEmail,
-          username: `user_${Date.now()}`,
+          username: metadata?.username || `user_${Date.now()}`,
           bio: 'New user',
           music_preferences: ['electronic'],
           avatar_url: '/default-avatar.png',
@@ -72,10 +100,11 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         user: {
-          id: userData.user.id,
-          email: userData.user.email,
-          emailConfirmed: true
+          id: signupData.user.id,
+          email: signupData.user.email,
+          emailConfirmed: !!signupData.user.email_confirmed_at
         },
+        session: signupData.session,
         message: 'Account created successfully'
       });
     }
