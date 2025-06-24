@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -115,31 +114,7 @@ export default function LoginPage() {
       setError(`Unexpected error: ${errorMessage}`);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleOAuth = async (provider: 'google') => {
-    setError("");
-    setLoading(true);
-    
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      
-      if (error) {
-        setError(`OAuth login failed: ${error.message}`);
-      }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(`OAuth login error: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    }  };
 
   useEffect(() => {
     async function checkOnMount() {
@@ -246,29 +221,10 @@ export default function LoginPage() {
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-gray-600" />
           </div>          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-black px-2 text-gray-400">{t('login.continueWith')}</span>
-          </div>
+            <span className="bg-black px-2 text-gray-400">{t('login.continueWith')}</span>          </div>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => handleOAuth('google')}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2 bg-white/10 border-gray-600 text-white hover:bg-white/20 disabled:opacity-50 py-3 rounded-xl"
-        >
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Redirecting...
-            </>
-          ) : (
-            <>
-              <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
-              {t('login.continueWithGoogle')}
-            </>
-          )}
-        </Button>        <div className="text-center space-y-2">
+        <div className="text-center space-y-2">
           <p className="text-sm text-gray-400">
             {t('login.noAccount')}{' '}
             <a href="/signup" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">

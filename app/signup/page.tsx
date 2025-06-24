@@ -167,16 +167,6 @@ export default function SignupPage() {
       setLoading(false)
     }
   }
-
-  const handleOAuth = async (provider: "google") => {
-    setError("")
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: `${window.location.origin}/dashboard` },
-    })
-    if (error) setError(`OAuth signup failed: ${error.message}`)
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900/20 to-black px-4">
       <div className="w-full max-w-md bg-black/80 border border-purple-500/30 rounded-lg p-8">
@@ -281,17 +271,8 @@ export default function SignupPage() {
               </div>
             ) : (
               t('signup.createAccount')
-            )}
-          </Button>
+            )}          </Button>
         </form>
-        
-        <Button
-          type="button"
-          onClick={() => handleOAuth("google")}
-          className="w-full mb-4 bg-white text-black hover:bg-gray-100 border border-gray-300"
-        >
-          {t('signup.signUpWithGoogle')}
-        </Button>
         
         <div className="text-center text-sm text-gray-400">
           {t('signup.alreadyHaveAccount')}{" "}
