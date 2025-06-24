@@ -80,10 +80,8 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    initializeOnboarding();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    initializeOnboarding();    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
       if (session?.user) {
         setUser(session.user);
         await loadOnboardingState(session.user.id);
