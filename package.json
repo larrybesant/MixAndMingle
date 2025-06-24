@@ -1,7 +1,8 @@
 {
   "name": "mix-and-mingle",
   "version": "0.1.0",
-  "private": true,  "scripts": {
+  "private": true,
+  "scripts": {
     "build": "next build",
     "vercel-build": "next build",
     "dev": "next dev",
@@ -101,7 +102,8 @@
     "postcss": "^8.5.0",
     "ts-jest": "^29.4.0",
     "typescript": "^5.4.5"
-  },  "engines": {
+  },
+  "engines": {
     "node": "18.x"
   }
 }

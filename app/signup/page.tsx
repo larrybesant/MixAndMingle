@@ -32,10 +32,35 @@ export default function SignupPage() {
   function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
-  
-  // Helper to validate password (min 8 chars)
+    // Helper to validate password (min 8 chars)
   function isValidPassword(pw: string): boolean {
     return pw.length >= 8
+  }
+
+  // Helper to check if username is already taken
+  async function isUsernameAvailable(username: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username.toLowerCase())
+        .single()
+      
+      if (error && error.code === 'PGRST116') {
+        // No rows returned - username is available
+        return true
+      }
+      
+      if (data) {
+        // Username already exists
+        return false
+      }
+      
+      return true
+    } catch (err) {
+      console.error('Username check error:', err)
+      return false
+    }
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -68,9 +93,17 @@ export default function SignupPage() {
         setLoading(false)
         return
       }
-      
-      if (!isValidPassword(cleanPassword)) {
+        if (!isValidPassword(cleanPassword)) {
         setError("Password must be at least 8 characters.")
+        setLoading(false)
+        return
+      }
+      
+      // Check if username is already taken
+      setError("Checking username availability...")
+      const usernameAvailable = await isUsernameAvailable(cleanUsername)
+      if (!usernameAvailable) {
+        setError(`Username "${cleanUsername}" is already taken. Please choose a different one.`)
         setLoading(false)
         return
       }

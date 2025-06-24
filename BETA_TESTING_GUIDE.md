@@ -55,6 +55,7 @@ Thanks for helping make Mix & Mingle amazing! 🚀
 ### What We're Looking For
 - ✅ Does signup/login work smoothly?
 - ✅ Is profile creation intuitive?
+- ✅ **Can you create a duplicate username?** (Should be prevented)
 - ✅ Are the features easy to find and use?
 - ✅ Any bugs or confusing elements?
 - ✅ Performance on mobile vs desktop?
@@ -82,6 +83,7 @@ Thanks for helping make Mix & Mingle amazing! 🚀
 ### Currently Working ✅
 - User authentication (email/password)
 - Profile creation and management
+- **Unique username enforcement** (no duplicate usernames possible)
 - Dashboard and navigation
 - Basic matchmaking interface
 - Live room browsing

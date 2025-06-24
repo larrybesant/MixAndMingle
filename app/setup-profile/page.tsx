@@ -37,9 +37,35 @@ export default function SetupProfilePage() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [error, setError] = useState("");  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const router = useRouter();
+  const [user, setUser] = useState<any>(null);  const router = useRouter();
   const { markProfileComplete } = useOnboarding();
+
+  // Helper to check if username is already taken (excluding current user)
+  const isUsernameAvailable = async (username: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, id')
+        .eq('username', username.toLowerCase())
+        .single();
+      
+      if (error && error.code === 'PGRST116') {
+        // No rows returned - username is available
+        return true;
+      }
+      
+      if (data && data.id !== user?.id) {
+        // Username exists and belongs to a different user
+        return false;
+      }
+      
+      // Username is either available or belongs to current user
+      return true;
+    } catch (err) {
+      console.error('Username check error:', err);
+      return false;
+    }
+  };
 
   useEffect(() => {
     async function getUser() {
@@ -126,13 +152,23 @@ export default function SetupProfilePage() {
         return false;
     }
   };
-
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep()) {
       setError("Please fill in all required fields for this step.");
       return;
     }
     setError("");
+    
+    // For basic step, validate username uniqueness
+    if (currentStep === 'basic') {
+      setError("Checking username availability...");
+      const isAvailable = await isUsernameAvailable(profileData.username.trim());
+      if (!isAvailable) {
+        setError(`Username "${profileData.username.trim()}" is already taken. Please choose a different one.`);
+        return;
+      }
+      setError(""); // Clear the checking message
+    }
     
     switch (currentStep) {
       case 'basic':
