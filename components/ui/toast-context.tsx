@@ -1,3 +1,4 @@
+"use client";
 import { createContext, useContext, useState } from 'react';
 
 export const ToastContext = createContext<any>(null);
