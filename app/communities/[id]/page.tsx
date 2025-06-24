@@ -11,14 +11,10 @@ import Image from "next/image";
 import Link from "next/link";
 import toast, { Toaster } from 'react-hot-toast';
 
-export default function CommunityDetailPage() {  const params = useParams();
+export default function CommunityDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const communityId = params?.id as string;
-  
-  if (!communityId) {
-    router.replace("/communities");
-    return null;
-  }
   
   const [user, setUser] = useState<User | null>(null);
   const [community, setCommunity] = useState<CommunityWithDetails | null>(null);
@@ -42,6 +38,11 @@ export default function CommunityDetailPage() {  const params = useParams();
   const [loadingMembers, setLoadingMembers] = useState(false);
 
   useEffect(() => {
+    if (!communityId) {
+      router.replace("/communities");
+      return;
+    }
+    
     async function getUser() {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
@@ -246,8 +247,24 @@ export default function CommunityDetailPage() {  const params = useParams();
   useEffect(() => {
     if (activeTab === 'members' && communityMembers.length === 0) {
       fetchCommunityMembers();
-    }
-  }, [activeTab, communityId]);
+    }  }, [activeTab, communityId]);
+
+  // Early return for missing communityId
+  if (!communityId) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Invalid community URL</h2>
+          <Link 
+            href="/communities"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors"
+          >
+            Browse Communities
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

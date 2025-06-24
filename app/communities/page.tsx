@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { CommunityService } from "@/lib/services/community-service";
 import { ROOM_CATEGORIES } from "@/lib/room-categories";
-import type { Community, CommunityWithDetails } from "@/types/community";
+import type { CommunityWithDetails } from "@/types/community";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import Image from "next/image";
