@@ -1,4 +1,4 @@
-import { Browser, Page } from "@playwright/test";
+import { Browser, Page, expect } from "@playwright/test";
 
 interface TestResult {
   test: string;
@@ -6,6 +6,9 @@ interface TestResult {
   duration?: number;
   error?: string;
   timestamp: string;
+  severity?: "low" | "medium" | "high" | "critical";
+  type?: string;
+  message?: string;
 }
 
 class QATestSuite {
@@ -51,12 +54,11 @@ class QATestSuite {
     message: string,
     severity: "low" | "medium" | "high" | "critical" = "medium",
   ) {
-    const issue = {
-      type,
-      message,
-      severity,
+    const issue: TestResult = {
+      test: type,
+      status: severity,
+      error: message,
       timestamp: new Date().toISOString(),
-      url: this.page.url(),
     };
     this.testResults.push(issue);
     console.log(`🚨 [${severity.toUpperCase()}] ${type}: ${message}`);
