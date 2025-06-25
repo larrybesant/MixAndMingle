@@ -45,7 +45,8 @@ function checkRateLimit(ip: string, limit = 10, windowMs = 60_000): boolean {
  * Handles push subscription POST requests with validation, auth, rate limiting, and error logging.
  */
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
   if (!checkRateLimit(ip)) {
     Sentry.captureMessage(`Rate limit exceeded for ${ip}`);
     return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
