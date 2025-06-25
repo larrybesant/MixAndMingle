@@ -141,7 +141,7 @@ Returns user's current matches
 - [ ] Verify error handling
 
 ### Development Commands
-```bash
+\`\`\`bash
 # Start development server
 npm run dev
 
@@ -150,7 +150,7 @@ curl http://localhost:3000/api/matching/potential
 
 # Deploy database schema (when ready)
 npm run db:init
-```
+\`\`\`
 
 ## UI/UX Features
 

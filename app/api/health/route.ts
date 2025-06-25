@@ -1,22 +1,8 @@
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase/client';
 
 export async function GET() {
-  // Check if Supabase is configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json({ 
-      status: 'unhealthy',
-      error: 'Supabase not configured - missing environment variables',
-      configured: false
-    }, { status: 500 });
-  }
-
   try {
-    // Dynamically import and initialize Supabase only when needed
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, supabaseKey);
     // Test all major app features
     const results = {
       timestamp: new Date().toISOString(),

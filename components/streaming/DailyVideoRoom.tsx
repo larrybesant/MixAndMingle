@@ -17,11 +17,13 @@ export const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({ roomUrl, isHost 
 
   React.useEffect(() => {
     if (!roomUrl || !containerRef.current) return
+
     // Clean up any previous frame
     if (callFrameRef.current) {
       callFrameRef.current.destroy()
       callFrameRef.current = null
     }
+
     // Create the Daily iframe inside the container
     callFrameRef.current = DailyIframe.createFrame(containerRef.current, {
       showLeaveButton: true,
@@ -32,7 +34,9 @@ export const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({ roomUrl, isHost 
         borderRadius: "16px",
       },
     })
+
     callFrameRef.current.join({ url: roomUrl })
+
     return () => {
       if (callFrameRef.current) {
         callFrameRef.current.leave()

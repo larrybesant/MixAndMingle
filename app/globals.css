@@ -2,25 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Onboarding Tour Styles */
-.tour-highlight {
-  position: relative;
-  z-index: 40;
-  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.5), 0 0 20px rgba(147, 51, 234, 0.3);
-  border-radius: 8px;
-  animation: tour-pulse 2s infinite;
-}
-
-@keyframes tour-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.5), 0 0 20px rgba(147, 51, 234, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(147, 51, 234, 0.3), 0 0 30px rgba(147, 51, 234, 0.5);
-  }
-}
-
 @layer utilities {
   .bg-background {
     background-color: var(--background);
@@ -91,8 +72,7 @@
     border-width: 0px;
   }
   body {
-    background-color: #000000;
-    color: #ffffff;
+    @apply bg-black text-white;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   }
 }

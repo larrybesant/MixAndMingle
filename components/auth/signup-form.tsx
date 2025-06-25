@@ -11,7 +11,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Eye, EyeOff, Mail, Lock, User, Github, Loader2 } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
-import { toast } from '@/hooks/use-toast';
 
 interface FormData {
   fullName: string;
@@ -131,13 +130,8 @@ export default function SignupPage() {
 
     setIsLoading(true);
     clearError();
-    let timeoutId: NodeJS.Timeout | null = null;
+
     try {
-      // Timeout fallback: reset loading after 15s
-      timeoutId = setTimeout(() => {
-        setIsLoading(false);
-        setErrors({ general: 'Signup is taking too long. Please check your connection or try again.' });
-      }, 15000);
       const { error: signUpError } = await signUp(
         formData.email,
         formData.password,
@@ -156,7 +150,6 @@ export default function SignupPage() {
           setErrors({ general: signUpError.message });
         }
       } else {
-        toast({ title: 'Signup successful!', description: 'Check your email to verify your account.', variant: 'default' });
         setIsSuccess(true);
         // Redirect to email verification page
         setTimeout(() => {
@@ -165,11 +158,7 @@ export default function SignupPage() {
       }
     } catch (err) {
       setErrors({ general: 'An unexpected error occurred. Please try again.' });
-      // Debug log
-      // @ts-ignore
-      if (typeof window !== 'undefined') console.error('Signup error:', err);
     } finally {
-      if (timeoutId) clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };
@@ -223,7 +212,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900/20 to-black px-4">
-      <Card className="w-full max-w-md bg-black/80 border-purple-500/30 shadow-xl rounded-xl font-sans">
+      <Card className="w-full max-w-md bg-black/80 border-purple-500/30">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent">
             Create Account
@@ -396,7 +385,7 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all duration-200"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 transition-all duration-200"
             >
               {isLoading ? (
                 <>

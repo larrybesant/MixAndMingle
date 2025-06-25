@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase/client';
 
 export async function GET(request: NextRequest) {
-  // Check if Supabase is configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json({ 
-      error: 'Supabase not configured - missing environment variables',
-      configured: false
-    }, { status: 500 });
-  }
-
   const { searchParams } = new URL(request.url);
   const email = searchParams.get('email');
   
@@ -21,12 +11,7 @@ export async function GET(request: NextRequest) {
     }, { status: 400 });
   }
 
-  try {
-    // Dynamically import and initialize Supabase only when needed
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Check if user exists in auth.users (we can't query this directly, so we'll try a password reset)
+  try {    // Check if user exists in auth.users (we can't query this directly, so we'll try a password reset)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'http://localhost:3000/reset-password',
     });
@@ -67,17 +52,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  // Check if Supabase is configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json({ 
-      error: 'Supabase not configured - missing environment variables',
-      configured: false
-    }, { status: 500 });
-  }
-
   try {
     const { email, password } = await request.json();
     
@@ -86,10 +60,6 @@ export async function POST(request: NextRequest) {
         error: 'Email and password required' 
       }, { status: 400 });
     }
-
-    // Dynamically import and initialize Supabase only when needed
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Try to create a test user
     const { data, error } = await supabase.auth.signUp({
