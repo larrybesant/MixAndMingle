@@ -4,8 +4,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from "@/contexts/auth-context-types";
 
+type AuthContextType = {
+  user: {
+    name?: string;
+    email?: string;
+    [key: string]: any;
+  } | null;
+  signOut: () => void;
+};
+
 export default function Header() {
-  const { user, signOut } = useAuth();
+  const { user, signOut } = (useAuth() ?? { user: null, signOut: () => {} }) as AuthContextType;
 
   return (
     <header className="flex items-center justify-between p-4 border-b border-purple-700 bg-black/80">

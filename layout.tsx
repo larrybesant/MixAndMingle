@@ -8,7 +8,7 @@ import { SafetyProvider } from "@/contexts/safety-context";
 import { ThemeProvider } from "@/contexts/theme-provider";
 import ClientProviders from '@/components/ui/ClientProviders';
 // import { Analytics } from "@vercel/analytics/react"; // Uncomment if you install this package
-import Header from "@/components/Header"; // <-- Use your client Header component
+// import Header from "@/components/Header"; // <-- Use your client Header component
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,7 +51,7 @@ export default function RootLayout({
               <OnboardingProvider>
                 <SafetyProvider>
                   <ClientProviders>
-                    <Header />
+                    {/* <Header /> */}
                     {children}
                   </ClientProviders>
                 </SafetyProvider>
