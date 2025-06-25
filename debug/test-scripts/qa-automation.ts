@@ -1,3 +1,5 @@
+import { Browser, Page } from "@playwright/test";
+
 interface TestResult {
   test: string;
   status: string;
