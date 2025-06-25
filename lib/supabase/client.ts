@@ -68,8 +68,8 @@ export const authHelpers = {
     });
   },
 
-  // Sign in with OAuth (Google, GitHub, etc.)
-  signInWithOAuth: async (provider: "google" | "github" | "discord") => {
+  // Sign in with OAuth (GitHub, Discord)
+  signInWithOAuth: async (provider: "github" | "discord") => {
     return await supabase.auth.signInWithOAuth({
       provider,
       options: {

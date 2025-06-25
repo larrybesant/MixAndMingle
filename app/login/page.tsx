@@ -119,39 +119,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleOAuth = async (provider: "google") => {
-    setError("");
-    setLoading(true);
-
-    try {
-      console.log(
-        "🔐 Starting OAuth with redirect to:",
-        `${window.location.origin}/auth/callback`,
-      );
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      });
-
-      if (error) {
-        console.error("❌ OAuth error:", error);
-        setError(`OAuth login failed: ${error.message}`);
-      }
-    } catch (err: any) {
-      console.error("💥 OAuth exception:", err);
-      setError(`OAuth login error: ${err.message || err}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     async function checkOnMount() {
       const { data, error } = await supabase.auth.getUser();
@@ -266,32 +233,7 @@ export default function LoginPage() {
           {loading ? "Signing In..." : "Sign In"}
         </Button>
         {/* Social Sign-In Buttons */}
-        <div className="space-y-3 mt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleOAuth("google")}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-100 disabled:opacity-50"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
-                Redirecting...
-              </>
-            ) : (
-              <>
-                <Image
-                  src="/icons/google.svg"
-                  alt="Google"
-                  width={20}
-                  height={20}
-                />
-                Continue with Google
-              </>
-            )}
-          </Button>
-        </div>
+        <div className="space-y-3 mt-4"></div>
         <p className="text-center text-sm text-white">
           Don’t have an account?{" "}
           <a href="/signup" className="text-blue-400 hover:underline">

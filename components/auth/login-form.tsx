@@ -17,7 +17,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Mail, Lock, Github, Loader2 } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
 
 interface FormData {
   email: string;
@@ -128,7 +127,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleOAuthSignIn = async (provider: "google" | "github") => {
+  const handleOAuthSignIn = async (provider: "github") => {
     setIsLoading(true);
     clearError();
 
@@ -173,21 +172,6 @@ export default function LoginPage() {
         <CardContent className="space-y-4">
           {/* OAuth Buttons */}
           <div className="space-y-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOAuthSignIn("google")}
-              disabled={isLoading}
-              className="w-full bg-white hover:bg-gray-100 text-black border-gray-300"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <FcGoogle className="mr-2 h-4 w-4" />
-              )}
-              Continue with Google
-            </Button>
-
             <Button
               type="button"
               variant="outline"

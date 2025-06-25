@@ -40,7 +40,7 @@ interface AuthContextType {
     password: string,
   ) => Promise<{ error: AuthError | null }>;
   signInWithOAuth: (
-    provider: "google" | "github" | "discord",
+    provider: "github" | "discord",
   ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
@@ -210,7 +210,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signInWithOAuth = async (provider: "google" | "github" | "discord") => {
+  const signInWithOAuth = async (provider: "github" | "discord") => {
     setLoading(true);
     setError(null);
 
