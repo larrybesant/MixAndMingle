@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function SignupPage() {
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,11 +22,6 @@ export default function SignupPage() {
       .slice(0, maxLength);
   }
 
-  // Helper to validate username (alphanumeric, underscores, 3-20 chars)
-  function isValidUsername(name: string): boolean {
-    return /^[a-zA-Z0-9_]{3,20}$/.test(name);
-  }
-
   // Helper to validate email
   function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -38,32 +32,16 @@ export default function SignupPage() {
   }
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🚀 Form submitted!"); // Debug log
     setLoading(true);
     setError("");
 
     try {
       // Sanitize and validate inputs
-      const cleanUsername = sanitizeInput(username, 20);
       const cleanEmail = sanitizeInput(email, 100);
       const cleanPassword = password.trim();
 
-      console.log("📝 Form data:", {
-        cleanUsername,
-        cleanEmail,
-        passwordLength: cleanPassword.length,
-      }); // Debug log
-
-      if (!cleanUsername || !cleanEmail || !cleanPassword) {
+      if (!cleanEmail || !cleanPassword) {
         setError("All fields are required.");
-        setLoading(false);
-        return;
-      }
-
-      if (!isValidUsername(cleanUsername)) {
-        setError(
-          "Username must be 3-20 characters, letters, numbers, or underscores only.",
-        );
         setLoading(false);
         return;
       }
@@ -79,25 +57,19 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-      console.log("🔐 Attempting signup with Supabase..."); // Debug log
-      // Try signup with minimal options to bypass webhook issues
+      // Try signup with minimal options
       const signupResult = await supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
         options: {
-          data: { username: cleanUsername },
           emailRedirectTo: undefined, // Explicitly disable email redirect
           captchaToken: undefined, // Disable captcha
         },
       });
 
-      console.log("📧 Signup result:", signupResult); // Debug log
-
       if (signupResult.error) {
-        console.error("❌ Signup error:", signupResult.error); // Debug log
         setError(`Signup failed: ${signupResult.error.message}`);
       } else if (signupResult.data?.user) {
-        console.log("✅ Signup successful! User:", signupResult.data.user.id); // Debug log
         setError(""); // Clear any errors
 
         // Check if user needs email confirmation
@@ -114,13 +86,11 @@ export default function SignupPage() {
           }, 1000);
         }
       } else {
-        console.log("⚠️ Signup completed but no user data returned"); // Debug log
         setError(
           "Account may have been created. Please check your email or try logging in.",
         );
       }
     } catch (err: any) {
-      console.error("💥 Unexpected error:", err); // Debug log
       setError(`Unexpected error: ${err.message || err}`);
     } finally {
       setLoading(false);
@@ -144,28 +114,11 @@ export default function SignupPage() {
 
         {/* Debug info */}
         <div className="mb-4 text-xs text-gray-500 bg-gray-900/30 p-2 rounded">
-          Debug: Username: {username.length}, Email: {email.length}, Password:{" "}
-          {password.length}, Loading: {loading ? "true" : "false"}
+          Debug: Email: {email.length}, Password: {password.length}, Loading:{" "}
+          {loading ? "true" : "false"}
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
-          <div>
-            <Input
-              placeholder="Username (3-20 characters)"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
-              autoComplete="username"
-              required
-            />
-            {username && !isValidUsername(username) && (
-              <p className="text-red-400 text-xs mt-1">
-                Username must be 3-20 characters, letters, numbers, or
-                underscores only.
-              </p>
-            )}
-          </div>
-
           <div>
             <Input
               type="email"
@@ -192,7 +145,7 @@ export default function SignupPage() {
               className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
               autoComplete="new-password"
               required
-            />{" "}
+            />
             {password && !isValidPassword(password) && (
               <p className="text-red-400 text-xs mt-1">
                 Password must be at least 8 characters.

@@ -24,22 +24,8 @@ export default function LoginPage() {
   }, []);
 
   const checkProfileAndRedirect = async (userId: string) => {
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-    if (
-      !profileData ||
-      !profileData.username ||
-      !profileData.bio ||
-      !profileData.music_preferences ||
-      !profileData.avatar_url
-    ) {
-      router.push("/create-profile");
-    } else {
-      router.push("/dashboard");
-    }
+    console.log("Redirecting to /create-profile");
+    router.push("/create-profile");
   };
   const handleLogin = async () => {
     setError("");
