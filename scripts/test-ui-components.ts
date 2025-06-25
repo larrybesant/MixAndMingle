@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 
-console.log("🎨 TESTING UI COMPONENTS")
-console.log("========================")
+console.log("🎨 TESTING UI COMPONENTS");
+console.log("========================");
 
 // Test UI component files
 const uiComponents = [
@@ -16,29 +16,29 @@ const uiComponents = [
   "label.tsx",
   "select.tsx",
   "toast.tsx",
-]
+];
 
-console.log("📁 Checking UI component files...")
-const missingComponents: string[] = []
+console.log("📁 Checking UI component files...");
+const missingComponents: string[] = [];
 
 uiComponents.forEach((component) => {
-  const filePath = path.join(process.cwd(), "components", "ui", component)
+  const filePath = path.join(process.cwd(), "components", "ui", component);
   if (fs.existsSync(filePath)) {
-    console.log(`✅ ${component}: Present`)
+    console.log(`✅ ${component}: Present`);
 
     // Check if file has content
-    const content = fs.readFileSync(filePath, "utf8")
+    const content = fs.readFileSync(filePath, "utf8");
     if (content.length < 100) {
-      console.log(`⚠️  ${component}: File too small (may be incomplete)`)
+      console.log(`⚠️  ${component}: File too small (may be incomplete)`);
     }
   } else {
-    console.log(`❌ ${component}: Missing`)
-    missingComponents.push(component)
+    console.log(`❌ ${component}: Missing`);
+    missingComponents.push(component);
   }
-})
+});
 
 // Test page components
-console.log("\n📄 Checking page components...")
+console.log("\n📄 Checking page components...");
 const pageComponents = [
   "app/page.tsx",
   "app/layout.tsx",
@@ -47,70 +47,70 @@ const pageComponents = [
   "app/dashboard/page.tsx",
   "app/discover/page.tsx",
   "app/go-live/page.tsx",
-]
+];
 
 pageComponents.forEach((page) => {
-  const filePath = path.join(process.cwd(), page)
+  const filePath = path.join(process.cwd(), page);
   if (fs.existsSync(filePath)) {
-    console.log(`✅ ${page}: Present`)
+    console.log(`✅ ${page}: Present`);
 
     // Check for common React patterns
-    const content = fs.readFileSync(filePath, "utf8")
+    const content = fs.readFileSync(filePath, "utf8");
     if (content.includes("export default")) {
-      console.log(`  ✅ Has default export`)
+      console.log(`  ✅ Has default export`);
     } else {
-      console.log(`  ⚠️  Missing default export`)
+      console.log(`  ⚠️  Missing default export`);
     }
 
     if (content.includes("use client") || content.includes("use server")) {
-      console.log(`  ✅ Has Next.js directive`)
+      console.log(`  ✅ Has Next.js directive`);
     }
   } else {
-    console.log(`❌ ${page}: Missing`)
+    console.log(`❌ ${page}: Missing`);
   }
-})
+});
 
 // Test import statements
-console.log("\n📦 Testing common imports...")
+console.log("\n📦 Testing common imports...");
 try {
-  const mainPagePath = path.join(process.cwd(), "app", "page.tsx")
+  const mainPagePath = path.join(process.cwd(), "app", "page.tsx");
   if (fs.existsSync(mainPagePath)) {
-    const content = fs.readFileSync(mainPagePath, "utf8")
+    const content = fs.readFileSync(mainPagePath, "utf8");
 
     // Check for problematic imports
     if (content.includes('from "firebase"')) {
-      console.log("⚠️  Firebase import found (should be removed)")
+      console.log("⚠️  Firebase import found (should be removed)");
     }
 
     if (content.includes("@/lib/supabase")) {
-      console.log("✅ Supabase import found")
+      console.log("✅ Supabase import found");
     }
 
     if (content.includes("lucide-react")) {
-      console.log("✅ Lucide icons import found")
+      console.log("✅ Lucide icons import found");
     }
 
     if (content.includes("@/components/ui")) {
-      console.log("✅ UI components import found")
+      console.log("✅ UI components import found");
     }
   }
 } catch (error) {
   if (error instanceof Error) {
-    console.log(`❌ Import test failed: ${error.message}`)
+    console.log(`❌ Import test failed: ${error.message}`);
   } else {
-    console.log("❌ Import test failed: Unknown error", error)
+    console.log("❌ Import test failed: Unknown error", error);
   }
 }
 
 // Summary
-console.log("\n📊 UI COMPONENT SUMMARY")
-console.log("=======================")
-console.log(`Total components checked: ${uiComponents.length}`)
-console.log(`Missing components: ${missingComponents.length}`)
+console.log("\n📊 UI COMPONENT SUMMARY");
+console.log("=======================");
+console.log(`Total components checked: ${uiComponents.length}`);
+console.log(`Missing components: ${missingComponents.length}`);
 
 if (missingComponents.length === 0) {
-  console.log("🎉 All UI components present!")
+  console.log("🎉 All UI components present!");
 } else {
-  console.log("❌ Missing components:")
-  missingComponents.forEach((comp) => console.log(`  - ${comp}`))
+  console.log("❌ Missing components:");
+  missingComponents.forEach((comp) => console.log(`  - ${comp}`));
 }

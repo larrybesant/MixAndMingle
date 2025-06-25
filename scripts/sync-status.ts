@@ -1,15 +1,15 @@
-console.log("🔄 SYNCING MIX & MINGLE TO V0...")
-console.log("===============================")
+console.log("🔄 SYNCING MIX & MINGLE TO V0...");
+console.log("===============================");
 
-console.log("✅ All files synced successfully!")
-console.log("✅ Supabase integration: Ready")
-console.log("✅ Live streaming: Ready")
-console.log("✅ Real-time chat: Ready")
-console.log("✅ User authentication: Ready")
-console.log("✅ DJ dashboard: Ready")
-console.log("✅ Room discovery: Ready")
-console.log("✅ Responsive design: Ready")
-console.log("✅ Neon theme: Ready")
+console.log("✅ All files synced successfully!");
+console.log("✅ Supabase integration: Ready");
+console.log("✅ Live streaming: Ready");
+console.log("✅ Real-time chat: Ready");
+console.log("✅ User authentication: Ready");
+console.log("✅ DJ dashboard: Ready");
+console.log("✅ Room discovery: Ready");
+console.log("✅ Responsive design: Ready");
+console.log("✅ Neon theme: Ready");
 
-console.log("\n🎵 Mix & Mingle is now synced to v0!")
-console.log("🚀 Your app is production-ready!")
+console.log("\n🎵 Mix & Mingle is now synced to v0!");
+console.log("🚀 Your app is production-ready!");

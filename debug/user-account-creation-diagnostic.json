@@ -1,0 +1,138 @@
+{
+  "timestamp": "2025-06-22T20:51:17.706Z",
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "results": [
+    {
+      "test": "API_AVAILABILITY",
+      "status": "PASS"
+    },
+    {
+      "test": "NEW_USER_CREATION",
+      "status": "PASS",
+      "data": {
+        "message": "User created successfully",
+        "user": {
+          "id": "57a52e0b-2fba-485a-a23f-ddf3cd3dd400",
+          "email": "test-1750625475399@example.com",
+          "email_confirmed": true
+        },
+        "session": "Created"
+      }
+    },
+    {
+      "test": "DUPLICATE_EMAIL_HANDLING",
+      "status": "PASS",
+      "error": "User already registered"
+    },
+    {
+      "test": "VALIDATION_MISSING_EMAIL",
+      "status": "PASS"
+    },
+    {
+      "test": "VALIDATION_MISSING_PASSWORD",
+      "status": "PASS"
+    },
+    {
+      "test": "VALIDATION_INVALID_EMAIL_FORMAT",
+      "status": "PASS"
+    },
+    {
+      "test": "VALIDATION_WEAK_PASSWORD",
+      "status": "PASS"
+    },
+    {
+      "test": "MAIN_AUTH_SIGNUP",
+      "status": "PASS",
+      "data": {
+        "message": "User created successfully. Please check your email for verification.",
+        "user": {
+          "id": "ed1a3c55-1cd7-43f7-9289-cb644b09a4f4",
+          "aud": "authenticated",
+          "role": "authenticated",
+          "email": "main-auth-1750625476622@example.com",
+          "email_confirmed_at": "2025-06-22T20:51:18.868833219Z",
+          "phone": "",
+          "last_sign_in_at": "2025-06-22T20:51:18.872417081Z",
+          "app_metadata": {
+            "provider": "email",
+            "providers": ["email"]
+          },
+          "user_metadata": {
+            "email": "main-auth-1750625476622@example.com",
+            "email_verified": true,
+            "full_name": "Main Auth Test User",
+            "phone_verified": false,
+            "sub": "ed1a3c55-1cd7-43f7-9289-cb644b09a4f4",
+            "username": "mainauth1750625476622"
+          },
+          "identities": [
+            {
+              "identity_id": "53de861b-36eb-47c8-8bdb-8ce618d567a0",
+              "id": "ed1a3c55-1cd7-43f7-9289-cb644b09a4f4",
+              "user_id": "ed1a3c55-1cd7-43f7-9289-cb644b09a4f4",
+              "identity_data": {
+                "email": "main-auth-1750625476622@example.com",
+                "email_verified": true,
+                "full_name": "Main Auth Test User",
+                "phone_verified": false,
+                "sub": "ed1a3c55-1cd7-43f7-9289-cb644b09a4f4",
+                "username": "mainauth1750625476622"
+              },
+              "provider": "email",
+              "last_sign_in_at": "2025-06-22T20:51:18.863919405Z",
+              "created_at": "2025-06-22T20:51:18.863972Z",
+              "updated_at": "2025-06-22T20:51:18.863972Z",
+              "email": "main-auth-1750625476622@example.com"
+            }
+          ],
+          "created_at": "2025-06-22T20:51:18.860116Z",
+          "updated_at": "2025-06-22T20:51:18.8753Z",
+          "is_anonymous": false
+        },
+        "requiresVerification": false
+      }
+    },
+    {
+      "test": "SUPABASE_CONFIG",
+      "status": "PASS",
+      "config": {
+        "status": "CUSTOM_SMTP_CONFIGURED",
+        "message": "Custom SMTP settings have been configured in Supabase",
+        "smtp_provider": "Resend (smtp.resend.com)",
+        "sender_email": "mixandmingleapp@gmail.com",
+        "sender_name": "mixandmingleapp",
+        "configuration": {
+          "host": "smtp.resend.com",
+          "port": 587,
+          "username": "resend",
+          "rate_limit": "60 seconds between emails",
+          "status": "CONFIGURED"
+        },
+        "next_steps": {
+          "step1": "Test password reset email functionality",
+          "step2": "Verify email templates are properly configured",
+          "step3": "Test signup confirmation emails",
+          "step4": "Monitor email delivery and logs"
+        },
+        "test_instructions": {
+          "title": "How to test email delivery",
+          "steps": [
+            "1. Use the password reset endpoint: POST /api/auth/reset-password",
+            "2. Check larrybesant@gmail.com inbox (including spam folder)",
+            "3. Verify the reset link works correctly",
+            "4. Test signup flow with email confirmation"
+          ]
+        },
+        "test_email": "larrybesant@gmail.com",
+        "current_supabase_url": "https://ywfjmsbyksehjgwalqum.supabase.co",
+        "email_service_status": "CUSTOM_SMTP_CONFIGURED",
+        "dashboard_url": "https://supabase.com/dashboard/project/ywfjmsbyksehjgwalqum/auth/settings"
+      }
+    }
+  ]
+}

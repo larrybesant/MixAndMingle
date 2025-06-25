@@ -75,12 +75,13 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
     async function fetchMessages() {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Fetch messages with user profile data
         const { data, error } = await supabase
           .from("chat_messages")
-          .select(`
+          .select(
+            `
             id,
             user_id,
             message,
@@ -90,24 +91,27 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
               username,
               avatar_url
             )
-          `)
+          `,
+          )
           .eq("room_id", roomId)
           .order("created_at", { ascending: true });
 
         if (error) {
-          console.error('Error fetching messages:', error);
-          setError("Failed to load messages.");        } else if (data) {
+          console.error("Error fetching messages:", error);
+          setError("Failed to load messages.");
+        } else if (data) {
           // Transform the data to include profile info
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const transformedMessages = data.map((msg: any) => ({
             ...msg,
-            username: msg.profiles?.username || `User ${msg.user_id.slice(0, 8)}`,
+            username:
+              msg.profiles?.username || `User ${msg.user_id.slice(0, 8)}`,
             avatar_url: msg.profiles?.avatar_url || undefined,
           }));
           setMessages(transformedMessages);
         }
       } catch (err) {
-        console.error('Fetch messages error:', err);
+        console.error("Fetch messages error:", err);
         setError("Failed to load messages.");
       } finally {
         setLoading(false);
@@ -130,12 +134,12 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
         },
         async (payload: { new: ChatMessage }) => {
           const msg = payload.new;
-          
+
           // Fetch the user profile for this message
           const { data: profile } = await supabase
-            .from('profiles')
-            .select('username, avatar_url')
-            .eq('id', msg.user_id)
+            .from("profiles")
+            .select("username, avatar_url")
+            .eq("id", msg.user_id)
             .single();
 
           setMessages((prev) => [

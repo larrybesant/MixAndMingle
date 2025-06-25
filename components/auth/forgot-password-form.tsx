@@ -1,25 +1,32 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/auth-context';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Mail, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState('');
-    const { resetPassword } = useAuth();
+  const [error, setError] = useState("");
+  const { resetPassword } = useAuth();
   const searchParams = useSearchParams();
   useEffect(() => {
     // Pre-fill email if provided in URL
-    const emailParam = searchParams?.get('email');
+    const emailParam = searchParams?.get("email");
     if (emailParam) {
       setEmail(decodeURIComponent(emailParam));
     }
@@ -31,30 +38,37 @@ export default function ForgotPasswordPage() {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
-      setError('Email address is required');
+      setError("Email address is required");
       return;
     }
 
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const { error: resetError } = await resetPassword(email);
 
       if (resetError) {
-        if (resetError.message.includes('User not found')) {
-          setError('No account found with this email address');
-        } else if (resetError.message.includes('405') || resetError.message.includes('hook')) {
-          setError('There\'s a temporary issue with password reset. Please contact support at support@mixandmingle.com or try again later.');
-        } else if (resetError.message.includes('too many requests')) {
-          setError('Too many reset attempts. Please wait a few minutes before trying again.');
+        if (resetError.message.includes("User not found")) {
+          setError("No account found with this email address");
+        } else if (
+          resetError.message.includes("405") ||
+          resetError.message.includes("hook")
+        ) {
+          setError(
+            "There's a temporary issue with password reset. Please contact support at support@mixandmingle.com or try again later.",
+          );
+        } else if (resetError.message.includes("too many requests")) {
+          setError(
+            "Too many reset attempts. Please wait a few minutes before trying again.",
+          );
         } else {
           setError(resetError.message);
         }
@@ -62,8 +76,10 @@ export default function ForgotPasswordPage() {
         setIsSuccess(true);
       }
     } catch (err) {
-      console.error('Reset password error:', err);
-      setError('An unexpected error occurred. Please try again or contact support.');
+      console.error("Reset password error:", err);
+      setError(
+        "An unexpected error occurred. Please try again or contact support.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -78,21 +94,27 @@ export default function ForgotPasswordPage() {
               <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white">Check Your Email</h2>
+              <h2 className="text-2xl font-bold text-white">
+                Check Your Email
+              </h2>
               <p className="text-gray-400">
-                We&apos;ve sent a password reset link to <span className="text-white font-medium">{email}</span>
+                We&apos;ve sent a password reset link to{" "}
+                <span className="text-white font-medium">{email}</span>
               </p>
               <p className="text-sm text-gray-500">
-                Click the link in the email to reset your password. The link will expire in 1 hour.
+                Click the link in the email to reset your password. The link
+                will expire in 1 hour.
               </p>
               <div className="space-y-2 pt-4">
-                <p className="text-xs text-gray-500">Didn&apos;t receive the email?</p>
+                <p className="text-xs text-gray-500">
+                  Didn&apos;t receive the email?
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     setIsSuccess(false);
-                    setEmail('');
+                    setEmail("");
                   }}
                   className="text-purple-400 border-purple-400 hover:bg-purple-400/10"
                 >
@@ -122,21 +144,33 @@ export default function ForgotPasswordPage() {
             Reset Password
           </CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Enter your email address and we&apos;ll send you a link to reset your password
+            Enter your email address and we&apos;ll send you a link to reset
+            your password
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">          {/* Error Alert */}
+        <CardContent className="space-y-4">
+          {" "}
+          {/* Error Alert */}
           {error && (
             <Alert variant="destructive">
               <AlertDescription>
                 {error}
-                {error.includes('405') || error.includes('hook') || error.includes('support@') ? (
+                {error.includes("405") ||
+                error.includes("hook") ||
+                error.includes("support@") ? (
                   <div className="mt-2 pt-2 border-t border-red-700/50">
                     <p className="text-sm text-red-300">
-                      <strong>Quick Fix:</strong> This is a known issue that can be resolved. 
+                      <strong>Quick Fix:</strong> This is a known issue that can
+                      be resolved.
                       <br />• Try refreshing the page and attempting again
-                      <br />• Contact us at <a href="mailto:support@mixandmingle.com" className="underline">support@mixandmingle.com</a>
+                      <br />• Contact us at{" "}
+                      <a
+                        href="mailto:support@mixandmingle.com"
+                        className="underline"
+                      >
+                        support@mixandmingle.com
+                      </a>
                       <br />• Or try signing in with your current password
                     </p>
                   </div>
@@ -144,7 +178,6 @@ export default function ForgotPasswordPage() {
               </AlertDescription>
             </Alert>
           )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Input */}
             <div className="space-y-2">
@@ -175,17 +208,17 @@ export default function ForgotPasswordPage() {
                   Sending Reset Link...
                 </>
               ) : (
-                'Send Reset Link'
+                "Send Reset Link"
               )}
             </Button>
           </form>
-
           {/* Additional Options */}
           <div className="text-center space-y-2">
-            <p className="text-sm text-gray-500">
-              Remember your password?
-            </p>
-            <Link href="/login" className="text-purple-400 hover:text-purple-300 text-sm underline">
+            <p className="text-sm text-gray-500">Remember your password?</p>
+            <Link
+              href="/login"
+              className="text-purple-400 hover:text-purple-300 text-sm underline"
+            >
               Back to Sign In
             </Link>
           </div>
@@ -193,8 +226,11 @@ export default function ForgotPasswordPage() {
 
         <CardFooter>
           <p className="text-sm text-gray-400 text-center w-full">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-purple-400 hover:text-purple-300 underline">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="text-purple-400 hover:text-purple-300 underline"
+            >
               Sign up
             </Link>
           </p>

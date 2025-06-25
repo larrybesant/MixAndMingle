@@ -196,7 +196,7 @@ deploymentFiles.forEach(({ file, required }) => {
     console.log(
       `${required ? "❌" : "⚠️"} ${file} - ${
         required ? "MISSING" : "Optional"
-      }`
+      }`,
     );
   }
 });

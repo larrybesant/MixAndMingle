@@ -1,29 +1,29 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  Mic, 
-  MicOff, 
-  Video, 
-  VideoOff, 
-  Radio, 
-  Users, 
-  Heart, 
+import { useState, useRef, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  Radio,
+  Users,
+  Heart,
   Settings,
   Monitor,
   MonitorOff,
   Volume2,
   VolumeX,
   Maximize,
-  Share2
-} from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { DailyVideoRoom } from './DailyVideoRoom';
+  Share2,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { DailyVideoRoom } from "./DailyVideoRoom";
 
 interface LiveStreamPlayerProps {
   roomId: string;
@@ -36,28 +36,28 @@ interface LiveStreamPlayerProps {
   initialViewerCount?: number;
 }
 
-export function LiveStreamPlayer({ 
-  roomId, 
-  isHost = false, 
+export function LiveStreamPlayer({
+  roomId,
+  isHost = false,
   hostInfo,
-  initialViewerCount = 0 
+  initialViewerCount = 0,
 }: LiveStreamPlayerProps) {
   // Stream state
   const [isStreaming, setIsStreaming] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [viewerCount, setViewerCount] = useState(initialViewerCount);
-  
+
   // Media controls
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [volume, setVolume] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
+
   // Loading states
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
-  
+
   // Refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -65,14 +65,15 @@ export function LiveStreamPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // WebRTC state (simplified for demo)
-  const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null);
+  const [peerConnection, setPeerConnection] =
+    useState<RTCPeerConnection | null>(null);
 
   // Real-time viewer count updates
   useEffect(() => {
     if (!isStreaming) return;
 
     const interval = setInterval(() => {
-      setViewerCount(prev => {
+      setViewerCount((prev) => {
         const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
         return Math.max(0, prev + change);
       });
@@ -86,12 +87,12 @@ export function LiveStreamPlayer({
     const updateRoomStatus = async () => {
       if (isHost) {
         await supabase
-          .from('dj_rooms')
-          .update({ 
+          .from("dj_rooms")
+          .update({
             is_live: isStreaming,
-            viewer_count: viewerCount 
+            viewer_count: viewerCount,
           })
-          .eq('id', roomId);
+          .eq("id", roomId);
       }
     };
 
@@ -102,20 +103,20 @@ export function LiveStreamPlayer({
   const startStream = async () => {
     if (isStarting) return;
     setIsStarting(true);
-    
+
     try {
       // Get user media
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          frameRate: { ideal: 30 }
+          frameRate: { ideal: 30 },
         },
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
-        }
+          autoGainControl: true,
+        },
       });
 
       if (localVideoRef.current) {
@@ -126,18 +127,18 @@ export function LiveStreamPlayer({
       setIsStreaming(true);
       setIsConnected(true);
       setViewerCount(Math.floor(Math.random() * 20) + 5);
-      
+
       toast({
         title: "🎥 Live Stream Started!",
         description: "Your stream is now live and viewers can join.",
       });
-
     } catch (error) {
-      console.error('Error starting stream:', error);
+      console.error("Error starting stream:", error);
       toast({
         title: "Stream Error",
-        description: "Could not access camera/microphone. Please check permissions.",
-        variant: "destructive"
+        description:
+          "Could not access camera/microphone. Please check permissions.",
+        variant: "destructive",
       });
     } finally {
       setIsStarting(false);
@@ -150,7 +151,7 @@ export function LiveStreamPlayer({
     setIsStopping(true);
 
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
 
@@ -162,7 +163,7 @@ export function LiveStreamPlayer({
     setIsConnected(false);
     setViewerCount(0);
     setIsStopping(false);
-    
+
     toast({
       title: "📴 Stream Ended",
       description: "Your live stream has been stopped.",
@@ -173,14 +174,16 @@ export function LiveStreamPlayer({
   const toggleMute = () => {
     if (streamRef.current) {
       const audioTracks = streamRef.current.getAudioTracks();
-      audioTracks.forEach(track => {
+      audioTracks.forEach((track) => {
         track.enabled = isMuted;
       });
       setIsMuted(!isMuted);
-      
+
       toast({
         title: isMuted ? "🎤 Microphone On" : "🤫 Microphone Off",
-        description: isMuted ? "Your audio is now enabled" : "Your audio is now muted",
+        description: isMuted
+          ? "Your audio is now enabled"
+          : "Your audio is now muted",
       });
     }
   };
@@ -189,14 +192,16 @@ export function LiveStreamPlayer({
   const toggleVideo = () => {
     if (streamRef.current) {
       const videoTracks = streamRef.current.getVideoTracks();
-      videoTracks.forEach(track => {
+      videoTracks.forEach((track) => {
         track.enabled = !isVideoOn;
       });
       setIsVideoOn(!isVideoOn);
-      
+
       toast({
         title: isVideoOn ? "📹 Camera Off" : "📹 Camera On",
-        description: isVideoOn ? "Your video is now disabled" : "Your video is now enabled",
+        description: isVideoOn
+          ? "Your video is now disabled"
+          : "Your video is now enabled",
       });
     }
   };
@@ -207,13 +212,13 @@ export function LiveStreamPlayer({
       if (!isScreenSharing) {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
-          audio: true
+          audio: true,
         });
-        
+
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = screenStream;
         }
-        
+
         setIsScreenSharing(true);
         toast({
           title: "🖥️ Screen Sharing Started",
@@ -225,11 +230,11 @@ export function LiveStreamPlayer({
         setIsScreenSharing(false);
       }
     } catch (error) {
-      console.error('Screen share error:', error);
+      console.error("Screen share error:", error);
       toast({
         title: "Screen Share Error",
         description: "Could not start screen sharing",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -246,7 +251,7 @@ export function LiveStreamPlayer({
   };
 
   return (
-    <Card 
+    <Card
       ref={containerRef}
       className="bg-gradient-to-b from-slate-900/90 to-black/90 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden"
     >
@@ -263,7 +268,9 @@ export function LiveStreamPlayer({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-white font-semibold">{hostInfo.username}</h3>
+                  <h3 className="text-white font-semibold">
+                    {hostInfo.username}
+                  </h3>
                   <div className="flex items-center space-x-2">
                     {isConnected && (
                       <Badge className="bg-red-500 text-white animate-pulse">
@@ -273,7 +280,7 @@ export function LiveStreamPlayer({
                     )}
                     <span className="text-white/60 text-sm flex items-center">
                       <Users className="w-4 h-4 mr-1" />
-                      {viewerCount} {viewerCount === 1 ? 'viewer' : 'viewers'}
+                      {viewerCount} {viewerCount === 1 ? "viewer" : "viewers"}
                     </span>
                   </div>
                 </div>
@@ -321,7 +328,7 @@ export function LiveStreamPlayer({
               playsInline
               className="w-full h-full object-cover"
             />
-            
+
             {/* Remote Video (Viewer) */}
             {!isHost && (
               <video
@@ -340,27 +347,39 @@ export function LiveStreamPlayer({
                     variant="ghost"
                     size="icon"
                     onClick={toggleMute}
-                    className={`rounded-full ${isMuted ? 'bg-red-500 text-white' : 'text-white hover:bg-white/20'}`}
+                    className={`rounded-full ${isMuted ? "bg-red-500 text-white" : "text-white hover:bg-white/20"}`}
                   >
-                    {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    {isMuted ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={toggleVideo}
-                    className={`rounded-full ${!isVideoOn ? 'bg-red-500 text-white' : 'text-white hover:bg-white/20'}`}
+                    className={`rounded-full ${!isVideoOn ? "bg-red-500 text-white" : "text-white hover:bg-white/20"}`}
                   >
-                    {isVideoOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
+                    {isVideoOn ? (
+                      <Video className="w-4 h-4" />
+                    ) : (
+                      <VideoOff className="w-4 h-4" />
+                    )}
                   </Button>
 
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={toggleScreenShare}
-                    className={`rounded-full ${isScreenSharing ? 'bg-blue-500 text-white' : 'text-white hover:bg-white/20'}`}
+                    className={`rounded-full ${isScreenSharing ? "bg-blue-500 text-white" : "text-white hover:bg-white/20"}`}
                   >
-                    {isScreenSharing ? <MonitorOff className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+                    {isScreenSharing ? (
+                      <MonitorOff className="w-4 h-4" />
+                    ) : (
+                      <Monitor className="w-4 h-4" />
+                    )}
                   </Button>
 
                   <Button
@@ -374,7 +393,7 @@ export function LiveStreamPlayer({
                   </Button>
                 </div>
               )}
-              
+
               {!isHost && (
                 <div className="flex items-center space-x-2 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2">
                   <Button
@@ -383,7 +402,11 @@ export function LiveStreamPlayer({
                     onClick={() => setVolume(volume > 0 ? 0 : 1)}
                     className="rounded-full text-white hover:bg-white/20"
                   >
-                    {volume > 0 ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                    {volume > 0 ? (
+                      <Volume2 className="w-4 h-4" />
+                    ) : (
+                      <VolumeX className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               )}
@@ -397,16 +420,15 @@ export function LiveStreamPlayer({
             </div>
             <div>
               <h3 className="text-xl font-semibold text-white mb-2">
-                {isHost ? 'Ready to Go Live?' : 'Stream Offline'}
+                {isHost ? "Ready to Go Live?" : "Stream Offline"}
               </h3>
               <p className="text-white/60">
-                {isHost 
-                  ? 'Start your live stream to connect with your audience'
-                  : 'This stream is currently offline. Check back later!'
-                }
+                {isHost
+                  ? "Start your live stream to connect with your audience"
+                  : "This stream is currently offline. Check back later!"}
               </p>
             </div>
-            
+
             {isHost && (
               <Button
                 onClick={startStream}

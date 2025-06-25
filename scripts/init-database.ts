@@ -1,54 +1,54 @@
-import { supabase, sql, testConnections } from "../lib/database/connection"
-import { readFileSync } from "fs"
-import { join } from "path"
+import { supabase, sql, testConnections } from "../lib/database/connection";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 async function initializeDatabase() {
-  console.log("🚀 Initializing Mix & Mingle Database...")
+  console.log("🚀 Initializing Mix & Mingle Database...");
 
   // Test connections first
-  console.log("\n🔍 Testing database connections...")
-  const connections = await testConnections()
+  console.log("\n🔍 Testing database connections...");
+  const connections = await testConnections();
 
   if (!connections.supabase) {
-    console.error("❌ Supabase connection failed")
-    return
+    console.error("❌ Supabase connection failed");
+    return;
   }
 
   if (!connections.neon) {
-    console.error("❌ Neon connection failed")
-    return
+    console.error("❌ Neon connection failed");
+    return;
   }
 
-  console.log("✅ Both Supabase and Neon connected successfully!")
+  console.log("✅ Both Supabase and Neon connected successfully!");
 
   // Run schema
   try {
-    console.log("\n📋 Running database schema...")
-    const schemaPath = join(process.cwd(), "database", "schema.sql")
-    const schema = readFileSync(schemaPath, "utf8")
+    console.log("\n📋 Running database schema...");
+    const schemaPath = join(process.cwd(), "database", "schema.sql");
+    const schema = readFileSync(schemaPath, "utf8");
 
     // Split schema into individual statements
     const statements = schema
       .split(";")
       .map((s) => s.trim())
-      .filter((s) => s.length > 0)
+      .filter((s) => s.length > 0);
 
     for (const statement of statements) {
       try {
-        await sql([statement] as any)
-        console.log("✅ Executed statement")
+        await sql([statement] as any);
+        console.log("✅ Executed statement");
       } catch (error) {
-        console.log("⚠️  Statement skipped (may already exist)")
+        console.log("⚠️  Statement skipped (may already exist)");
       }
     }
 
-    console.log("✅ Database schema initialized!")
+    console.log("✅ Database schema initialized!");
   } catch (error) {
-    console.error("❌ Error running schema:", error)
+    console.error("❌ Error running schema:", error);
   }
 
   // Create sample data
-  console.log("\n🎵 Creating sample data...")
+  console.log("\n🎵 Creating sample data...");
 
   try {
     // Create sample DJ profiles
@@ -72,10 +72,10 @@ async function initializeDatabase() {
           music_preferences: ["Bass", "Dubstep", "Drum & Bass"],
         },
       ])
-      .select()
+      .select();
 
     if (!djError) {
-      console.log("✅ Sample DJ profiles created")
+      console.log("✅ Sample DJ profiles created");
     }
 
     // Create sample rooms
@@ -103,25 +103,25 @@ async function initializeDatabase() {
           tags: ["bass", "dubstep", "heavy"],
         },
       ])
-      .select()
+      .select();
 
     if (!roomError) {
-      console.log("✅ Sample DJ rooms created")
+      console.log("✅ Sample DJ rooms created");
     }
   } catch (error) {
-    console.log("⚠️  Sample data creation skipped")
+    console.log("⚠️  Sample data creation skipped");
   }
 
-  console.log("\n🎉 Database initialization complete!")
-  console.log("\n📋 Next steps:")
-  console.log("1. Run: npm run dev")
-  console.log("2. Visit: http://localhost:3000")
-  console.log("3. Sign up and start DJing!")
+  console.log("\n🎉 Database initialization complete!");
+  console.log("\n📋 Next steps:");
+  console.log("1. Run: npm run dev");
+  console.log("2. Visit: http://localhost:3000");
+  console.log("3. Sign up and start DJing!");
 }
 
 // Run if called directly
 if (require.main === module) {
-  initializeDatabase()
+  initializeDatabase();
 }
 
-export { initializeDatabase }
+export { initializeDatabase };

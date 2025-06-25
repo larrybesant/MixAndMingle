@@ -5,9 +5,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   quality:
@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - run: npm run lint
       - run: npm run type-check || npx tsc --noEmit
@@ -36,7 +36,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - name: Download previous build artifacts (if any)
         uses: actions/download-artifact@v4
@@ -72,7 +72,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - run: npm run test -- --coverage || true
       - name: Upload coverage report
@@ -89,13 +89,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - name: Audit dependencies for vulnerabilities
         run: npm audit --audit-level=moderate || true
       - name: Check for outdated dependencies
         run: npm outdated || true
-
 # Summary:
 # - Lint, type-check, and test on Node.js 18 and 20
 # - Build and E2E test on Node.js 20

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { SwipeCard } from './swipe-card';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Heart, Zap } from 'lucide-react';
-import { PotentialMatch } from '@/types/matching';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { SwipeCard } from "./swipe-card";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Heart, Zap } from "lucide-react";
+import { PotentialMatch } from "@/types/matching";
+import { toast } from "@/hooks/use-toast";
 
 export function MatchingInterface() {
   const [users, setUsers] = useState<PotentialMatch[]>([]);
@@ -18,7 +18,7 @@ export function MatchingInterface() {
   const fetchPotentialMatches = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/matching/potential');
+      const response = await fetch("/api/matching/potential");
       if (response.ok) {
         const data = await response.json();
         setUsers(data.matches || []);
@@ -27,15 +27,15 @@ export function MatchingInterface() {
         toast({
           title: "Error",
           description: "Failed to load potential matches",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Error fetching matches:', error);
+      console.error("Error fetching matches:", error);
       toast({
         title: "Error",
         description: "Failed to load potential matches",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -43,44 +43,44 @@ export function MatchingInterface() {
   };
 
   // Handle swipe action
-  const handleSwipe = async (action: 'like' | 'pass' | 'super_like') => {
+  const handleSwipe = async (action: "like" | "pass" | "super_like") => {
     if (currentIndex >= users.length) return;
-    
+
     setIsAnimating(true);
     const currentUser = users[currentIndex];
 
     try {
-      const response = await fetch('/api/matching/swipe', {
-        method: 'POST',
+      const response = await fetch("/api/matching/swipe", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           swiped_id: currentUser.id,
-          action
-        })
+          action,
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Show match celebration if it's a match
-        if (data.is_match && action === 'like') {
+        if (data.is_match && action === "like") {
           setIsMatch(true);
           toast({
             title: "🎉 It's a Match!",
             description: `You and ${currentUser.full_name || currentUser.username} liked each other!`,
-            duration: 5000
+            duration: 5000,
           });
-          
+
           // Hide match celebration after 3 seconds
           setTimeout(() => setIsMatch(false), 3000);
-        } else if (action === 'like') {
+        } else if (action === "like") {
           toast({
             title: "💜 Liked!",
             description: `You liked ${currentUser.full_name || currentUser.username}`,
           });
-        } else if (action === 'super_like') {
+        } else if (action === "super_like") {
           toast({
             title: "⭐ Super Liked!",
             description: `You super liked ${currentUser.full_name || currentUser.username}`,
@@ -89,23 +89,23 @@ export function MatchingInterface() {
 
         // Move to next user
         setTimeout(() => {
-          setCurrentIndex(prev => prev + 1);
+          setCurrentIndex((prev) => prev + 1);
           setIsAnimating(false);
         }, 500);
       } else {
         toast({
           title: "Error",
           description: "Failed to record your swipe",
-          variant: "destructive"
+          variant: "destructive",
         });
         setIsAnimating(false);
       }
     } catch (error) {
-      console.error('Error swiping:', error);
+      console.error("Error swiping:", error);
       toast({
         title: "Error",
         description: "Failed to record your swipe",
-        variant: "destructive"
+        variant: "destructive",
       });
       setIsAnimating(false);
     }
@@ -140,9 +140,10 @@ export function MatchingInterface() {
           <div className="text-6xl mb-4">🎵</div>
           <h2 className="text-3xl font-bold text-white">No More Matches</h2>
           <p className="text-white/80 text-lg">
-            You've seen all available matches in your area. Check back later for more people to discover!
+            You've seen all available matches in your area. Check back later for
+            more people to discover!
           </p>
-          <Button 
+          <Button
             onClick={fetchPotentialMatches}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
           >
@@ -161,9 +162,10 @@ export function MatchingInterface() {
           <div className="text-6xl mb-4">🔍</div>
           <h2 className="text-3xl font-bold text-white">No Matches Found</h2>
           <p className="text-white/80 text-lg">
-            We couldn't find any potential matches for you right now. Try updating your preferences or check back later!
+            We couldn't find any potential matches for you right now. Try
+            updating your preferences or check back later!
           </p>
-          <Button 
+          <Button
             onClick={fetchPotentialMatches}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
           >

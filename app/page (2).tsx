@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 export default function BetaRoom() {
   return (
@@ -12,7 +12,7 @@ export default function BetaRoom() {
           height: "70vh",
           border: "0px",
           borderRadius: "16px",
-          background: "#111"
+          background: "#111",
         }}
         title="Daily.co Beta Room"
       />
@@ -20,5 +20,5 @@ export default function BetaRoom() {
         Share this link with DJs to test live video and audio.
       </p>
     </div>
-  )
+  );
 }

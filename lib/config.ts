@@ -10,10 +10,14 @@ export const config = {
   // Room Configuration
   rooms: {
     maxNameLength: Number.parseInt(process.env.MAX_ROOM_NAME_LENGTH || "50"),
-    maxDescriptionLength: Number.parseInt(process.env.MAX_ROOM_DESCRIPTION_LENGTH || "200"),
+    maxDescriptionLength: Number.parseInt(
+      process.env.MAX_ROOM_DESCRIPTION_LENGTH || "200",
+    ),
     maxTagsPerRoom: Number.parseInt(process.env.MAX_TAGS_PER_ROOM || "5"),
     maxTagLength: Number.parseInt(process.env.MAX_TAG_LENGTH || "20"),
-    defaultMaxViewers: Number.parseInt(process.env.DEFAULT_MAX_VIEWERS || "100"),
+    defaultMaxViewers: Number.parseInt(
+      process.env.DEFAULT_MAX_VIEWERS || "100",
+    ),
     defaultCategory: process.env.DEFAULT_ROOM_CATEGORY || "Music",
     defaultGenre: process.env.DEFAULT_ROOM_GENRE || "Electronic",
   },
@@ -63,19 +67,25 @@ export const config = {
     noBufferUtil: process.env.WS_NO_BUFFER_UTIL === "1",
     noUtf8Validate: process.env.WS_NO_UTF_8_VALIDATE === "1",
   },
-} as const
+} as const;
 
 // Validation function to check required environment variables
 export function validateConfig() {
-  const required = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "DATABASE_URL"]
+  const required = [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "DATABASE_URL",
+  ];
 
-  const missing = required.filter((key) => !process.env[key])
+  const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
+    throw new Error(
+      `Missing required environment variables: ${missing.join(", ")}`,
+    );
   }
 }
 
 // Development helper to check if we're in development mode
-export const isDevelopment = process.env.NODE_ENV === "development"
-export const isProduction = process.env.NODE_ENV === "production"
+export const isDevelopment = process.env.NODE_ENV === "development";
+export const isProduction = process.env.NODE_ENV === "production";

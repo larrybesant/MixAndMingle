@@ -13,7 +13,9 @@ export default function StreamHistoryPage() {
       if (!userData.user) return;
       const { data } = await supabase
         .from("room_history")
-        .select("id, room_id, started_at, ended_at, peak_viewers, total_messages, duration_minutes, dj_rooms(name, genre)")
+        .select(
+          "id, room_id, started_at, ended_at, peak_viewers, total_messages, duration_minutes, dj_rooms(name, genre)",
+        )
         .eq("dj_rooms.host_id", userData.user.id)
         .order("started_at", { ascending: false });
       setStreams(data || []);
@@ -45,12 +47,23 @@ export default function StreamHistoryPage() {
             </thead>
             <tbody>
               {streams.map((s) => (
-                <tr key={s.id} className="border-b border-gray-700 hover:bg-gray-900">
+                <tr
+                  key={s.id}
+                  className="border-b border-gray-700 hover:bg-gray-900"
+                >
                   <td className="p-2">{s.dj_rooms?.name || "-"}</td>
                   <td className="p-2">{s.dj_rooms?.genre || "-"}</td>
-                  <td className="p-2">{s.started_at ? new Date(s.started_at).toLocaleString() : "-"}</td>
-                  <td className="p-2">{s.ended_at ? new Date(s.ended_at).toLocaleString() : "-"}</td>
-                  <td className="p-2">{s.duration_minutes ? `${s.duration_minutes} min` : "-"}</td>
+                  <td className="p-2">
+                    {s.started_at
+                      ? new Date(s.started_at).toLocaleString()
+                      : "-"}
+                  </td>
+                  <td className="p-2">
+                    {s.ended_at ? new Date(s.ended_at).toLocaleString() : "-"}
+                  </td>
+                  <td className="p-2">
+                    {s.duration_minutes ? `${s.duration_minutes} min` : "-"}
+                  </td>
                   <td className="p-2">{s.peak_viewers ?? "-"}</td>
                   <td className="p-2">{s.total_messages ?? "-"}</td>
                 </tr>

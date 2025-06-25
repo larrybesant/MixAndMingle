@@ -7,12 +7,14 @@ const protectedRoutes = [
   "/room",
   "/messages",
   "/notifications",
-  "/admin"
+  "/admin",
 ];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
+  const isProtected = protectedRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
 
   // Check for Supabase auth cookie (adjust if you use a different session method)
   const token = request.cookies.get("sb-access-token")?.value;
@@ -33,6 +35,6 @@ export const config = {
     "/room/:path*",
     "/messages",
     "/notifications",
-    "/admin"
-  ]
+    "/admin",
+  ],
 };

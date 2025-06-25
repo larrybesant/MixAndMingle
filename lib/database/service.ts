@@ -1,35 +1,44 @@
-import { supabase, sql } from "./connection"
-import { ProfileSchema } from "@/lib/zod-schemas-shared"
-import type { Profile, UserRoom, ChatMessage } from "@/types/database"
+import { supabase, sql } from "./connection";
+import { ProfileSchema } from "@/lib/zod-schemas-shared";
+import type { Profile, UserRoom, ChatMessage } from "@/types/database";
 
 export class DatabaseService {
   // Profile operations
   static async getProfile(userId: string): Promise<Profile | null> {
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
 
     if (error) {
-      console.error("Error fetching profile:", error)
-      return null
+      console.error("Error fetching profile:", error);
+      return null;
     }
 
     // Validate with Zod before returning
-    const parsed = ProfileSchema.safeParse(data)
+    const parsed = ProfileSchema.safeParse(data);
     if (!parsed.success) {
-      console.error("Invalid profile data:", parsed.error)
-      return null
+      console.error("Invalid profile data:", parsed.error);
+      return null;
     }
-    return parsed.data
+    return parsed.data;
   }
 
   static async updateProfile(userId: string, updates: Partial<Profile>) {
-    const { data, error } = await supabase.from("profiles").update(updates).eq("id", userId).select().single()
+    const { data, error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", userId)
+      .select()
+      .single();
 
     if (error) {
-      console.error("Error updating profile:", error)
-      throw error
+      console.error("Error updating profile:", error);
+      throw error;
     }
 
-    return data
+    return data;
   }
   // User Room operations
   static async getLiveRooms(): Promise<UserRoom[]> {
@@ -37,14 +46,14 @@ export class DatabaseService {
       .from("user_rooms")
       .select("*")
       .eq("is_live", true)
-      .order("viewer_count", { ascending: false })
+      .order("viewer_count", { ascending: false });
 
     if (error) {
-      console.error("Error fetching live rooms:", error)
-      return []
+      console.error("Error fetching live rooms:", error);
+      return [];
     }
 
-    return (data as UserRoom[]) || []
+    return (data as UserRoom[]) || [];
   }
 
   static async createRoom(hostId: string, roomData: Partial<UserRoom>) {
@@ -55,14 +64,14 @@ export class DatabaseService {
         host_id: hostId,
       })
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error("Error creating room:", error)
-      throw error
+      console.error("Error creating room:", error);
+      throw error;
     }
 
-    return data
+    return data;
   }
 
   static async updateRoomStatus(roomId: string, isLive: boolean) {
@@ -71,32 +80,39 @@ export class DatabaseService {
       .update({ is_live: isLive })
       .eq("id", roomId)
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error("Error updating room status:", error)
-      throw error
+      console.error("Error updating room status:", error);
+      throw error;
     }
 
-    return data
+    return data;
   }
   // Chat operations
-  static async getChatMessages(roomId: string, limit = 50): Promise<ChatMessage[]> {
+  static async getChatMessages(
+    roomId: string,
+    limit = 50,
+  ): Promise<ChatMessage[]> {
     const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
       .eq("room_id", roomId)
       .order("created_at", { ascending: false })
-      .limit(limit)
+      .limit(limit);
 
     if (error) {
-      console.error("Error fetching chat messages:", error)
-      return []
+      console.error("Error fetching chat messages:", error);
+      return [];
     }
 
-    return ((data as ChatMessage[])?.reverse()) || []
+    return (data as ChatMessage[])?.reverse() || [];
   }
-  static async sendChatMessage(roomId: string, userId: string, message: string) {
+  static async sendChatMessage(
+    roomId: string,
+    userId: string,
+    message: string,
+  ) {
     const { data, error } = await supabase
       .from("chat_messages")
       .insert({
@@ -105,17 +121,20 @@ export class DatabaseService {
         message,
       })
       .select("*")
-      .single()
+      .single();
 
     if (error) {
-      console.error("Error sending chat message:", error)
-      throw error
+      console.error("Error sending chat message:", error);
+      throw error;
     }
 
-    return data
+    return data;
   }
   // Real-time subscriptions
-  static subscribeToRoom(roomId: string, onMessage: (message: ChatMessage) => void) {
+  static subscribeToRoom(
+    roomId: string,
+    onMessage: (message: ChatMessage) => void,
+  ) {
     return supabase
       .channel(`room:${roomId}`)
       .on(
@@ -126,12 +145,16 @@ export class DatabaseService {
           table: "chat_messages",
           filter: `room_id=eq.${roomId}`,
         },
-        (payload: { new: ChatMessage }) => onMessage(payload.new as ChatMessage),
+        (payload: { new: ChatMessage }) =>
+          onMessage(payload.new as ChatMessage),
       )
-      .subscribe()
+      .subscribe();
   }
 
-  static subscribeToRoomUpdates(roomId: string, onUpdate: (update: UserRoom) => void) {
+  static subscribeToRoomUpdates(
+    roomId: string,
+    onUpdate: (update: UserRoom) => void,
+  ) {
     return supabase
       .channel(`room_updates:${roomId}`)
       .on(
@@ -144,7 +167,7 @@ export class DatabaseService {
         },
         (payload: { new: UserRoom }) => onUpdate(payload.new as UserRoom),
       )
-      .subscribe()
+      .subscribe();
   }
 
   // Analytics using Neon for complex queries
@@ -163,12 +186,12 @@ export class DatabaseService {
         LEFT JOIN chat_messages cm ON r.id = cm.room_id
         WHERE r.id = ${roomId}
         GROUP BY r.id, r.name, r.genre
-      `
+      `;
 
-      return analytics[0] || null
+      return analytics[0] || null;
     } catch (error) {
-      console.error("Error fetching room analytics:", error)
-      return null
+      console.error("Error fetching room analytics:", error);
+      return null;
     }
   }
 
@@ -188,12 +211,12 @@ export class DatabaseService {
         GROUP BY p.id, p.username, p.avatar_url
         ORDER BY total_viewers DESC
         LIMIT ${limit}
-      `
+      `;
 
-      return topUsers
+      return topUsers;
     } catch (error) {
-      console.error("Error fetching top users:", error)
-      return []
+      console.error("Error fetching top users:", error);
+      return [];
     }
   }
 }

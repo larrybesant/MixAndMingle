@@ -1,0 +1,2 @@
+// Add this to your package.json dependencies and run npm install:
+// "@daily-co/daily-js": "^0.34.0"

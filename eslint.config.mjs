@@ -22,9 +22,9 @@ const eslintConfig = [
       "*.config.js",
       "scripts/**/*",
       "jest.config.js",
-      "lint-staged.config.mjs"
-    ]
-  }
+      "lint-staged.config.mjs",
+    ],
+  },
 ];
 
 export default eslintConfig;

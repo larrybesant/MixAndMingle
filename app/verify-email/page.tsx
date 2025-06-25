@@ -1,57 +1,61 @@
-"use client"
+"use client";
 
-import { Suspense } from "react"
-import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { supabase } from "@/lib/supabase/client"
-import Link from "next/link"
+import { Suspense } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
+import Link from "next/link";
 
 function VerifyEmailContent() {
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [message, setMessage] = useState("")
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const verifyEmail = async () => {
-      const token = searchParams?.get("token")
-      const type = searchParams?.get("type")
+      const token = searchParams?.get("token");
+      const type = searchParams?.get("type");
 
       if (type === "signup" && token) {
         try {
           const { error } = await supabase.auth.verifyOtp({
             token_hash: token,
             type: "signup",
-          })
+          });
 
           if (error) {
-            setStatus("error")
-            setMessage(error.message)
+            setStatus("error");
+            setMessage(error.message);
           } else {
-            setStatus("success")
-            setMessage("Email verified successfully! You can now sign in.")
+            setStatus("success");
+            setMessage("Email verified successfully! You can now sign in.");
             setTimeout(() => {
-              router.push("/login")
-            }, 3000)
+              router.push("/login");
+            }, 3000);
           }
         } catch (err) {
-          setStatus("error")
-          setMessage("An unexpected error occurred")
+          setStatus("error");
+          setMessage("An unexpected error occurred");
         }
       } else {
-        setStatus("error")
-        setMessage("Invalid verification link")
+        setStatus("error");
+        setMessage("Invalid verification link");
       }
-    }
+    };
 
-    verifyEmail()
-  }, [searchParams, router])
+    verifyEmail();
+  }, [searchParams, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
       <div className="max-w-md w-full text-center space-y-6 bg-black/40 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Email Verification</h1>
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Email Verification
+          </h1>
 
           {status === "loading" && (
             <div className="space-y-4">
@@ -83,7 +87,7 @@ function VerifyEmailContent() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function LoadingFallback() {
@@ -94,7 +98,7 @@ function LoadingFallback() {
         <p className="text-gray-400">Loading verification...</p>
       </div>
     </div>
-  )
+  );
 }
 
 export default function VerifyEmailPage() {
@@ -102,5 +106,5 @@ export default function VerifyEmailPage() {
     <Suspense fallback={<LoadingFallback />}>
       <VerifyEmailContent />
     </Suspense>
-  )
+  );
 }
