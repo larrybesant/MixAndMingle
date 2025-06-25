@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { UserListSchema, type UserList } from "@/lib/zod-schemas-shared";
 
 export default function Page() {
-  const [, setUsers] = useState<UserList>([]);
+  const [users, setUsers] = useState<UserList>([]);
 
   useEffect(() => {
     async function fetchUsers() {
