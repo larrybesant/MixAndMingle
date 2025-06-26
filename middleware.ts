@@ -10,9 +10,10 @@ const protectedRoutes = [
   "/room",
   "/messages",
   "/notifications",
-  "/admin",
+  "/admin"
 ];
 
+<<<<<<< HEAD
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const supabase = createMiddlewareClient({ req: request, res: response });
@@ -24,6 +25,11 @@ export async function middleware(request: NextRequest) {
   const isProtected = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route),
   );
+=======
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
 
   if (isProtected && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -33,5 +39,17 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+<<<<<<< HEAD
   matcher: "/:path*",
+=======
+  matcher: [
+    "/dashboard",
+    "/create-profile",
+    "/go-live",
+    "/room/:path*",
+    "/messages",
+    "/notifications",
+    "/admin"
+  ]
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
 };

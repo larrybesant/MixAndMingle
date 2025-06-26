@@ -1,67 +1,77 @@
-console.log("🔗 TESTING SUPABASE CONNECTION");
-console.log("==============================");
+import { supabase } from "../lib/supabase/client"
 
 async function testSupabaseConnection() {
-  try {
-    // Import Supabase client
-    const { supabase } = await import("../lib/supabase/client");
-    console.log("✅ Supabase client imported successfully");
+  console.log("🧪 Testing Supabase Connection...")
+  console.log("================================")
 
-    // Test basic connection
-    console.log("\n🔍 Testing database connection...");
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("count")
-      .limit(1);
+  try {
+    // Test 1: Basic connection
+    console.log("1. Testing basic connection...")
+    const { data, error } = await supabase.from("profiles").select("count(*)")
 
     if (error) {
-      console.log(`❌ Database connection failed: ${error.message}`);
-
-      // Check if it's a table not found error
-      if (error.message.includes('relation "profiles" does not exist')) {
-        console.log(
-          "💡 Database tables not created yet. Run the SQL schema first.",
-        );
+      if (error.code === "42P01") {
+        console.log("❌ Profiles table doesn't exist yet")
+        console.log("✅ But connection to Supabase is working!")
+        return true
+      } else {
+        console.log("❌ Connection error:", error.message)
+        return false
       }
-    } else {
-      console.log("✅ Database connection successful");
     }
 
-    // Test authentication
-    console.log("\n🔐 Testing authentication...");
-    const { data: authData, error: authError } =
-      await supabase.auth.getSession();
-
-    if (authError) {
-      console.log(`❌ Auth test failed: ${authError.message}`);
-    } else {
-      console.log("✅ Authentication system accessible");
-      console.log(`Current session: ${authData.session ? "Active" : "None"}`);
-    }
-
-    // Test real-time capabilities
-    console.log("\n⚡ Testing real-time capabilities...");
-    const channel = supabase.channel("test-channel");
-    console.log("✅ Real-time channel created");
-
-    // Clean up
-    await supabase.removeChannel(channel);
-    console.log("✅ Real-time channel cleaned up");
-  } catch (error) {
-    if (error instanceof Error) {
-      console.log(`❌ Supabase test failed: ${error.message}`);
-      if (error.message.includes("NEXT_PUBLIC_SUPABASE_URL")) {
-        console.log("💡 Missing NEXT_PUBLIC_SUPABASE_URL environment variable");
-      }
-      if (error.message.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY")) {
-        console.log(
-          "💡 Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable",
-        );
-      }
-    } else {
-      console.log("❌ Supabase test failed: Unknown error", error);
-    }
+    console.log("✅ Connection successful!")
+    console.log("✅ Profiles table exists!")
+    return true
+  } catch (err) {
+    console.error("❌ Connection failed:", err)
+    return false
   }
 }
 
-testSupabaseConnection();
+// Test auth
+async function testAuth() {
+  console.log("\n2. Testing authentication...")
+
+  try {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession()
+
+    if (error) {
+      console.log("❌ Auth error:", error.message)
+      return false
+    }
+
+    if (session) {
+      console.log("✅ User is logged in:", session.user.email)
+    } else {
+      console.log("ℹ️  No user currently logged in (this is normal)")
+    }
+
+    return true
+  } catch (err) {
+    console.error("❌ Auth test failed:", err)
+    return false
+  }
+}
+
+// Run tests
+async function runTests() {
+  const connectionOk = await testSupabaseConnection()
+  const authOk = await testAuth()
+
+  console.log("\n📊 TEST RESULTS")
+  console.log("================")
+  console.log(`Connection: ${connectionOk ? "✅ PASS" : "❌ FAIL"}`)
+  console.log(`Authentication: ${authOk ? "✅ PASS" : "❌ FAIL"}`)
+
+  if (connectionOk && authOk) {
+    console.log("\n🎉 All tests passed! Your Supabase setup is working.")
+  } else {
+    console.log("\n⚠️  Some tests failed. Check your environment variables.")
+  }
+}
+
+runTests()

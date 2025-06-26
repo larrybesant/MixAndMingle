@@ -1,62 +1,37 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
-export async function GET() {
-  try {
-    const { data: user, error: userError } = await supabase.auth.getUser();
+import type { Database } from '@/lib/database.types'
 
-    if (userError || !user.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const dynamic = 'force-dynamic'
 
-    // For now, return mock matches data
-    const mockMatches = [
-      {
-        id: "match1",
-        user1_id: user.user.id,
-        user2_id: "1",
-        matched_at: "2024-01-15T10:30:00Z",
-        is_active: true,
-        last_message_at: null,
-        other_user: {
-          id: "1",
-          username: "DJ_Alex",
-          full_name: "Alex Johnson",
-          avatar_url: null,
-          bio: "Electronic music producer and DJ. Love house and techno!",
-          music_preferences: ["House", "Techno", "Electronic"],
-          is_dj: true,
-          created_at: "2024-01-01T00:00:00Z",
-          updated_at: "2024-01-01T00:00:00Z",
-        },
-      },
-      {
-        id: "match2",
-        user1_id: user.user.id,
-        user2_id: "2",
-        matched_at: "2024-01-14T15:45:00Z",
-        is_active: true,
-        last_message_at: null,
-        other_user: {
-          id: "2",
-          username: "musiclover23",
-          full_name: "Sarah Chen",
-          avatar_url: null,
-          bio: "Always looking for new music and great vibes ✨",
-          music_preferences: ["Pop", "R&B", "Hip-Hop"],
-          is_dj: false,
-          created_at: "2024-01-01T00:00:00Z",
-          updated_at: "2024-01-01T00:00:00Z",
-        },
-      },
-    ];
+export async function GET(): Promise<NextResponse> {
+  const supabase = createRouteHandlerClient<Database>({ cookies })
 
-    return NextResponse.json({ matches: mockMatches });
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Replace any problematic count queries with proper error handling
+  const { data: matches, error } = await supabase
+    .from('matches')
+    .select(`
+    *,
+    profile1:profiles!matches_profile1_id_fkey(*),
+    profile2:profiles!matches_profile2_id_fkey(*)
+  `)
+    .or(`profile1_id.eq.${user.id},profile2_id.eq.${user.id}`)
+    .eq('matched', true)
+
+  if (error) {
+    console.error('Matches error:', error)
+    return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 })
+  }
+
+  return NextResponse.json(matches)
 }

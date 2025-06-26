@@ -1,23 +1,23 @@
-import { Resend } from "resend";
+import { Resend } from "resend"
 
-const resendKey = process.env.RESEND_KEY;
-const resend = resendKey ? new Resend(resendKey) : null;
+const resendKey = process.env.RESEND_KEY
+const resend = resendKey ? new Resend(resendKey) : null
 
 export interface BetaTester {
-  email: string;
-  name: string;
-  role?: string;
-  signupDate?: Date;
+  email: string
+  name: string
+  role?: string
+  signupDate?: Date
 }
 
 export class BetaTestingEmail {
   static async sendBetaInvite(tester: BetaTester) {
     if (!resend) {
-      console.error("Resend API key missing. Skipping email send.");
-      return { success: false, error: "Resend API key missing" };
+      console.error("Resend API key missing. Skipping email send.")
+      return { success: false, error: "Resend API key missing" }
     }
 
-    const betaLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://djmixandmingle.com"}/beta`;
+    const betaLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://djmixandmingle.com"}/beta`
 
     try {
       const { data, error } = await resend.emails.send({
@@ -96,43 +96,39 @@ export class BetaTestingEmail {
           </body>
           </html>
         `,
-      });
+      })
 
       if (error) {
-        console.error("Error sending beta invite:", error);
-        return { success: false, error };
+        console.error("Error sending beta invite:", error)
+        return { success: false, error }
       }
 
-      console.log("Beta invite sent successfully:", data);
-      return { success: true, data };
+      console.log("Beta invite sent successfully:", data)
+      return { success: true, data }
     } catch (error) {
-      console.error("Failed to send beta invite:", error);
-      return { success: false, error };
+      console.error("Failed to send beta invite:", error)
+      return { success: false, error }
     }
   }
 
   static async sendBulkBetaInvites(testers: BetaTester[]) {
-    const results = [];
+    const results = []
 
     for (const tester of testers) {
-      const result = await this.sendBetaInvite(tester);
-      results.push({ email: tester.email, ...result });
+      const result = await this.sendBetaInvite(tester)
+      results.push({ email: tester.email, ...result })
 
       // Add delay to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000))
     }
 
-    return results;
+    return results
   }
 
-  static async sendFeedbackConfirmation(
-    email: string,
-    name: string,
-    feedback: string,
-  ) {
+  static async sendFeedbackConfirmation(email: string, name: string, feedback: string) {
     if (!resend) {
-      console.error("Resend API key missing. Skipping email send.");
-      return { success: false, error: "Resend API key missing" };
+      console.error("Resend API key missing. Skipping email send.")
+      return { success: false, error: "Resend API key missing" }
     }
 
     try {
@@ -158,12 +154,12 @@ export class BetaTestingEmail {
             </div>
           </div>
         `,
-      });
+      })
 
-      return { success: true, data };
+      return { success: true, data }
     } catch (error) {
-      console.error("Failed to send feedback confirmation:", error);
-      return { success: false, error };
+      console.error("Failed to send feedback confirmation:", error)
+      return { success: false, error }
     }
   }
 }

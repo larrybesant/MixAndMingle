@@ -1,5 +1,6 @@
-"use client";
+"use client"
 
+<<<<<<< HEAD
 import { useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
@@ -70,6 +71,22 @@ export default function LoginPage() {
           {loading ? "Signing In..." : "Sign In"}
         </button>
       </form>
+=======
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+
+export default function LoginPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to demo login page
+    router.replace("/demo-login")
+  }, [router])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
+      <div className="text-white text-xl">Redirecting to demo login...</div>
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
     </div>
-  );
+  )
 }

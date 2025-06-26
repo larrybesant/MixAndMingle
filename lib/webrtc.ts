@@ -9,9 +9,6 @@ export async function getUserMedia(constraints: MediaStreamConstraints) {
 }
 
 // Example: Attach stream to video element
-export function attachStreamToVideo(
-  videoElement: HTMLVideoElement,
-  stream: MediaStream,
-) {
+export function attachStreamToVideo(videoElement: HTMLVideoElement, stream: MediaStream) {
   videoElement.srcObject = stream;
 }

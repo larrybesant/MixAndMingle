@@ -1,54 +1,40 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+```ts file="app/api/matching/matches/route.ts"
+[v0-no-op-code-block-prefix]import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
-export async function GET() {
-  try {
-    const { data: user, error: userError } = await supabase.auth.getUser();
+import type { Database } from '@/lib/database.types'
 
-    if (userError || !user.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const dynamic = 'force-dynamic'
 
-    // For now, return mock data until we set up the database tables
-    const mockMatches = [
-      {
-        id: "1",
-        username: "DJ_Alex",
-        full_name: "Alex Johnson",
-        avatar_url: null,
-        bio: "Electronic music producer and DJ. Love house and techno!",
-        music_preferences: ["House", "Techno", "Electronic"],
-        is_dj: true,
-        age: 26,
-      },
-      {
-        id: "2",
-        username: "musiclover23",
-        full_name: "Sarah Chen",
-        avatar_url: null,
-        bio: "Always looking for new music and great vibes ✨",
-        music_preferences: ["Pop", "R&B", "Hip-Hop"],
-        is_dj: false,
-        age: 24,
-      },
-      {
-        id: "3",
-        username: "beatdropper",
-        full_name: "Mike Rodriguez",
-        avatar_url: null,
-        bio: "Producer, DJ, and music enthusiast. Let's create something amazing together!",
-        music_preferences: ["EDM", "Dubstep", "Trap"],
-        is_dj: true,
-        age: 29,
-      },
-    ];
+export async function GET(): Promise<NextResponse> {
+  const supabase = createRouteHandlerClient<Database>({ cookies })
 
-    return NextResponse.json({ matches: mockMatches });
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Replace any problematic count queries with proper error handling
+  const { data: matches, error } = await supabase
+    .from('matches')
+    .select(`
+    *,\
+profile1: profiles!
+matches_profile1_id_fkey(*),\
+profile2: profiles!
+matches_profile2_id_fkey(*)
+  `)
+    .or(\`profile1_id.eq.${user.id},profile2_id.eq.${user.id}\`)
+    .eq('matched', true)
+
+  if (error) {
+    console.error('Matches error:', error)
+    return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 })
+  }
+
+  return NextResponse.json(matches)
 }

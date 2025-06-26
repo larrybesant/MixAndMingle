@@ -6,17 +6,11 @@ First, run the development server:
 
 \`\`\`bash
 npm run dev
-
 # or
-
 yarn dev
-
 # or
-
 pnpm dev
-
 # or
-
 bun dev
 \`\`\`
 
@@ -48,7 +42,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 **IMPORTANT:** This is an 18+ adult platform. Age verification is required for all users. Please include appropriate warnings and compliance measures throughout the app.
 
 ## Branding & Visual Identity
-
 - Dark mode, neon accents, glowing buttons, animated waveforms
 - Neon-styled typography with music + social symbols
 - Futuristic and club-style fonts
@@ -60,7 +53,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - Background: Deep black with purple gradients
 
 ## Features
-
 - Live DJ streaming
 - Matchmaking (swipe-style)
 - Real-time chat and reactions
@@ -72,7 +64,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - Admin dashboard (moderation, analytics)
 
 ## Tech Stack
-
 - Next.js 14+ (App Router, TypeScript)
 - TailwindCSS (custom neon palette)
 - shadcn/ui components
@@ -82,11 +73,9 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - Responsive, mobile-first design
 
 ## Visual Style
-
 - Gradient backgrounds, neon glow, glassmorphism, animated music visualizer, pulsing LIVE indicators, custom scrollbars, floating elements
 
 ## Environment Variables
-
 See `.env.example` for Firebase setup.
 
 ## Database Setup & Migration
@@ -98,9 +87,7 @@ To initialize the database schema for Mix & Mingle:
 
 \`\`\`bash
 npm run db:init
-
 # or
-
 npx ts-node scripts/init-database.ts
 \`\`\`
 
@@ -124,7 +111,6 @@ If any are missing, the app will throw a clear error at startup.
 Thank you for helping test Mix & Mingle! Please follow these steps:
 
 ### 1. Setup
-
 - Clone the repository and install dependencies:
   \`\`\`bash
   npm install
@@ -140,7 +126,6 @@ Thank you for helping test Mix & Mingle! Please follow these steps:
   \`\`\`
 
 ### 2. What to Test
-
 - Sign up, log in, and log out
 - Complete your profile and upload a photo
 - Try matching/discovering users
@@ -150,13 +135,11 @@ Thank you for helping test Mix & Mingle! Please follow these steps:
 - Try to break things! (invalid input, network errors, etc.)
 
 ### 3. Reporting Bugs & Feedback
-
 - Note the steps to reproduce any bug
 - Include screenshots or screen recordings if possible
 - Report issues via [GitHub Issues](https://github.com/your-repo/issues) or the feedback form in the app (if available)
 
 ### 4. Manual Testing Checklist
-
 - [ ] Sign up, log in, log out
 - [ ] Reset password and verify email (if required)
 - [ ] Edit profile and upload photo
@@ -169,7 +152,6 @@ Thank you for helping test Mix & Mingle! Please follow these steps:
 ---
 
 ## What You Have
-
 - Core authentication (sign up, login, forgot/reset password, Google OAuth)
 - User profile (view/edit, user name)
 - Dashboard and admin dashboard (admin-only access)
@@ -182,7 +164,6 @@ Thank you for helping test Mix & Mingle! Please follow these steps:
 ## What You Might Be Missing
 
 ### 1. **Feature Completeness**
-
 - **Profile photo upload** (if not already implemented)
 - **Live DJ streaming** (is it working end-to-end?)
 - **Real-time chat** (test for reliability and edge cases)
@@ -192,7 +173,6 @@ Thank you for helping test Mix & Mingle! Please follow these steps:
 - **Admin tools** (user moderation, analytics, etc.)
 
 ### 2. **User Experience**
-
 - **Clear error/success messages** throughout all flows
 - **Mobile responsiveness** (test on various devices)
 - **Loading states** for all async actions
@@ -200,26 +180,22 @@ Thank you for helping test Mix & Mingle! Please follow these steps:
 - **Accessible navigation** (keyboard, screen reader support)
 
 ### 3. **Security & Privacy**
-
 - **Protected routes** (no access to dashboard/admin when logged out)
 - **Age verification** (if required for 18+)
 - **No sensitive data leaks** in UI or network
 
 ### 4. **Testing & Feedback**
-
 - **Manual testing of all user flows** (use the checklist in your README)
 - **Automated tests** (unit/integration, if possible)
 - **Easy way for testers to report bugs/feedback** (GitHub Issues, in-app form, or email)
 
 ### 5. **Deployment**
-
 - **Production build works** (`npm run build` and `npm start`)
 - **Environment variables set for production**
 - **Domain and SSL configured**
 - **OAuth redirect URIs set for production domain**
 
 ### 6. **Documentation**
-
 - **README fully up to date**
 - **Onboarding instructions for new users/testers**
 - **Privacy policy and terms**

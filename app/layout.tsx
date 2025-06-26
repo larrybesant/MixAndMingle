@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
@@ -12,19 +13,27 @@ const robotoMono = Roboto_Mono({
   variable: "--font-roboto-mono",
   subsets: ["latin"],
 });
+=======
+import type React from "react"
+import type { Metadata } from "next"
+import "./globals.css"
+import ClientOnly from "@/components/client-only-provider"
+import { AuthProvider } from "@/contexts/auth-context"
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
 
 export const metadata: Metadata = {
-  title: "Mix 🎵 Mingle",
-  description: "Live DJ streaming and social rooms",
+  title: "v0 App",
+  description: "Created with v0",
   generator: "v0.dev",
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
+<<<<<<< HEAD
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
@@ -46,7 +55,20 @@ export default function RootLayout({
         <main id="main-content" role="main">
           <SupabaseProvider>{children}</SupabaseProvider>
         </main>
+=======
+    <html lang="en">
+      <body>
+        <ClientOnly
+          fallback={
+            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+              <div className="text-xl">Loading...</div>
+            </div>
+          }
+        >
+          <AuthProvider>{children}</AuthProvider>
+        </ClientOnly>
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
       </body>
     </html>
-  );
+  )
 }

@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, privacy = "public" } = await request.json();
+    const { name, privacy = "public" } = await request.json()
 
     const response = await fetch("https://api.daily.co/v1/rooms", {
       method: "POST",
@@ -20,13 +20,13 @@ export async function POST(request: NextRequest) {
           enable_recording: false,
         },
       }),
-    });
+    })
 
     if (!response.ok) {
-      throw new Error("Failed to create Daily room");
+      throw new Error("Failed to create Daily room")
     }
 
-    const room = await response.json();
+    const room = await response.json()
 
     return NextResponse.json({
       success: true,
@@ -35,12 +35,9 @@ export async function POST(request: NextRequest) {
         name: room.name,
         id: room.id,
       },
-    });
+    })
   } catch (error) {
-    console.error("Error creating Daily room:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to create room" },
-      { status: 500 },
-    );
+    console.error("Error creating Daily room:", error)
+    return NextResponse.json({ success: false, error: "Failed to create room" }, { status: 500 })
   }
 }

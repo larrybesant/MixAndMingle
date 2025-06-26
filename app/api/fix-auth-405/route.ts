@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    console.log("🔧 Starting 405 auth fix...");
+    console.log('🔧 Starting 405 auth fix...');
 
     // The enhanced SQL fix that should resolve the 405 error
     const enhancedAuthFixSQL = `
@@ -79,74 +79,61 @@ export async function POST() {
     // Execute the fix using the service role client
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceRoleKey) {
-      throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+      throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const { createClient } = await import("@supabase/supabase-js");
+    const { createClient } = await import('@supabase/supabase-js');
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    console.log("🔧 Executing enhanced auth fix SQL...");
-    const { error } = await supabaseAdmin.rpc("exec_sql", {
-      sql: enhancedAuthFixSQL,
-    });
+    console.log('🔧 Executing enhanced auth fix SQL...');
+    const { error } = await supabaseAdmin.rpc('exec_sql', { sql: enhancedAuthFixSQL });
 
     if (error) {
-      console.error("❌ SQL execution failed:", error);
+      console.error('❌ SQL execution failed:', error);
       // Try alternative method - direct query
       const { error: directError } = await supabaseAdmin
-        .from("profiles")
-        .select("count")
+        .from('profiles')
+        .select('count')
         .limit(1);
-
+      
       if (directError) {
-        console.error("❌ Database connection failed:", directError);
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Database connection failed",
-            details: directError,
-          },
-          { status: 500 },
-        );
+        console.error('❌ Database connection failed:', directError);
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Database connection failed',
+          details: directError 
+        }, { status: 500 });
       }
-
+      
       // If we can connect to profiles table, the issue might be with RPC
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Could not execute SQL fix directly. Please run the SQL manually in Supabase dashboard.",
-          sql: enhancedAuthFixSQL,
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Could not execute SQL fix directly. Please run the SQL manually in Supabase dashboard.',
+        sql: enhancedAuthFixSQL
+      }, { status: 400 });
     }
 
-    console.log("✅ Enhanced auth fix applied successfully!");
-    return NextResponse.json({
-      success: true,
-      message:
-        "Enhanced auth fix applied successfully! The 405 error should now be resolved.",
-      timestamp: new Date().toISOString(),
+    console.log('✅ Enhanced auth fix applied successfully!');
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Enhanced auth fix applied successfully! The 405 error should now be resolved.',
+      timestamp: new Date().toISOString()
     });
+
   } catch (error) {
-    console.error("💥 Fix application failed:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to apply auth fix",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    console.error('💥 Fix application failed:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Failed to apply auth fix',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
 export async function GET() {
-  return NextResponse.json({
-    message: "Use POST to apply the 405 auth fix",
-    instructions:
-      "Send a POST request to this endpoint to fix the authentication 405 error",
+  return NextResponse.json({ 
+    message: 'Use POST to apply the 405 auth fix',
+    instructions: 'Send a POST request to this endpoint to fix the authentication 405 error'
   });
 }

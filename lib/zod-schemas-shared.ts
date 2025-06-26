@@ -44,7 +44,7 @@ export const UserListSchema = z.array(
   z.object({
     id: z.string(),
     username: z.string(),
-  }),
+  })
 );
 
 export const ProfileSchema = z.object({

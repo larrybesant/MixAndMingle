@@ -1,41 +1,41 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Your Supabase configuration
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ywfjmsbyksehjgwalqum.supabase.co"
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3Zmptc2J5a3NlaGpnd2FscXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczMzIwNjgsImV4cCI6MjA2MjkwODA2OH0.fXx5d7iRXgpJDB_jAKgtRa2pVoAPBHU9Rly0T14HsVs"
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  );
+  throw new Error("Missing Supabase environment variables")
 }
 
-// Supabase client configuration with auth settings
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     flowType: "pkce",
+<<<<<<< HEAD
     // Removed explicit storage option for SSR/cookie compatibility
+=======
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
   },
-  global: {
-    headers: {
-      "X-Client-Info": "mixandmingle-app",
-    },
-  },
-});
+})
 
-// Auth helper functions
+// Auth helpers with better error handling
 export const authHelpers = {
-  // Get current user
-  getCurrentUser: async () => {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    return { user, error };
+  async getCurrentSession() {
+    try {
+      const { data, error } = await supabase.auth.getSession()
+      return { session: data.session, error }
+    } catch (err) {
+      console.error("Error getting session:", err)
+      return { session: null, error: err as Error }
+    }
   },
 
+<<<<<<< HEAD
   // Get current session
   getCurrentSession: async () => {
     const {
@@ -77,28 +77,63 @@ export const authHelpers = {
         queryParams: {
           access_type: "offline",
           prompt: "consent",
+=======
+  async signUp(email: string, password: string, metadata?: Record<string, unknown>) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
         },
-      },
-    });
+      })
+      return { data, error }
+    } catch (err) {
+      console.error("Error signing up:", err)
+      return { data: null, error: err as Error }
+    }
   },
 
-  // Sign out
-  signOut: async () => {
-    return await supabase.auth.signOut();
+  async signIn(email: string, password: string) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { data, error }
+    } catch (err) {
+      console.error("Error signing in:", err)
+      return { data: null, error: err as Error }
+    }
   },
 
-  // Reset password
-  resetPassword: async (email: string) => {
-    return await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
+  async signInWithOAuth(provider: "google" | "github" | "discord") {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      return { data, error }
+    } catch (err) {
+      console.error("Error with OAuth:", err)
+      return { data: null, error: err as Error }
+    }
   },
 
-  // Update password
-  updatePassword: async (password: string) => {
-    return await supabase.auth.updateUser({ password });
+  async signOut() {
+    try {
+      const { error } = await supabase.auth.signOut()
+      return { error }
+    } catch (err) {
+      console.error("Error signing out:", err)
+      return { error: err as Error }
+    }
   },
 
+<<<<<<< HEAD
   // Resend email verification
   resendVerification: async (email: string) => {
     return await supabase.auth.resend({
@@ -108,5 +143,38 @@ export const authHelpers = {
         emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
+=======
+  async resetPassword(email: string) {
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email)
+      return { data, error }
+    } catch (err) {
+      console.error("Error resetting password:", err)
+      return { data: null, error: err as Error }
+    }
+>>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
   },
-};
+
+  async updatePassword(password: string) {
+    try {
+      const { data, error } = await supabase.auth.updateUser({ password })
+      return { data, error }
+    } catch (err) {
+      console.error("Error updating password:", err)
+      return { data: null, error: err as Error }
+    }
+  },
+
+  async resendVerification(email: string) {
+    try {
+      const { data, error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      })
+      return { data, error }
+    } catch (err) {
+      console.error("Error resending verification:", err)
+      return { data: null, error: err as Error }
+    }
+  },
+}
