@@ -23,7 +23,11 @@ export default function CreateProfilePage() {
 
   // Helper to sanitize input (remove HTML tags, trim, limit length)
   function sanitizeInput(input: string, maxLength: number = 100): string {
-    return input.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+    return input
+      .replace(/<[^>]*>?/gm, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, maxLength);
   }
 
   // Helper to validate username (alphanumeric, underscores, 3-20 chars)
@@ -39,12 +43,23 @@ export default function CreateProfilePage() {
     const cleanBio = sanitizeInput(bio, 160);
     const cleanMusicPreferences = sanitizeInput(musicPreferences, 100);
     const cleanBdsmPreferences = sanitizeInput(bdsmPreferences, 200);
-    if (!cleanUsername || !cleanBio || !cleanMusicPreferences || !relationshipStyle || !photo || !gender) {
-      setError("All fields, including relationship style, gender, and a profile photo are required.");
+    if (
+      !cleanUsername ||
+      !cleanBio ||
+      !cleanMusicPreferences ||
+      !relationshipStyle ||
+      !photo ||
+      !gender
+    ) {
+      setError(
+        "All fields, including relationship style, gender, and a profile photo are required.",
+      );
       return;
     }
     if (!isValidUsername(cleanUsername)) {
-      setError("Username must be 3-20 characters, letters, numbers, or underscores only.");
+      setError(
+        "Username must be 3-20 characters, letters, numbers, or underscores only.",
+      );
       return;
     }
     if (photo) {
@@ -73,7 +88,9 @@ export default function CreateProfilePage() {
         id: user.id,
         username: cleanUsername,
         bio: cleanBio,
-        music_preferences: cleanMusicPreferences.split(",").map((g) => sanitizeInput(g, 30)),
+        music_preferences: cleanMusicPreferences
+          .split(",")
+          .map((g) => sanitizeInput(g, 30)),
         relationship_style: relationshipStyle,
         bdsm_preferences: cleanBdsmPreferences,
         show_bdsm_public: showBdsmPublic,
@@ -94,7 +111,10 @@ export default function CreateProfilePage() {
     <ErrorBoundary>
       <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
         <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
-        <form className="flex flex-col gap-4 w-full max-w-xs" onSubmit={handleSubmit}>
+        <form
+          className="flex flex-col gap-4 w-full max-w-xs"
+          onSubmit={handleSubmit}
+        >
           <Input
             type="text"
             value={username}
@@ -116,7 +136,7 @@ export default function CreateProfilePage() {
           <select
             className="p-2 rounded bg-gray-700 text-white"
             value={relationshipStyle}
-            onChange={e => setRelationshipStyle(e.target.value)}
+            onChange={(e) => setRelationshipStyle(e.target.value)}
             required
           >
             <option value="">Select Relationship Style</option>
@@ -129,7 +149,7 @@ export default function CreateProfilePage() {
           <select
             className="p-2 rounded bg-gray-700 text-white"
             value={gender}
-            onChange={e => setGender(e.target.value)}
+            onChange={(e) => setGender(e.target.value)}
             required
           >
             <option value="">Select Gender</option>
@@ -141,11 +161,13 @@ export default function CreateProfilePage() {
           </select>
           {/* BDSM/Kink Preferences Section */}
           <div className="flex flex-col gap-2 bg-gray-800/60 p-3 rounded-lg mt-2">
-            <label className="text-white font-semibold">BDSM / Kink / Other Preferences (optional)</label>
+            <label className="text-white font-semibold">
+              BDSM / Kink / Other Preferences (optional)
+            </label>
             <textarea
               className="p-2 rounded bg-gray-700 text-white"
               value={bdsmPreferences}
-              onChange={e => setBdsmPreferences(e.target.value)}
+              onChange={(e) => setBdsmPreferences(e.target.value)}
               placeholder="Share as much or as little as you want..."
               rows={3}
               maxLength={200}
@@ -154,7 +176,7 @@ export default function CreateProfilePage() {
               <input
                 type="checkbox"
                 checked={showBdsmPublic}
-                onChange={e => setShowBdsmPublic(e.target.checked)}
+                onChange={(e) => setShowBdsmPublic(e.target.checked)}
               />
               Show this section on my public profile
             </label>
@@ -164,7 +186,7 @@ export default function CreateProfilePage() {
             <input
               type="checkbox"
               checked={isDatingVisible}
-              onChange={e => setIsDatingVisible(e.target.checked)}
+              onChange={(e) => setIsDatingVisible(e.target.checked)}
               id="dating-visible"
             />
             <label htmlFor="dating-visible" className="text-sm text-gray-300">

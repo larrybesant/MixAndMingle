@@ -10,9 +10,13 @@ export default function CheckEmailPage() {
           Check Your Email
         </h1>
         <p className="text-gray-300 mb-6">
-          We’ve sent a verification link to your email address. Please check your inbox (and spam folder) to verify your account before signing in.
+          We’ve sent a verification link to your email address. Please check
+          your inbox (and spam folder) to verify your account before signing in.
         </p>
-        <Link href="/login" className="text-blue-400 hover:underline font-semibold">
+        <Link
+          href="/login"
+          className="text-blue-400 hover:underline font-semibold"
+        >
           Go to Login
         </Link>
       </div>

@@ -1,23 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase/client";
 
 export async function POST() {
-  // Check if Supabase is configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json({ 
-      error: 'Supabase not configured - missing environment variables',
-      configured: false
-    }, { status: 500 });
-  }
-
   try {
-    console.log('Testing database schema creation...');
-
-    // Dynamically import and initialize Supabase only when needed
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log("Testing database schema creation...");
 
     // Test creating the matching tables
     const queries = [
@@ -66,25 +52,28 @@ export async function POST() {
           location_lng DECIMAL(11, 8),
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
-      `
+      `,
     ];
 
     for (const query of queries) {
-      const { error } = await supabase.rpc('exec_sql', { sql_query: query });
+      const { error } = await supabase.rpc("exec_sql", { sql_query: query });
       if (error) {
-        console.log('Query result:', error);
+        console.log("Query result:", error);
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Database schema checked' 
+    return NextResponse.json({
+      success: true,
+      message: "Database schema checked",
     });
   } catch (error) {
-    console.error('Database test error:', error);
-    return NextResponse.json({ 
-      error: 'Database test failed',
-      details: error 
-    }, { status: 500 });
+    console.error("Database test error:", error);
+    return NextResponse.json(
+      {
+        error: "Database test failed",
+        details: error,
+      },
+      { status: 500 },
+    );
   }
 }

@@ -1,79 +1,81 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Suspense } from "react"
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { supabase } from "@/lib/supabase/client"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import type React from "react";
+import { Suspense } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 function ResetPasswordForm() {
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [message, setMessage] = useState("")
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Check if we have the necessary tokens from the URL
-    const accessToken = searchParams?.get("access_token")
-    const refreshToken = searchParams?.get("refresh_token")
+    const accessToken = searchParams?.get("access_token");
+    const refreshToken = searchParams?.get("refresh_token");
 
     if (accessToken && refreshToken) {
       // Set the session with the tokens
       supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
-      })
+      });
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setMessage("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
-      return
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      setLoading(false)
-      return
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
     }
 
     try {
       const { error } = await supabase.auth.updateUser({
         password: password,
-      })
+      });
 
       if (error) {
-        setError(error.message)
+        setError(error.message);
       } else {
-        setMessage("Password updated successfully! Redirecting...")
+        setMessage("Password updated successfully! Redirecting...");
         setTimeout(() => {
-          router.push("/dashboard")
-        }, 2000)
+          router.push("/dashboard");
+        }, 2000);
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      setError("An unexpected error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-black via-purple-900/20 to-black">
       <div className="max-w-md w-full space-y-6 bg-black/40 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Set New Password</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Set New Password
+          </h1>
           <p className="text-gray-400">Enter your new password below</p>
         </div>
 
@@ -118,7 +120,7 @@ function ResetPasswordForm() {
         </form>
       </div>
     </div>
-  )
+  );
 }
 
 function LoadingFallback() {
@@ -129,7 +131,7 @@ function LoadingFallback() {
         <p className="text-gray-400">Loading...</p>
       </div>
     </div>
-  )
+  );
 }
 
 export default function ResetPasswordPage() {
@@ -137,5 +139,5 @@ export default function ResetPasswordPage() {
     <Suspense fallback={<LoadingFallback />}>
       <ResetPasswordForm />
     </Suspense>
-  )
+  );
 }

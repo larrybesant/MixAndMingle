@@ -32,7 +32,9 @@ export default function RoomsPage() {
         if (error) throw error;
         const parsed = UserRoomListSchema.safeParse(data || []);
         if (!parsed.success) {
-          setError("Invalid data received from server. Please try again later.");
+          setError(
+            "Invalid data received from server. Please try again later.",
+          );
           setRooms([]);
           return;
         }
@@ -66,9 +68,7 @@ export default function RoomsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           <Suspense
-            fallback={
-              <div className="text-gray-400">Loading rooms...</div>
-            }
+            fallback={<div className="text-gray-400">Loading rooms...</div>}
           >
             {rooms.map((room) => (
               <RoomCard key={room.id} room={room} />
