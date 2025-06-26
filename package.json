@@ -51,6 +51,7 @@
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
     "@sentry/nextjs": "latest",
+    "@supabase/auth-helpers-nextjs": "latest",
     "@supabase/supabase-js": "latest",
     "babel-jest": "^30.0.1",
     "class-variance-authority": "^0.7.1",
