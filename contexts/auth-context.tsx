@@ -133,7 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         // Get initial session
         const { session } = await authHelpers.getCurrentSession();
-
+        console.log("[AuthProvider] Initial session:", session);
         if (session?.user) {
           setUser(session.user);
           setSession(session);
@@ -154,25 +154,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
-
+      console.log("[AuthProvider] Auth state changed:", event, session);
       setSession(session);
       setUser(session?.user ?? null);
-
       if (session?.user) {
         const profileData = await fetchProfile(session.user.id);
         setProfile(profileData);
       } else {
         setProfile(null);
       }
-
       setLoading(false);
+      setTimeout(() => {
+        // Print the latest state after updates
+        console.log('[AuthProvider] AFTER setUser/setSession:', {
+          user,
+          session,
+          error
+        });
+      }, 500);
     });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Log state on every render
+  console.log('[AuthProvider] RENDER user:', user, 'session:', session, 'error:', error);
 
   // Auth methods
   const signUp = async (
@@ -182,14 +190,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     setLoading(true);
     setError(null);
-
     try {
       const result = await authHelpers.signUp(email, password, metadata);
-
+      console.log("[AuthProvider] signUp result:", result);
       if (result.error) {
         setError(result.error.message);
       }
-
       return { error: result.error };
     } catch (error) {
       const authError = new Error("Unexpected signup error") as AuthError;
@@ -203,14 +209,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
-
     try {
       const result = await authHelpers.signIn(email, password);
-
+      console.log("[AuthProvider] signIn result:", result);
       if (result.error) {
         setError(result.error.message);
       }
-
       return { error: result.error };
     } finally {
       setLoading(false);

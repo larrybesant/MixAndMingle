@@ -193,7 +193,7 @@ export default function ProfileEditPage() {
 
     try {
       // TODO: Upload avatar if changed
-      let avatar_url = avatarPreview;
+      const avatar_url = avatarPreview;
 
       if (avatarFile) {
         // Here you would upload to Supabase Storage

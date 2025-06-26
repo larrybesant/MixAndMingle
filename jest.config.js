@@ -10,4 +10,5 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  testPathIgnorePatterns: ["/e2e/", "/node_modules/"],
 };

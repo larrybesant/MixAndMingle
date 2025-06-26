@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-
-import { AuthProvider } from "@/contexts/auth-context";
-import { ThemeProvider } from "@/contexts/theme-provider";
-// import { Analytics } from "@vercel/analytics/react"; // Uncomment if you install this package
-// import Header from "@/components/Header"; // <-- Use your client Header component
+import SupabaseProvider from "../components/SupabaseProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,39 +31,21 @@ export default function RootLayout({
         <title>Mix & Mingle</title>
         {/* Open Graph Meta Tags for Social Sharing */}
         <meta property="og:title" content="Mix 🎵 Mingle" />
-        <meta
-          property="og:description"
-          content="Live DJ streaming and social rooms"
-        />
-        <meta
-          property="og:image"
-          content="https://www.djmixandmingle.com/hero-dj.jpg"
-        />
-        <meta
-          property="og:image:alt"
-          content="Live Music Stream - Connect Through Music"
-        />
+        <meta property="og:description" content="Live DJ streaming and social rooms" />
+        <meta property="og:image" content="https://www.djmixandmingle.com/hero-dj.jpg" />
+        <meta property="og:image:alt" content="Live Music Stream - Connect Through Music" />
         <meta property="og:url" content="https://www.djmixandmingle.com/" />
         <meta property="og:type" content="website" />
         {/* Twitter Card Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Mix 🎵 Mingle" />
-        <meta
-          name="twitter:description"
-          content="Live DJ streaming and social rooms"
-        />
-        <meta
-          name="twitter:image"
-          content="https://www.djmixandmingle.com/hero-dj.jpg"
-        />
+        <meta name="twitter:description" content="Live DJ streaming and social rooms" />
+        <meta name="twitter:image" content="https://www.djmixandmingle.com/hero-dj.jpg" />
       </head>
       <body className={`${inter.className} antialiased`}>
         <main id="main-content" role="main">
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <AuthProvider>{children}</AuthProvider>
-          </ThemeProvider>
+          <SupabaseProvider>{children}</SupabaseProvider>
         </main>
-        {/* <Analytics /> */}
       </body>
     </html>
   );

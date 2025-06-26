@@ -2,14 +2,25 @@
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
+
+interface Message {
+  id?: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  created_at?: string;
+  sender?: { username?: string; avatar_url?: string };
+  receiver?: { username?: string; avatar_url?: string };
+}
 
 export default function DirectChatPage({
   params,
 }: {
   params: { userId: string };
 }) {
-  const [user, setUser] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -94,6 +105,8 @@ export default function DirectChatPage({
       </div>
       <form onSubmit={sendMessage} className="w-full max-w-md flex gap-2 mt-4">
         <input
+          id="chat-input"
+          name="chat-input"
           className="flex-1 p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           type="text"
           value={input}

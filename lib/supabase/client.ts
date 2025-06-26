@@ -16,7 +16,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     flowType: "pkce",
-    storage: typeof window !== "undefined" ? window.localStorage : undefined,
+    // Removed explicit storage option for SSR/cookie compatibility
   },
   global: {
     headers: {
@@ -55,7 +55,7 @@ export const authHelpers = {
       password,
       options: {
         data: metadata,
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: undefined,
       },
     });
   },
@@ -73,7 +73,7 @@ export const authHelpers = {
     return await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/dashboard`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",
@@ -105,7 +105,7 @@ export const authHelpers = {
       type: "signup",
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
   },

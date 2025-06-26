@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+
+console.log("[MIDDLEWARE] File loaded");
 
 const protectedRoutes = [
   "/dashboard",
@@ -10,31 +13,25 @@ const protectedRoutes = [
   "/admin",
 ];
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export async function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+  const supabase = createMiddlewareClient({ req: request, res: response });
+  const { data: { user } } = await supabase.auth.getUser();
+
+  console.log("[MIDDLEWARE] Cookies:", request.cookies.getAll());
+  console.log("[MIDDLEWARE] Supabase user:", user);
+
   const isProtected = protectedRoutes.some((route) =>
-    pathname.startsWith(route),
+    request.nextUrl.pathname.startsWith(route),
   );
 
-  // Check for Supabase auth cookie (adjust if you use a different session method)
-  const token = request.cookies.get("sb-access-token")?.value;
-
-  if (isProtected && !token) {
-    // Redirect unauthenticated users to login
+  if (isProtected && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
-  matcher: [
-    "/dashboard",
-    "/create-profile",
-    "/go-live",
-    "/room/:path*",
-    "/messages",
-    "/notifications",
-    "/admin",
-  ],
+  matcher: "/:path*",
 };
