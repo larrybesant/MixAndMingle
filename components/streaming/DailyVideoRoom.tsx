@@ -1,30 +1,27 @@
-"use client";
+"use client"
 
 // DailyVideoRoom.tsx
 // A simple Daily.co video room embed for host/viewer
 
-import React from "react";
-import DailyIframe from "@daily-co/daily-js";
+import React from "react"
+import DailyIframe from "@daily-co/daily-js"
 
 interface DailyVideoRoomProps {
-  roomUrl: string;
-  isHost?: boolean;
+  roomUrl: string
+  isHost?: boolean
 }
 
-export const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
-  roomUrl,
-  isHost,
-}) => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const callFrameRef = React.useRef<any>(null);
+export const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({ roomUrl, isHost }) => {
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const callFrameRef = React.useRef<any>(null)
 
   React.useEffect(() => {
-    if (!roomUrl || !containerRef.current) return;
+    if (!roomUrl || !containerRef.current) return
 
     // Clean up any previous frame
     if (callFrameRef.current) {
-      callFrameRef.current.destroy();
-      callFrameRef.current = null;
+      callFrameRef.current.destroy()
+      callFrameRef.current = null
     }
 
     // Create the Daily iframe inside the container
@@ -36,18 +33,18 @@ export const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
         border: "0",
         borderRadius: "16px",
       },
-    });
+    })
 
-    callFrameRef.current.join({ url: roomUrl });
+    callFrameRef.current.join({ url: roomUrl })
 
     return () => {
       if (callFrameRef.current) {
-        callFrameRef.current.leave();
-        callFrameRef.current.destroy();
-        callFrameRef.current = null;
+        callFrameRef.current.leave()
+        callFrameRef.current.destroy()
+        callFrameRef.current = null
       }
-    };
-  }, [roomUrl]);
+    }
+  }, [roomUrl])
 
   return (
     <div
@@ -59,5 +56,5 @@ export const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
         overflow: "hidden",
       }}
     />
-  );
-};
+  )
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import type { Profile, ChatMessage } from "@/types/database";
+import type { Profile, ChatMessage } from '@/types/database';
 
 export function useFriends(userId: string | null) {
   const [friends, setFriends] = useState<Profile[]>([]);
@@ -10,7 +10,7 @@ export function useFriends(userId: string | null) {
     if (!userId) return;
     let isMounted = true;
     async function fetchFriends() {
-      setLoading(true); // Fetch accepted friends where user is either user_id or friend_id
+      setLoading(true);      // Fetch accepted friends where user is either user_id or friend_id
       const { error } = await supabase
         .from("friends")
         .select("*")
@@ -23,9 +23,7 @@ export function useFriends(userId: string | null) {
       }
     }
     fetchFriends();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [userId]);
 
   return { friends, loading };
@@ -39,7 +37,7 @@ export function useRecentMessages(userId: string | null) {
     if (!userId) return;
     let isMounted = true;
     async function fetchConversations() {
-      setLoading(true); // Fetch recent messages where user is sender or receiver
+      setLoading(true);      // Fetch recent messages where user is sender or receiver
       const { error } = await supabase
         .from("messages")
         .select("*")
@@ -53,9 +51,7 @@ export function useRecentMessages(userId: string | null) {
       }
     }
     fetchConversations();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [userId]);
 
   return { conversations, loading };

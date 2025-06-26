@@ -1,6 +1,6 @@
 const { createDefaultPreset } = require("ts-jest");
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { defaults } = require("jest-config");
+const { defaults } = require('jest-config');
 
 const tsJestTransformCfg = createDefaultPreset().transform;
 

@@ -1,13 +1,11 @@
 # Matching System Documentation
 
 ## Overview
-
 The Mix & Mingle matching system provides a Tinder-style swipe interface for users to discover and connect with other music lovers and DJs.
 
 ## Features
 
 ### ✅ Completed
-
 - **Swipe Interface**: Beautiful card-based UI with drag-to-swipe functionality
 - **Action Buttons**: Pass, Super Like, and Like buttons
 - **Match Detection**: Automatic match detection when two users like each other
@@ -18,7 +16,6 @@ The Mix & Mingle matching system provides a Tinder-style swipe interface for use
 - **Navigation Integration**: Links in navbar for easy access
 
 ### 🚧 In Progress (Mock Data)
-
 - **API Endpoints**: Currently using mock data for development
 - **Database Integration**: Schema created but needs deployment
 - **Match Storage**: Simulated matching logic
@@ -26,21 +23,18 @@ The Mix & Mingle matching system provides a Tinder-style swipe interface for use
 ## Pages & Components
 
 ### `/matchmaking` - Main Discovery Page
-
 - Displays potential matches in a card stack
 - Swipe gestures and action buttons
 - Match celebration overlay
 - Empty state handling
 
 ### `/matches` - User's Matches
-
 - Grid of matched users
 - Profile previews with message buttons
 - Match date display
 - Links to messaging
 
 ### Components
-
 - `SwipeCard`: Individual user card with swipe functionality
 - `MatchingInterface`: Main discovery interface
 - Navigation integration
@@ -48,31 +42,24 @@ The Mix & Mingle matching system provides a Tinder-style swipe interface for use
 ## API Endpoints
 
 ### GET `/api/matching/potential`
-
 Returns potential matches for the current user
-
 - **Response**: Array of user profiles with preferences
 - **Status**: Currently returns mock data
 
 ### POST `/api/matching/swipe`
-
 Records a swipe action (like/pass/super_like)
-
 - **Body**: `{ swiped_id: string, action: 'like'|'pass'|'super_like' }`
 - **Response**: Swipe confirmation and match status
 - **Status**: Currently simulated (30% match rate on likes)
 
 ### GET `/api/matching/matches`
-
 Returns user's current matches
-
 - **Response**: Array of matches with other user profiles
 - **Status**: Currently returns mock data
 
 ## Database Schema
 
 ### Tables Created
-
 - `user_swipes`: Records all swipe actions
 - `matches`: Stores mutual likes (matches)
 - `match_messages`: Messages between matched users
@@ -80,7 +67,6 @@ Returns user's current matches
 - `profiles`: Extended with `date_of_birth` for age calculation
 
 ### Triggers & Functions
-
 - Auto-match creation on mutual likes
 - Notification generation for new matches
 - Potential match finder function
@@ -88,7 +74,6 @@ Returns user's current matches
 ## Next Steps
 
 ### High Priority
-
 1. **Deploy Database Schema**
    - Run migration scripts on Supabase
    - Test table creation and relationships
@@ -106,7 +91,6 @@ Returns user's current matches
    - DJ vs non-DJ filtering
 
 ### Medium Priority
-
 1. **User Preferences Page**
    - Settings for matching criteria
    - Distance preferences
@@ -123,7 +107,6 @@ Returns user's current matches
    - Typing indicators
 
 ### Low Priority
-
 1. **Advanced Features**
    - Super like limitations
    - Match expiration
@@ -133,19 +116,16 @@ Returns user's current matches
 ## Technical Notes
 
 ### Performance Considerations
-
 - Card component uses React.memo for optimization
 - Lazy loading for large user sets
 - Efficient swipe detection algorithms
 
 ### Security Features
-
 - Authentication required for all endpoints
 - RLS policies prevent unauthorized access
 - Input validation and sanitization
 
 ### Mobile Optimizations
-
 - Touch-friendly swipe gestures
 - Responsive card sizing
 - Optimized image loading
@@ -153,7 +133,6 @@ Returns user's current matches
 ## Testing
 
 ### Manual Testing Checklist
-
 - [ ] Swipe cards left/right with mouse
 - [ ] Use action buttons (pass/super/like)
 - [ ] Verify match celebration appears
@@ -162,40 +141,32 @@ Returns user's current matches
 - [ ] Verify error handling
 
 ### Development Commands
-
 \`\`\`bash
-
 # Start development server
-
 npm run dev
 
 # Test API endpoints
-
 curl http://localhost:3000/api/matching/potential
 
 # Deploy database schema (when ready)
-
 npm run db:init
 \`\`\`
 
 ## UI/UX Features
 
 ### Visual Design
-
 - Glassmorphism effects with backdrop blur
 - Neon color scheme (purple/blue gradients)
 - Dark theme throughout
 - Smooth animations and transitions
 
 ### User Experience
-
 - Intuitive swipe gestures
 - Clear visual feedback
 - Immediate match notifications
 - Easy navigation between discovery and matches
 
 ### Accessibility
-
 - Keyboard navigation support
 - Screen reader compatible
 - High contrast ratios

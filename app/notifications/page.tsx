@@ -31,9 +31,7 @@ export default function NotificationsPage() {
         const parsed = NotificationListSchema.safeParse(data || []);
         setNotifications(parsed.success ? parsed.data : []);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch notifications.",
-        );
+        setError(err instanceof Error ? err.message : "Failed to fetch notifications.");
       } finally {
         setLoading(false);
       }
@@ -53,13 +51,8 @@ export default function NotificationsPage() {
           <div className="text-gray-400">No notifications yet.</div>
         ) : (
           notifications.map((n) => (
-            <li
-              key={n.id}
-              className={`bg-gray-800 rounded-xl p-4 ${n.read ? "" : "border-l-4 border-blue-500"}`}
-            >
-              <div className="text-xs text-gray-400 mb-1">
-                {new Date(n.created_at).toLocaleString()}
-              </div>
+            <li key={n.id} className={`bg-gray-800 rounded-xl p-4 ${n.read ? '' : 'border-l-4 border-blue-500'}`}>
+              <div className="text-xs text-gray-400 mb-1">{new Date(n.created_at).toLocaleString()}</div>
               <div className="text-white font-semibold">{n.type}</div>
               <div className="text-white">{n.message}</div>
             </li>

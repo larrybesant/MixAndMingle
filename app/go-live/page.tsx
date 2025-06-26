@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 
 const GoLivePage = () => {
-  const [roomUrl, setRoomUrl] = useState("");
-  const [roomName, setRoomName] = useState("");
-  const [error, setError] = useState("");
+  const [roomUrl, setRoomUrl] = useState("")
+  const [roomName, setRoomName] = useState("")
+  const [error, setError] = useState("")
 
   // Add this function to handle room creation
   const createDailyRoom = async (roomName: string) => {
@@ -19,41 +19,38 @@ const GoLivePage = () => {
           name: roomName,
           privacy: "public",
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
-        return data.room.url;
+        return data.room.url
       } else {
-        throw new Error(data.error || "Failed to create room");
+        throw new Error(data.error || "Failed to create room")
       }
     } catch (error) {
-      console.error("Error creating room:", error);
-      throw error;
+      console.error("Error creating room:", error)
+      throw error
     }
-  };
+  }
 
   const handleCreateRoom = async () => {
     try {
-      const url = await createDailyRoom(roomName);
-      setRoomUrl(url);
-      setError("");
+      const url = await createDailyRoom(roomName)
+      setRoomUrl(url)
+      setError("")
     } catch (err: any) {
-      setError(err.message || "Failed to create room");
-      setRoomUrl("");
+      setError(err.message || "Failed to create room")
+      setRoomUrl("")
     }
-  };
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-3xl font-bold mb-4">Go Live!</h1>
 
       <div className="mb-4">
-        <label
-          htmlFor="roomName"
-          className="block text-gray-700 text-sm font-bold mb-2"
-        >
+        <label htmlFor="roomName" className="block text-gray-700 text-sm font-bold mb-2">
           Room Name:
         </label>
         <input
@@ -80,19 +77,14 @@ const GoLivePage = () => {
           <h2 className="text-xl font-semibold mb-2">Room Created!</h2>
           <p>
             Join the room at:{" "}
-            <a
-              href={roomUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500"
-            >
+            <a href={roomUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500">
               {roomUrl}
             </a>
           </p>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default GoLivePage;
+export default GoLivePage

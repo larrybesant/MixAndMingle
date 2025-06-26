@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase/client';
 
 export async function POST() {
   try {
-    console.log("Testing database schema creation...");
+    console.log('Testing database schema creation...');
 
     // Test creating the matching tables
     const queries = [
@@ -52,28 +52,25 @@ export async function POST() {
           location_lng DECIMAL(11, 8),
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
-      `,
+      `
     ];
 
     for (const query of queries) {
-      const { error } = await supabase.rpc("exec_sql", { sql_query: query });
+      const { error } = await supabase.rpc('exec_sql', { sql_query: query });
       if (error) {
-        console.log("Query result:", error);
+        console.log('Query result:', error);
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Database schema checked",
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Database schema checked' 
     });
   } catch (error) {
-    console.error("Database test error:", error);
-    return NextResponse.json(
-      {
-        error: "Database test failed",
-        details: error,
-      },
-      { status: 500 },
-    );
+    console.error('Database test error:', error);
+    return NextResponse.json({ 
+      error: 'Database test failed',
+      details: error 
+    }, { status: 500 });
   }
 }

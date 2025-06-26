@@ -1,22 +1,16 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useAuth } from "@/contexts/auth-context";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, Mail, Lock, Github, Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Eye, EyeOff, Mail, Lock, Github, Loader2 } from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
 
 interface FormData {
   email: string;
@@ -31,15 +25,15 @@ interface FormErrors {
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<FormData>({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
   });
-
+  
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-
+  
   const { signIn, signInWithOAuth, error, clearError } = useAuth();
   const router = useRouter();
 
@@ -54,14 +48,14 @@ export default function LoginPage() {
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!validateEmail(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = 'Please enter a valid email address';
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = 'Password is required';
     }
 
     setErrors(newErrors);
@@ -69,13 +63,13 @@ export default function LoginPage() {
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
     // Clear field error when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+      setErrors(prev => ({ ...prev, [field]: undefined }));
     }
-
+    
     // Clear general error
     if (error) {
       clearError();
@@ -84,7 +78,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!validateForm()) {
       return;
     }
@@ -93,51 +87,38 @@ export default function LoginPage() {
     clearError();
 
     try {
-      const { error: signInError } = await signIn(
-        formData.email,
-        formData.password,
-      );
+      const { error: signInError } = await signIn(formData.email, formData.password);
 
       if (signInError) {
-        if (signInError.message.includes("Invalid login credentials")) {
-          setErrors({
-            general:
-              "Invalid email or password. Please check your credentials.",
-          });
-        } else if (signInError.message.includes("Email not confirmed")) {
-          setErrors({
-            general:
-              "Please verify your email before logging in. Check your inbox for a verification link.",
-          });
-        } else if (signInError.message.includes("User not found")) {
-          setErrors({
-            general: "No account found with this email. Please sign up first.",
-          });
+        if (signInError.message.includes('Invalid login credentials')) {
+          setErrors({ general: 'Invalid email or password. Please check your credentials.' });
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setErrors({ general: 'Please verify your email before logging in. Check your inbox for a verification link.' });
+        } else if (signInError.message.includes('User not found')) {
+          setErrors({ general: 'No account found with this email. Please sign up first.' });
         } else {
           setErrors({ general: signInError.message });
         }
       } else {
         // Successful login - redirect will be handled by the auth context
-        router.push("/dashboard");
+        router.push('/dashboard');
       }
     } catch (err) {
-      setErrors({ general: "An unexpected error occurred. Please try again." });
+      setErrors({ general: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOAuthSignIn = async (provider: "github") => {
+  const handleOAuthSignIn = async (provider: 'google' | 'github') => {
     setIsLoading(true);
     clearError();
 
     try {
       const { error: oauthError } = await signInWithOAuth(provider);
-
+      
       if (oauthError) {
-        setErrors({
-          general: `${provider} sign in failed: ${oauthError.message}`,
-        });
+        setErrors({ general: `${provider} sign in failed: ${oauthError.message}` });
       }
       // Success will redirect automatically via OAuth flow
     } catch (err) {
@@ -149,11 +130,9 @@ export default function LoginPage() {
 
   const handleForgotPassword = () => {
     if (formData.email && validateEmail(formData.email)) {
-      router.push(
-        `/auth/forgot-password?email=${encodeURIComponent(formData.email)}`,
-      );
+      router.push(`/auth/forgot-password?email=${encodeURIComponent(formData.email)}`);
     } else {
-      router.push("/auth/forgot-password");
+      router.push('/auth/forgot-password');
     }
   };
 
@@ -175,7 +154,22 @@ export default function LoginPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => handleOAuthSignIn("github")}
+              onClick={() => handleOAuthSignIn('google')}
+              disabled={isLoading}
+              className="w-full bg-white hover:bg-gray-100 text-black border-gray-300"
+            >
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FcGoogle className="mr-2 h-4 w-4" />
+              )}
+              Continue with Google
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOAuthSignIn('github')}
               disabled={isLoading}
               className="w-full bg-gray-900 hover:bg-gray-800 text-white border-gray-600"
             >
@@ -193,9 +187,7 @@ export default function LoginPage() {
               <Separator className="w-full" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-black px-2 text-gray-400">
-                Or continue with email
-              </span>
+              <span className="bg-black px-2 text-gray-400">Or continue with email</span>
             </div>
           </div>
 
@@ -204,13 +196,13 @@ export default function LoginPage() {
             <Alert variant="destructive">
               <AlertDescription>
                 {errors.general || error}
-                {errors.general?.includes("verify your email") && (
+                {errors.general?.includes('verify your email') && (
                   <div className="mt-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push("/auth/resend-verification")}
+                      onClick={() => router.push('/auth/resend-verification')}
                       className="text-xs"
                     >
                       Resend verification email
@@ -231,7 +223,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="Email address"
                   value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
                   className="pl-10 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400"
                   aria-invalid={!!errors.email}
                   autoComplete="email"
@@ -247,12 +239,10 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
                   value={formData.password}
-                  onChange={(e) =>
-                    handleInputChange("password", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange('password', e.target.value)}
                   className="pl-10 pr-10 bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 focus:border-purple-400"
                   aria-invalid={!!errors.password}
                   autoComplete="current-password"
@@ -306,7 +296,7 @@ export default function LoginPage() {
                   Signing In...
                 </>
               ) : (
-                "Sign In"
+                'Sign In'
               )}
             </Button>
           </form>
@@ -314,11 +304,8 @@ export default function LoginPage() {
 
         <CardFooter>
           <p className="text-sm text-gray-400 text-center w-full">
-            Don't have an account?{" "}
-            <Link
-              href="/signup"
-              className="text-purple-400 hover:text-purple-300 underline"
-            >
+            Don't have an account?{' '}
+            <Link href="/signup" className="text-purple-400 hover:text-purple-300 underline">
               Sign up
             </Link>
           </p>

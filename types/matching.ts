@@ -17,7 +17,7 @@ export interface UserSwipe {
   id: string;
   swiper_id: string;
   swiped_id: string;
-  action: "like" | "pass" | "super_like";
+  action: 'like' | 'pass' | 'super_like';
   created_at: string;
 }
 
@@ -35,7 +35,7 @@ export interface MatchMessage {
   match_id: string;
   sender_id: string;
   message: string;
-  message_type: "text" | "emoji" | "image";
+  message_type: 'text' | 'emoji' | 'image';
   is_read: boolean;
   created_at: string;
 }
@@ -46,7 +46,7 @@ export interface UserPreferences {
   max_age: number;
   preferred_distance: number;
   music_genres: string[] | null;
-  show_me: "all" | "djs_only" | "non_djs";
+  show_me: 'all' | 'djs_only' | 'non_djs';
   location_lat: number | null;
   location_lng: number | null;
   updated_at: string;

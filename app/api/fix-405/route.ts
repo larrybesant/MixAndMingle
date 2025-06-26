@@ -1,26 +1,23 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST() {
   try {
-    console.log("🔧 Starting 405 Auth Error Fix...");
-
+    console.log('🔧 Starting 405 Auth Error Fix...');
+    
     // Use service role key for admin operations
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
+    
     if (!supabaseServiceKey) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Service role key not configured",
-        },
-        { status: 500 },
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'Service role key not configured'
+      }, { status: 500 });
     }
-
+    
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
+    
     // Critical SQL to fix the 405 error
     const fixQueries = [
       // Create profiles table
@@ -39,10 +36,10 @@ export async function POST() {
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
       `,
-
+      
       // Enable RLS
       `ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;`,
-
+      
       // Create the trigger function that fixes the 405 error
       `
         CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -59,7 +56,7 @@ export async function POST() {
         END;
         $$ LANGUAGE plpgsql SECURITY DEFINER;
       `,
-
+      
       // Create the trigger
       `
         DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -67,7 +64,7 @@ export async function POST() {
           AFTER INSERT ON auth.users
           FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
       `,
-
+      
       // RLS policies
       `
         DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
@@ -83,63 +80,56 @@ export async function POST() {
         DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
         CREATE POLICY "Users can update their own profile" ON public.profiles
           FOR UPDATE USING (auth.uid() = id);
-      `,
+      `
     ];
-
+    
     const results = [];
     const errors = [];
-
+    
     for (let i = 0; i < fixQueries.length; i++) {
       const query = fixQueries[i].trim();
       if (query.length === 0) continue;
-
+      
       try {
         console.log(`⚙️  Executing fix query ${i + 1}/${fixQueries.length}`);
-        // Execute the query using supabase admin client
-        const { error } = await supabaseAdmin.rpc("exec_sql", {
-          sql_statement: query,
+          // Execute the query using supabase admin client
+        const { error } = await supabaseAdmin.rpc('exec_sql', { 
+          sql_statement: query 
         });
-
+        
         if (error) {
           console.warn(`⚠️  Error on query ${i + 1}:`, error);
           errors.push(`Query ${i + 1}: ${error.message}`);
         } else {
           results.push(`Query ${i + 1}: Success`);
-        }
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred";
+        }      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         console.warn(`⚠️  Exception on query ${i + 1}:`, error);
         errors.push(`Query ${i + 1}: ${errorMessage}`);
       }
     }
-
+    
     return NextResponse.json({
       success: true,
-      message: "🎉 405 Auth Error Fix completed!",
+      message: '🎉 405 Auth Error Fix completed!',
       results,
       errors,
-      note: "If there are errors, you may need to run the SQL manually in Supabase Dashboard",
+      note: 'If there are errors, you may need to run the SQL manually in Supabase Dashboard'
     });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("❌ Fix failed:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage,
-        note: "Please run the SQL file manually in your Supabase Dashboard",
-      },
-      { status: 500 },
-    );
+      } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('❌ Fix failed:', error);
+    return NextResponse.json({
+      success: false,
+      error: errorMessage,
+      note: 'Please run the SQL file manually in your Supabase Dashboard'
+    }, { status: 500 });
   }
 }
 
 export async function GET() {
   return NextResponse.json({
-    message: "Auth Fix API - Use POST to run the fix",
-    instructions:
-      "This API fixes the 405 error by creating the missing trigger function",
+    message: 'Auth Fix API - Use POST to run the fix',
+    instructions: 'This API fixes the 405 error by creating the missing trigger function'
   });
 }

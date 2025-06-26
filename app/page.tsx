@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { supabase } from "@/lib/supabase/client";
-import { UserListSchema, type UserList } from "@/lib/zod-schemas-shared";
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { supabase } from "@/lib/supabase/client"
+import { UserListSchema, type UserList } from "@/lib/zod-schemas-shared"
 
 export default function Page() {
-  const [users, setUsers] = useState<UserList>([]);
+  const [, setUsers] = useState<UserList>([])
 
   useEffect(() => {
     async function fetchUsers() {
-      const { data } = await supabase.from("profiles").select("id, username");
+      const { data } = await supabase.from("profiles").select("id, username")
       // Validate and filter users at runtime
-      const parsed = UserListSchema.safeParse(data || []);
+      const parsed = UserListSchema.safeParse(data || [])
       if (parsed.success) {
-        setUsers(parsed.data);
+        setUsers(parsed.data)
       } else {
-        setUsers([]);
+        setUsers([])
         // Optionally log or show error
         // console.error("Invalid user data", parsed.error)
       }
     }
-    fetchUsers();
-  }, []);
+    fetchUsers()
+  }, [])
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
@@ -44,15 +44,9 @@ export default function Page() {
         <div className="flex items-center gap-3">
           {/* Neon Logo */}
           <div className="text-4xl font-black tracking-wider">
-            <span className="text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)] font-extrabold">
-              MIX
-            </span>
-            <span className="text-orange-400 text-5xl mx-2 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)]">
-              🎵
-            </span>
-            <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-extrabold">
-              MINGLE
-            </span>
+            <span className="text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)] font-extrabold">MIX</span>
+            <span className="text-orange-400 text-5xl mx-2 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)]">🎵</span>
+            <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-extrabold">MINGLE</span>
           </div>
         </div>
         <Link
@@ -68,9 +62,7 @@ export default function Page() {
         <div className="max-w-5xl mx-auto">
           {/* Main Headline */}
           <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight">
-            <span className="block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-              Stream Live Content
-            </span>
+            <span className="block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">Stream Live Content</span>
             <span className="block text-transparent bg-gradient-to-r from-orange-400 via-pink-400 to-cyan-400 bg-clip-text text-4xl md:text-5xl mt-4 font-bold">
               from Around the World
             </span>
@@ -78,8 +70,7 @@ export default function Page() {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Party from home with friends or solo. Join rooms. Go live. Connect
-            with global vibes.
+            Party from home with friends or solo. Join rooms. Go live. Connect with global vibes.
           </p>
 
           {/* CTA Buttons */}
@@ -117,6 +108,14 @@ export default function Page() {
             {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
 
+            {/* Live Chat Bubble */}
+            <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl flex items-center gap-3 border border-white/20">
+              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
+              <span className="text-cyan-400 font-bold text-lg">truegrooves</span>
+              <span className="text-2xl">🔥</span>
+              <span className="text-white/90 text-lg">Love this set!</span>
+            </div>
+
             {/* Live Indicator */}
             <div className="absolute top-6 left-6 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse flex items-center gap-2">
               <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
@@ -142,9 +141,7 @@ export default function Page() {
                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
                       <span className="text-3xl">🎧</span>
                     </div>
-                    <div className="text-white font-bold text-xl mb-2">
-                      Electronic Journey
-                    </div>
+                    <div className="text-white font-bold text-xl mb-2">Electronic Journey</div>
                     <div className="text-cyan-200 text-sm">@Synthwave</div>
                   </div>
                 </div>
@@ -152,9 +149,7 @@ export default function Page() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm font-semibold">
-                        129 viewers
-                      </span>
+                      <span className="text-green-400 text-sm font-semibold">129 viewers</span>
                     </div>
                     <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
                       LIVE
@@ -172,9 +167,7 @@ export default function Page() {
                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
                       <span className="text-3xl">🎵</span>
                     </div>
-                    <div className="text-white font-bold text-xl mb-2">
-                      Rhythmic Beats
-                    </div>
+                    <div className="text-white font-bold text-xl mb-2">Rhythmic Beats</div>
                     <div className="text-pink-200 text-sm">@Bassline</div>
                   </div>
                 </div>
@@ -182,9 +175,7 @@ export default function Page() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm font-semibold">
-                        69 viewers
-                      </span>
+                      <span className="text-green-400 text-sm font-semibold">69 viewers</span>
                     </div>
                     <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
                       LIVE
@@ -202,9 +193,7 @@ export default function Page() {
                     <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4 mx-auto backdrop-blur-sm">
                       <span className="text-3xl">🎶</span>
                     </div>
-                    <div className="text-white font-bold text-xl mb-2">
-                      Groove Session
-                    </div>
+                    <div className="text-white font-bold text-xl mb-2">Groove Session</div>
                     <div className="text-green-200 text-sm">@Melody</div>
                   </div>
                 </div>
@@ -212,9 +201,7 @@ export default function Page() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm font-semibold">
-                        78 viewers
-                      </span>
+                      <span className="text-green-400 text-sm font-semibold">78 viewers</span>
                     </div>
                     <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
                       LIVE
@@ -233,9 +220,7 @@ export default function Page() {
           <h2 className="text-4xl md:text-5xl font-black mb-6 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
             Create a Room
           </h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Ready to share your content with the world?
-          </p>
+          <p className="text-xl text-gray-300 mb-8">Ready to share your content with the world?</p>
           <Link
             href="/go-live"
             className="group relative inline-block bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 hover:from-orange-600 hover:via-pink-600 hover:to-purple-700 text-white px-16 py-5 rounded-3xl font-black text-2xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_40px_rgba(251,146,60,0.6)] hover:shadow-[0_0_60px_rgba(251,146,60,0.8)]"
@@ -260,5 +245,5 @@ export default function Page() {
       {/* Bottom Glow Effect */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-900/20 to-transparent"></div>
     </div>
-  );
+  )
 }

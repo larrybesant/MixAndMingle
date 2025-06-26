@@ -1,26 +1,23 @@
-"use client";
+"use client"
 
-import { useParams } from "next/navigation";
-import { LiveStream } from "@/components/streaming/live-stream";
-import { ChatRoom } from "@/components/chat/chat-room";
-import Link from "next/link";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { useParams } from "next/navigation"
+import { LiveStream } from "@/components/streaming/live-stream"
+import { ChatRoom } from "@/components/chat/chat-room"
+import Link from "next/link"
+import { ArrowLeft, Share2 } from "lucide-react"
 
 export default function StreamPage() {
-  const params = useParams();
-  const roomId = params?.id as string;
+  const params = useParams()
+  const roomId = params?.id as string
   if (!roomId) {
-    return <div>Room not found.</div>;
+    return <div>Room not found.</div>
   }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4">
       {/* Header */}
       <header className="flex items-center justify-between mb-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-        >
+        <Link href="/" className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
           <ArrowLeft className="w-5 h-5" />
           Back to Home
         </Link>
@@ -49,5 +46,5 @@ export default function StreamPage() {
         </div>
       </div>
     </main>
-  );
+  )
 }

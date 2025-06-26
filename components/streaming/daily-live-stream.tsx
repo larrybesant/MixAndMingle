@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Radio,
-  Users,
-  Heart,
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  Radio, 
+  Users, 
+  Heart, 
   Settings,
   Share2,
   Play,
-  Square,
-} from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { DailyVideoRoom } from "./DailyVideoRoom";
+  Square
+} from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { DailyVideoRoom } from './DailyVideoRoom';
 
 interface DailyLiveStreamProps {
   roomId: string;
@@ -29,17 +29,17 @@ interface DailyLiveStreamProps {
   initialViewerCount?: number;
 }
 
-export function DailyLiveStream({
-  roomId,
-  isHost = false,
+export function DailyLiveStream({ 
+  roomId, 
+  isHost = false, 
   hostInfo,
-  initialViewerCount = 0,
+  initialViewerCount = 0 
 }: DailyLiveStreamProps) {
   // Stream state
   const [isStreaming, setIsStreaming] = useState(false);
   const [viewerCount, setViewerCount] = useState(initialViewerCount);
   const [dailyRoomUrl, setDailyRoomUrl] = useState<string | null>(null);
-
+  
   // Loading states
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
@@ -50,7 +50,7 @@ export function DailyLiveStream({
     if (!isStreaming) return;
 
     const interval = setInterval(() => {
-      setViewerCount((prev) => {
+      setViewerCount(prev => {
         const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
         return Math.max(0, prev + change);
       });
@@ -64,12 +64,12 @@ export function DailyLiveStream({
     const updateRoomStatus = async () => {
       if (isHost) {
         await supabase
-          .from("dj_rooms")
-          .update({
+          .from('dj_rooms')
+          .update({ 
             is_live: isStreaming,
-            viewer_count: viewerCount,
+            viewer_count: viewerCount 
           })
-          .eq("id", roomId);
+          .eq('id', roomId);
       }
     };
 
@@ -80,13 +80,13 @@ export function DailyLiveStream({
     const checkExistingRoom = async () => {
       try {
         const { data, error } = await supabase
-          .from("dj_rooms")
-          .select("stream_url, is_live")
-          .eq("id", roomId)
+          .from('dj_rooms')
+          .select('stream_url, is_live')
+          .eq('id', roomId)
           .single();
 
         if (error) {
-          console.warn("Error checking existing room:", error);
+          console.warn('Error checking existing room:', error);
           return;
         }
 
@@ -95,7 +95,7 @@ export function DailyLiveStream({
           setIsStreaming(true);
         }
       } catch (err) {
-        console.warn("Error in checkExistingRoom:", err);
+        console.warn('Error in checkExistingRoom:', err);
       }
     };
 
@@ -107,13 +107,13 @@ export function DailyLiveStream({
     if (isStarting) return;
     setIsStarting(true);
     setError(null);
-
+    
     try {
       // Create Daily.co room
-      const response = await fetch("/api/daily-room", {
-        method: "POST",
+      const response = await fetch('/api/daily-room', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ roomId }),
       });
@@ -121,36 +121,35 @@ export function DailyLiveStream({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create room");
+        throw new Error(data.error || 'Failed to create room');
       }
 
       // Save the Daily.co room URL to database
       await supabase
-        .from("dj_rooms")
-        .update({
+        .from('dj_rooms')
+        .update({ 
           stream_url: data.url,
           is_live: true,
-          viewer_count: 1,
+          viewer_count: 1
         })
-        .eq("id", roomId);
+        .eq('id', roomId);
 
       setDailyRoomUrl(data.url);
       setIsStreaming(true);
       setViewerCount(1);
-
+      
       toast({
         title: "🎥 Live Stream Started!",
         description: "Your stream is now live and viewers can join.",
       });
+
     } catch (error) {
-      console.error("Error starting stream:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to start stream",
-      );
+      console.error('Error starting stream:', error);
+      setError(error instanceof Error ? error.message : 'Failed to start stream');
       toast({
         title: "Stream Error",
         description: "Could not start the live stream. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsStarting(false);
@@ -165,24 +164,24 @@ export function DailyLiveStream({
     try {
       // Update database
       await supabase
-        .from("dj_rooms")
-        .update({
+        .from('dj_rooms')
+        .update({ 
           is_live: false,
           viewer_count: 0,
-          stream_url: null,
+          stream_url: null
         })
-        .eq("id", roomId);
+        .eq('id', roomId);
 
       setDailyRoomUrl(null);
       setIsStreaming(false);
       setViewerCount(0);
-
+      
       toast({
         title: "📴 Stream Ended",
         description: "Your live stream has been stopped.",
       });
     } catch (error) {
-      console.error("Error stopping stream:", error);
+      console.error('Error stopping stream:', error);
     } finally {
       setIsStopping(false);
     }
@@ -196,29 +195,21 @@ export function DailyLiveStream({
           <div className="flex items-center space-x-4">
             {hostInfo && (
               <Avatar className="h-12 w-12 ring-2 ring-purple-400/50">
-                <AvatarImage
-                  src={hostInfo.avatar_url}
-                  alt={hostInfo.username}
-                />
+                <AvatarImage src={hostInfo.avatar_url} alt={hostInfo.username} />
                 <AvatarFallback className="bg-purple-600 text-white">
                   {hostInfo.username.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             )}
             <div>
-              <h3 className="text-xl font-bold text-white">
-                {hostInfo?.username || "Live Stream"}
-              </h3>
+              <h3 className="text-xl font-bold text-white">{hostInfo?.username || 'Live Stream'}</h3>
               <div className="flex items-center space-x-4 text-sm text-white/60">
                 <div className="flex items-center space-x-1">
                   <Users className="w-4 h-4" />
                   <span>{viewerCount} viewers</span>
                 </div>
                 {isStreaming && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-red-600 text-white animate-pulse"
-                  >
+                  <Badge variant="secondary" className="bg-red-600 text-white animate-pulse">
                     <Radio className="w-3 h-3 mr-1" />
                     LIVE
                   </Badge>
@@ -228,26 +219,14 @@ export function DailyLiveStream({
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/10"
-            >
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
               <Heart className="w-5 h-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/10"
-            >
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
               <Share2 className="w-5 h-5" />
             </Button>
             {isHost && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/10"
-              >
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                 <Settings className="w-5 h-5" />
               </Button>
             )}
@@ -276,12 +255,13 @@ export function DailyLiveStream({
               </div>
               <div>
                 <p className="text-white text-lg font-medium">
-                  {isHost ? "Ready to go live?" : "Stream not started"}
+                  {isHost ? 'Ready to go live?' : 'Stream not started'}
                 </p>
                 <p className="text-white/60 text-sm">
-                  {isHost
-                    ? "Start your live stream to connect with your audience"
-                    : "Waiting for the host to start streaming"}
+                  {isHost 
+                    ? 'Start your live stream to connect with your audience' 
+                    : 'Waiting for the host to start streaming'
+                  }
                 </p>
               </div>
             </div>
@@ -292,8 +272,8 @@ export function DailyLiveStream({
         {isHost && (
           <div className="flex items-center justify-center space-x-4">
             {!isStreaming ? (
-              <Button
-                onClick={startStream}
+              <Button 
+                onClick={startStream} 
                 disabled={isStarting}
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 text-lg font-medium"
               >
@@ -310,7 +290,7 @@ export function DailyLiveStream({
                 )}
               </Button>
             ) : (
-              <Button
+              <Button 
                 onClick={stopStream}
                 disabled={isStopping}
                 variant="destructive"

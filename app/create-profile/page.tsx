@@ -1,209 +1,163 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
+import type React from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function CreateProfilePage() {
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-  const [musicPreferences, setMusicPreferences] = useState("");
-  const [relationshipStyle, setRelationshipStyle] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [bdsmPreferences, setBdsmPreferences] = useState("");
-  const [showBdsmPublic, setShowBdsmPublic] = useState(false);
-  const [isDatingVisible, setIsDatingVisible] = useState(true);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [gender, setGender] = useState("");
-  const router = useRouter();
-
-  // Helper to sanitize input (remove HTML tags, trim, limit length)
-  function sanitizeInput(input: string, maxLength: number = 100): string {
-    return input
-      .replace(/<[^>]*>?/gm, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, maxLength);
-  }
-
-  // Helper to validate username (alphanumeric, underscores, 3-20 chars)
-  function isValidUsername(name: string): boolean {
-    return /^[a-zA-Z0-9_]{3,20}$/.test(name);
-  }
+  const { user, initialized } = useAuth()
+  const [username, setUsername] = useState("")
+  const [bio, setBio] = useState("")
+  const [musicPreferences, setMusicPreferences] = useState("")
+  const [relationshipStyle, setRelationshipStyle] = useState("")
+  const [gender, setGender] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    // Sanitize inputs
-    const cleanUsername = sanitizeInput(username, 20);
-    const cleanBio = sanitizeInput(bio, 160);
-    const cleanMusicPreferences = sanitizeInput(musicPreferences, 100);
-    const cleanBdsmPreferences = sanitizeInput(bdsmPreferences, 200);
-    if (
-      !cleanUsername ||
-      !cleanBio ||
-      !cleanMusicPreferences ||
-      !relationshipStyle ||
-      !photo ||
-      !gender
-    ) {
-      setError(
-        "All fields, including relationship style, gender, and a profile photo are required.",
-      );
-      return;
+    e.preventDefault()
+    setError("")
+
+    if (!user) {
+      setError("Please log in first")
+      return
     }
-    if (!isValidUsername(cleanUsername)) {
-      setError(
-        "Username must be 3-20 characters, letters, numbers, or underscores only.",
-      );
-      return;
+
+    if (!username || !bio || !musicPreferences || !relationshipStyle || !gender) {
+      setError("All fields are required")
+      return
     }
-    if (photo) {
-      if (!photo.type.startsWith("image/")) {
-        setError("Profile photo must be an image file.");
-        return;
-      }
-      if (photo.size > 5 * 1024 * 1024) {
-        setError("Profile photo must be less than 5MB.");
-        return;
-      }
-    }
-    setLoading(true);
+
+    setLoading(true)
+
     try {
-      let photoUrl = "";
-      if (photo) {
-        const { data, error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(`public/${Date.now()}_${photo.name}`, photo);
-        if (uploadError) throw uploadError;
-        photoUrl = data?.path || "";
-      }
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error("User not authenticated");
+      // Dynamic import to avoid SSR issues
+      const { supabase } = await import("@/lib/supabase/client")
+
       const { error: updateError } = await supabase.from("profiles").upsert({
         id: user.id,
-        username: cleanUsername,
-        bio: cleanBio,
-        music_preferences: cleanMusicPreferences
-          .split(",")
-          .map((g) => sanitizeInput(g, 30)),
+        username: username.trim(),
+        bio: bio.trim(),
+        music_preferences: musicPreferences.split(",").map((g) => g.trim()),
         relationship_style: relationshipStyle,
-        bdsm_preferences: cleanBdsmPreferences,
-        show_bdsm_public: showBdsmPublic,
-        is_dating_visible: isDatingVisible,
-        avatar_url: photoUrl,
         gender: gender,
-      });
-      if (updateError) throw updateError;
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Profile setup failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+        profile_completed: true,
+      })
 
-  return (
-    <ErrorBoundary>
-      <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
+      if (updateError) {
+        if (updateError.message.includes("relation") || updateError.message.includes("does not exist")) {
+          setError("Database not set up. Please contact support to create the profiles table.")
+        } else {
+          throw updateError
+        }
+      } else {
+        // Success - redirect to dashboard
+        router.push("/dashboard")
+      }
+    } catch (err: any) {
+      setError(err.message || "Profile setup failed")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Show loading while initializing
+  if (!initialized) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  // Show login message if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
         <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
-        <form
-          className="flex flex-col gap-4 w-full max-w-xs"
-          onSubmit={handleSubmit}
+        <p className="text-center mb-4">Please log in to create your profile</p>
+        <Button onClick={() => router.push("/login")} className="bg-blue-600">
+          Go to Login
+        </Button>
+      </div>
+    )
+  }
+
+  // Show the form
+  return (
+    <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
+      <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
+      <form className="flex flex-col gap-4 w-full max-w-xs" onSubmit={handleSubmit}>
+        <Input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
+          required
+        />
+        <Input type="text" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Bio" required />
+        <Input
+          type="text"
+          value={musicPreferences}
+          onChange={(e) => setMusicPreferences(e.target.value)}
+          placeholder="Favorite Genres (comma separated)"
+          required
+        />
+        <select
+          className="p-2 rounded bg-gray-700 text-white"
+          value={relationshipStyle}
+          onChange={(e) => setRelationshipStyle(e.target.value)}
+          required
         >
-          <Input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-          />
-          <Input
-            type="text"
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="Bio"
-          />
-          <Input
-            type="text"
-            value={musicPreferences}
-            onChange={(e) => setMusicPreferences(e.target.value)}
-            placeholder="Favorite Genres (comma separated)"
-          />
-          <select
-            className="p-2 rounded bg-gray-700 text-white"
-            value={relationshipStyle}
-            onChange={(e) => setRelationshipStyle(e.target.value)}
-            required
-          >
-            <option value="">Select Relationship Style</option>
-            <option value="traditional">Traditional/Monogamous</option>
-            <option value="poly">Polyamorous</option>
-            <option value="open">Open</option>
-            <option value="queerplatonic">Queerplatonic</option>
-            <option value="other">Other</option>
-          </select>
-          <select
-            className="p-2 rounded bg-gray-700 text-white"
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-            required
-          >
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="nonbinary">Nonbinary</option>
-            <option value="transgender">Transgender</option>
-            <option value="other">Other / Prefer not to say</option>
-          </select>
-          {/* BDSM/Kink Preferences Section */}
-          <div className="flex flex-col gap-2 bg-gray-800/60 p-3 rounded-lg mt-2">
-            <label className="text-white font-semibold">
-              BDSM / Kink / Other Preferences (optional)
-            </label>
-            <textarea
-              className="p-2 rounded bg-gray-700 text-white"
-              value={bdsmPreferences}
-              onChange={(e) => setBdsmPreferences(e.target.value)}
-              placeholder="Share as much or as little as you want..."
-              rows={3}
-              maxLength={200}
-            />
-            <label className="flex items-center gap-2 text-sm text-gray-300">
-              <input
-                type="checkbox"
-                checked={showBdsmPublic}
-                onChange={(e) => setShowBdsmPublic(e.target.checked)}
-              />
-              Show this section on my public profile
-            </label>
-          </div>
-          {/* Dating Visibility Section */}
-          <div className="flex items-center gap-2 bg-gray-800/60 p-3 rounded-lg mt-2">
-            <input
-              type="checkbox"
-              checked={isDatingVisible}
-              onChange={(e) => setIsDatingVisible(e.target.checked)}
-              id="dating-visible"
-            />
-            <label htmlFor="dating-visible" className="text-sm text-gray-300">
-              Add me to the dating/matchmaking part of Mix & Mingle
-            </label>
-          </div>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-          />
-          {error && <div className="text-red-500 text-sm">{error}</div>}
-          <Button type="submit" className="bg-blue-600" disabled={loading}>
-            {loading ? "Saving..." : "Finish Setup"}
-          </Button>
-        </form>
-      </main>
-    </ErrorBoundary>
-  );
+          <option value="">Select Relationship Style</option>
+          <option value="traditional">Traditional/Monogamous</option>
+          <option value="poly">Polyamorous</option>
+          <option value="open">Open</option>
+          <option value="queerplatonic">Queerplatonic</option>
+          <option value="other">Other</option>
+        </select>
+        <select
+          className="p-2 rounded bg-gray-700 text-white"
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+          required
+        >
+          <option value="">Select Gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="nonbinary">Nonbinary</option>
+          <option value="transgender">Transgender</option>
+          <option value="other">Other / Prefer not to say</option>
+        </select>
+
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+
+        <Button type="submit" className="bg-blue-600" disabled={loading}>
+          {loading ? "Saving..." : "Create Profile"}
+        </Button>
+      </form>
+
+      <div className="mt-8 p-4 bg-gray-800 rounded-lg text-sm max-w-md">
+        <p className="font-bold mb-2">If you get a database error, run this SQL in Supabase:</p>
+        <pre className="text-green-400 text-xs overflow-x-auto">{`CREATE TABLE profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  username TEXT UNIQUE,
+  bio TEXT,
+  music_preferences TEXT[],
+  relationship_style TEXT,
+  gender TEXT,
+  profile_completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage own profile" ON profiles FOR ALL USING (auth.uid() = id);`}</pre>
+      </div>
+    </main>
+  )
 }

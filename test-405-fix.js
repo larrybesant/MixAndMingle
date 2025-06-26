@@ -1,34 +1,32 @@
 // Quick test script to apply the 405 auth fix
-const fetch = require("node-fetch");
+const fetch = require('node-fetch');
 
 async function apply405Fix() {
   try {
-    console.log("🔧 Applying 405 auth fix...");
-
-    const response = await fetch("http://localhost:3000/api/fix-auth-405", {
-      method: "POST",
+    console.log('🔧 Applying 405 auth fix...');
+    
+    const response = await fetch('http://localhost:3000/api/fix-auth-405', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
     const result = await response.json();
-
+    
     if (result.success) {
-      console.log("✅ Success:", result.message);
-      console.log("🕐 Applied at:", result.timestamp);
+      console.log('✅ Success:', result.message);
+      console.log('🕐 Applied at:', result.timestamp);
     } else {
-      console.log("❌ Error:", result.error);
+      console.log('❌ Error:', result.error);
       if (result.sql) {
-        console.log("📋 Manual SQL to run in Supabase:");
+        console.log('📋 Manual SQL to run in Supabase:');
         console.log(result.sql);
       }
     }
   } catch (error) {
-    console.error("💥 Failed to apply fix:", error.message);
-    console.log(
-      "\n📋 Please run this SQL manually in your Supabase SQL Editor:",
-    );
+    console.error('💥 Failed to apply fix:', error.message);
+    console.log('\n📋 Please run this SQL manually in your Supabase SQL Editor:');
     console.log(`
 -- ENHANCED AUTH FIX - More robust trigger function
 
