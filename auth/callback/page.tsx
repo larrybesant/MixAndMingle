@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -10,19 +10,19 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        console.log("🔄 Processing OAuth callback...");
-
+        console.log('🔄 Processing OAuth callback...');
+        
         const { data, error } = await supabase.auth.getSession();
-
+        
         if (error) {
-          console.error("❌ Auth callback error:", error);
-          router.push("/login?error=oauth_failed");
+          console.error('❌ Auth callback error:', error);
+          router.push('/login?error=oauth_failed');
           return;
         }
 
         if (data.session?.user) {
-          console.log("✅ OAuth successful! User:", data.session.user.id);
-
+          console.log('✅ OAuth successful! User:', data.session.user.id);
+          
           // Check if user has a complete profile
           const { data: profileData } = await supabase
             .from("profiles")
@@ -38,12 +38,12 @@ export default function AuthCallback() {
             router.push("/dashboard");
           }
         } else {
-          console.log("⚠️ No user session found");
-          router.push("/login");
+          console.log('⚠️ No user session found');
+          router.push('/login');
         }
       } catch (err) {
-        console.error("💥 Callback processing error:", err);
-        router.push("/login?error=callback_failed");
+        console.error('💥 Callback processing error:', err);
+        router.push('/login?error=callback_failed');
       }
     };
 
@@ -55,9 +55,7 @@ export default function AuthCallback() {
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
         <p className="text-white text-lg">Completing sign in...</p>
-        <p className="text-gray-400 text-sm mt-2">
-          Please wait while we set up your account
-        </p>
+        <p className="text-gray-400 text-sm mt-2">Please wait while we set up your account</p>
       </div>
     </div>
   );

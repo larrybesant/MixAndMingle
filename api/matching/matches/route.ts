@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+import { NextResponse } from "next/server"
+import { supabase } from "@/lib/supabase/client"
 
 export async function GET() {
   try {
-    const { data: user, error: userError } = await supabase.auth.getUser();
+    const { data: user, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // For now, return mock matches data
@@ -49,14 +49,11 @@ export async function GET() {
           updated_at: "2024-01-01T00:00:00Z",
         },
       },
-    ];
+    ]
 
-    return NextResponse.json({ matches: mockMatches });
+    return NextResponse.json({ matches: mockMatches })
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    console.error("Unexpected error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

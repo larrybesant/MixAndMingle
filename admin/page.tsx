@@ -77,9 +77,7 @@ export default function AdminPage() {
               <span className="text-xs text-green-400">
                 {room.is_live ? "LIVE" : "Offline"}
               </span>
-              <span className="text-xs text-gray-400">
-                Host: {room.host_id}
-              </span>
+              <span className="text-xs text-gray-400">Host: {room.host_id}</span>
               <span className="text-xs text-blue-400">
                 Viewers: {room.viewer_count}
               </span>
