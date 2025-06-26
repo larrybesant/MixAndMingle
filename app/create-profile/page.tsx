@@ -1,42 +1,5 @@
 "use client"
 
-<<<<<<< HEAD
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-
-export default function CreateProfilePage() {
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-  const [musicPreferences, setMusicPreferences] = useState("");
-  const [relationshipStyle, setRelationshipStyle] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [bdsmPreferences, setBdsmPreferences] = useState("");
-  const [showBdsmPublic, setShowBdsmPublic] = useState(false);
-  const [isDatingVisible, setIsDatingVisible] = useState(true);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [gender, setGender] = useState("");
-  const [authChecking, setAuthChecking] = useState(true);
-  const router = useRouter();
-
-  // Helper to sanitize input (remove HTML tags, trim, limit length)
-  function sanitizeInput(input: string, maxLength: number = 100): string {
-    return input
-      .replace(/<[^>]*>?/gm, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, maxLength);
-  }
-
-  // Helper to validate username (alphanumeric, underscores, 3-20 chars)
-  function isValidUsername(name: string): boolean {
-    return /^[a-zA-Z0-9_]{3,20}$/.test(name);
-  }
-=======
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -54,7 +17,6 @@ export default function CreateProfilePage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,31 +48,6 @@ export default function CreateProfilePage() {
         profile_completed: true,
       })
 
-<<<<<<< HEAD
-  useEffect(() => {
-    async function checkAuth() {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        setError("You must be signed in to create a profile. Redirecting to login...");
-        setTimeout(() => router.replace("/login"), 1500);
-      }
-      setAuthChecking(false);
-    }
-    checkAuth();
-  }, [router]);
-
-  if (authChecking) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-black text-white">
-        <div className="text-lg">Checking authentication...</div>
-      </main>
-    );
-  }
-
-  return (
-    <ErrorBoundary>
-      <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-2">
-=======
       if (updateError) {
         if (updateError.message.includes("relation") || updateError.message.includes("does not exist")) {
           setError("Database not set up. Please contact support to create the profiles table.")
@@ -141,7 +78,6 @@ export default function CreateProfilePage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
         <h1 className="text-4xl font-bold mb-4">Create Your Profile</h1>
         <p className="text-center mb-4">Please log in to create your profile</p>
         <Button onClick={() => router.push("/login")} className="bg-blue-600">

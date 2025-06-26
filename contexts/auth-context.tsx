@@ -128,11 +128,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-<<<<<<< HEAD
-        // Get initial session
-        const { session } = await authHelpers.getCurrentSession();
-        console.log("[AuthProvider] Initial session:", session);
-=======
         if (isPreviewMode) {
           // Mock user for preview
           const mockUser = {
@@ -190,7 +185,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (!mounted) return
 
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
         if (session?.user) {
           setUser(session.user)
           setSession(session)
@@ -233,61 +227,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-<<<<<<< HEAD
-    initializeAuth();
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[AuthProvider] Auth state changed:", event, session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData);
-      } else {
-        setProfile(null);
-      }
-      setLoading(false);
-      setTimeout(() => {
-        // Print the latest state after updates
-        console.log('[AuthProvider] AFTER setUser/setSession:', {
-          user,
-          session,
-          error
-        });
-      }, 500);
-    });
-=======
     initializeAuth()
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
 
     return () => {
       mounted = false
     }
   }, [isPreviewMode])
 
-<<<<<<< HEAD
-  // Log state on every render
-  console.log('[AuthProvider] RENDER user:', user, 'session:', session, 'error:', error);
-
-  // Auth methods
-  const signUp = async (
-    email: string,
-    password: string,
-    metadata?: Record<string, unknown>,
-  ) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await authHelpers.signUp(email, password, metadata);
-      console.log("[AuthProvider] signUp result:", result);
-      if (result.error) {
-        setError(result.error.message);
-      }
-      return { error: result.error };
-=======
   const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
     setLoading(true)
     setError(null)
@@ -302,7 +248,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signUp({ email, password, options: { data: metadata } })
       if (error) setError(error.message)
       return { error }
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
     } catch (error) {
       const authError = new Error("Unexpected signup error") as AuthError
       setError(authError.message)
@@ -313,26 +258,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const signIn = async (email: string, password: string) => {
-<<<<<<< HEAD
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await authHelpers.signIn(email, password);
-      console.log("[AuthProvider] signIn result:", result);
-      if (result.error) {
-        setError(result.error.message);
-      }
-      return { error: result.error };
-    } finally {
-      setLoading(false);
-=======
     setLoading(true)
     setError(null)
 
     if (isPreviewMode) {
       setLoading(false)
       return { error: null }
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
     }
 
     try {

@@ -16,10 +16,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     flowType: "pkce",
-<<<<<<< HEAD
-    // Removed explicit storage option for SSR/cookie compatibility
-=======
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
   },
 })
 
@@ -35,49 +31,6 @@ export const authHelpers = {
     }
   },
 
-<<<<<<< HEAD
-  // Get current session
-  getCurrentSession: async () => {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-    return { session, error };
-  },
-  // Sign up with email/password
-  signUp: async (
-    email: string,
-    password: string,
-    metadata?: Record<string, unknown>,
-  ) => {
-    return await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-        emailRedirectTo: undefined,
-      },
-    });
-  },
-
-  // Sign in with email/password
-  signIn: async (email: string, password: string) => {
-    return await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-  },
-
-  // Sign in with OAuth (GitHub, Discord)
-  signInWithOAuth: async (provider: "github" | "discord") => {
-    return await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-=======
   async signUp(email: string, password: string, metadata?: Record<string, unknown>) {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -85,7 +38,6 @@ export const authHelpers = {
         password,
         options: {
           data: metadata,
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
         },
       })
       return { data, error }
@@ -133,17 +85,6 @@ export const authHelpers = {
     }
   },
 
-<<<<<<< HEAD
-  // Resend email verification
-  resendVerification: async (email: string) => {
-    return await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-=======
   async resetPassword(email: string) {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email)
@@ -152,7 +93,6 @@ export const authHelpers = {
       console.error("Error resetting password:", err)
       return { data: null, error: err as Error }
     }
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
   },
 
   async updatePassword(password: string) {
