@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ export default function CreateProfilePage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [gender, setGender] = useState("");
+  const [authChecking, setAuthChecking] = useState(true);
   const router = useRouter();
 
   // Helper to sanitize input (remove HTML tags, trim, limit length)
@@ -106,6 +107,26 @@ export default function CreateProfilePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    async function checkAuth() {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        setError("You must be signed in to create a profile. Redirecting to login...");
+        setTimeout(() => router.replace("/login"), 1500);
+      }
+      setAuthChecking(false);
+    }
+    checkAuth();
+  }, [router]);
+
+  if (authChecking) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="text-lg">Checking authentication...</div>
+      </main>
+    );
+  }
 
   return (
     <ErrorBoundary>

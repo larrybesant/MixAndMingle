@@ -117,16 +117,6 @@ export default function Page() {
             {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
 
-            {/* Live Chat Bubble */}
-            <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl flex items-center gap-3 border border-white/20">
-              <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
-              <span className="text-cyan-400 font-bold text-lg">
-                truegrooves
-              </span>
-              <span className="text-2xl">🔥</span>
-              <span className="text-white/90 text-lg">Love this set!</span>
-            </div>
-
             {/* Live Indicator */}
             <div className="absolute top-6 left-6 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse flex items-center gap-2">
               <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>

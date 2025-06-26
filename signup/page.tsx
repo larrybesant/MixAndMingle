@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function SignupPage() {
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,11 +22,6 @@ export default function SignupPage() {
       .slice(0, maxLength);
   }
 
-  // Helper to validate username (alphanumeric, underscores, 3-20 chars)
-  function isValidUsername(name: string): boolean {
-    return /^[a-zA-Z0-9_]{3,20}$/.test(name);
-  }
-
   // Helper to validate email
   function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -38,32 +32,16 @@ export default function SignupPage() {
   }
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("🚀 Form submitted!"); // Debug log
     setLoading(true);
     setError("");
 
     try {
       // Sanitize and validate inputs
-      const cleanUsername = sanitizeInput(username, 20);
       const cleanEmail = sanitizeInput(email, 100);
       const cleanPassword = password.trim();
 
-      console.log("📝 Form data:", {
-        cleanUsername,
-        cleanEmail,
-        passwordLength: cleanPassword.length,
-      }); // Debug log
-
-      if (!cleanUsername || !cleanEmail || !cleanPassword) {
+      if (!cleanEmail || !cleanPassword) {
         setError("All fields are required.");
-        setLoading(false);
-        return;
-      }
-
-      if (!isValidUsername(cleanUsername)) {
-        setError(
-          "Username must be 3-20 characters, letters, numbers, or underscores only.",
-        );
         setLoading(false);
         return;
       }
@@ -79,25 +57,19 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-      console.log("🔐 Attempting signup with Supabase..."); // Debug log
-      // Try signup with minimal options to bypass webhook issues
+      // Try signup with minimal options
       const signupResult = await supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
         options: {
-          data: { username: cleanUsername },
           emailRedirectTo: undefined, // Explicitly disable email redirect
           captchaToken: undefined, // Disable captcha
         },
       });
 
-      console.log("📧 Signup result:", signupResult); // Debug log
-
       if (signupResult.error) {
-        console.error("❌ Signup error:", signupResult.error); // Debug log
         setError(`Signup failed: ${signupResult.error.message}`);
       } else if (signupResult.data?.user) {
-        console.log("✅ Signup successful! User:", signupResult.data.user.id); // Debug log
         setError(""); // Clear any errors
 
         // Check if user needs email confirmation
@@ -114,13 +86,11 @@ export default function SignupPage() {
           }, 1000);
         }
       } else {
-        console.log("⚠️ Signup completed but no user data returned"); // Debug log
         setError(
           "Account may have been created. Please check your email or try logging in.",
         );
       }
     } catch (err: any) {
-      console.error("💥 Unexpected error:", err); // Debug log
       setError(`Unexpected error: ${err.message || err}`);
     } finally {
       setLoading(false);
@@ -136,127 +106,121 @@ export default function SignupPage() {
     if (error) setError(`OAuth signup failed: ${error.message}`);
   };
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900/20 to-black px-4">
-      <div className="w-full max-w-md bg-black/80 border border-purple-500/30 rounded-lg p-8">
-        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-6">
-          Mix & Mingle Signup
-        </h1>
-
-        {/* Debug info */}
-        <div className="mb-4 text-xs text-gray-500 bg-gray-900/30 p-2 rounded">
-          Debug: Username: {username.length}, Email: {email.length}, Password:{" "}
-          {password.length}, Loading: {loading ? "true" : "false"}
-        </div>
-
-        <form onSubmit={handleSignUp} className="space-y-4">
-          <div>
-            <Input
-              placeholder="Username (3-20 characters)"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
-              autoComplete="username"
-              required
-            />
-            {username && !isValidUsername(username) && (
-              <p className="text-red-400 text-xs mt-1">
-                Username must be 3-20 characters, letters, numbers, or
-                underscores only.
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
-              autoComplete="email"
-              required
-            />
-            {email && !isValidEmail(email) && (
-              <p className="text-red-400 text-xs mt-1">
-                Please enter a valid email address.
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Input
-              type="password"
-              placeholder="Password (minimum 8 characters)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
-              autoComplete="new-password"
-              required
-            />{" "}
-            {password && !isValidPassword(password) && (
-              <p className="text-red-400 text-xs mt-1">
-                Password must be at least 8 characters.
-              </p>
-            )}
-          </div>
-
-          {error && (
-            <div
-              className={`mb-4 text-sm p-3 border rounded ${
-                error.includes("✅")
-                  ? "text-green-400 bg-green-900/20 border-green-500"
-                  : "text-red-400 bg-red-900/20 border-red-500"
-              }`}
-            >
-              {error}
-            </div>
-          )}
-
-          {/* Main signup button */}
-          <Button
-            type="submit"
-            onClick={handleSignUp}
-            disabled={loading}
-            className="w-full mb-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Creating Account...
-              </div>
-            ) : (
-              "Sign Up"
-            )}
-          </Button>
-          {/* Test button for debugging */}
-          <button
-            type="button"
-            onClick={() => {
-              console.log("Test button clicked!");
-              alert("Test button works!");
-            }}
-            className="w-full mb-2 p-2 bg-gray-700 text-white rounded text-sm hover:bg-gray-600"
-          >
-            Test Button (Click to test if buttons work)
-          </button>
-        </form>
-
-        <Button
-          type="button"
-          onClick={() => handleOAuth("google")}
-          className="w-full mb-4 bg-white text-black hover:bg-gray-100 border border-gray-300"
+    <div>
+      {typeof window !== "undefined" && (
+        <div
+          style={{
+            background: "yellow",
+            color: "black",
+            padding: 8,
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
         >
-          Sign Up with Google
-        </Button>
+          JS/HYDRATION ACTIVE
+        </div>
+      )}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900/20 to-black px-4">
+        <div className="w-full max-w-md bg-black/80 border border-purple-500/30 rounded-lg p-8">
+          <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-6">
+            Mix & Mingle Signup
+          </h1>
 
-        <div className="text-center text-sm text-gray-400">
-          Already have an account?{" "}
-          <a
-            href="/login"
-            className="text-purple-400 hover:text-purple-300 underline"
+          {/* Debug info */}
+          <div className="mb-4 text-xs text-gray-500 bg-gray-900/30 p-2 rounded">
+            Debug: Email: {email.length}, Password: {password.length}, Loading:{" "}
+            {loading ? "true" : "false"}
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              console.log("SIGNUP FORM SUBMIT"); // TEMP DEBUG
+              e.preventDefault();
+              handleSignUp(e);
+            }}
+            className="space-y-4"
           >
-            Sign In
-          </a>
+            <div>
+              <Input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                className="w-full bg-black/40 text-white placeholder-white/80 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12 min-h-[48px] min-w-[48px] text-base"
+                style={{ minHeight: 48, minWidth: 48 }}
+                aria-label="Email"
+              />
+              {email && !isValidEmail(email) && (
+                <p className="text-red-400 text-xs mt-1">
+                  Please enter a valid email address.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                className="w-full bg-black/40 text-white placeholder-white/80 focus:border-purple-400 focus:ring-purple-400 rounded-xl h-12 min-h-[48px] min-w-[48px] text-base"
+                style={{ minHeight: 48, minWidth: 48 }}
+                aria-label="Password"
+              />
+              {password && !isValidPassword(password) && (
+                <p className="text-red-400 text-xs mt-1">
+                  Password must be at least 8 characters.
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <div
+                role="alert"
+                className={`mb-4 text-sm p-3 border rounded ${
+                  error.includes("✅")
+                    ? "text-green-400 bg-green-900/20 border-green-500"
+                    : "text-red-400 bg-red-900/20 border-red-500"
+                }`}
+              >
+                {error}
+              </div>
+            )}
+
+            {/* Main signup button */}
+            <Button
+              type="submit"
+              asChild={false}
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded hover:bg-blue-700 disabled:opacity-50 min-h-[48px] min-w-[48px] text-base"
+              style={{ minHeight: 48, minWidth: 48 }}
+            >
+              {loading ? "Signing Up..." : "Sign Up"}
+            </Button>
+          </form>
+
+          <Button
+            type="button"
+            onClick={() => handleOAuth("google")}
+            className="w-full mb-4 bg-white text-black hover:bg-gray-100 border border-gray-300"
+          >
+            Sign Up with Google
+          </Button>
+
+          <div className="text-center text-sm text-gray-400">
+            Already have an account?{" "}
+            <a
+              href="/login"
+              className="text-blue-400 hover:underline min-h-[24px] min-w-[24px] inline-block"
+              style={{ minHeight: 24, minWidth: 24 }}
+            >
+              Sign In
+            </a>
+          </div>
         </div>
       </div>
     </div>
