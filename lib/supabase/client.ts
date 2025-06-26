@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient, AuthError } from "@supabase/supabase-js"
 
 // Your Supabase configuration
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ywfjmsbyksehjgwalqum.supabase.co"
@@ -40,10 +40,11 @@ export const authHelpers = {
           data: metadata,
         },
       })
-      return { data, error }
+      return { data, error: error as AuthError | null }
     } catch (err) {
       console.error("Error signing up:", err)
-      return { data: null, error: err as Error }
+      // Return null if not an AuthError
+      return { data: null, error: null }
     }
   },
 
@@ -53,10 +54,11 @@ export const authHelpers = {
         email,
         password,
       })
-      return { data, error }
+      return { data, error: error as AuthError | null }
     } catch (err) {
       console.error("Error signing in:", err)
-      return { data: null, error: err as Error }
+      // Return null if not an AuthError
+      return { data: null, error: null }
     }
   },
 
@@ -68,10 +70,11 @@ export const authHelpers = {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
-      return { data, error }
+      return { data, error: error as AuthError | null }
     } catch (err) {
       console.error("Error with OAuth:", err)
-      return { data: null, error: err as Error }
+      // Return null if not an AuthError
+      return { data: null, error: null }
     }
   },
 
@@ -88,20 +91,20 @@ export const authHelpers = {
   async resetPassword(email: string) {
     try {
       const { data, error } = await supabase.auth.resetPasswordForEmail(email)
-      return { data, error }
+      return { data, error: error as AuthError | null }
     } catch (err) {
       console.error("Error resetting password:", err)
-      return { data: null, error: err as Error }
+      return { data: null, error: null }
     }
   },
 
   async updatePassword(password: string) {
     try {
       const { data, error } = await supabase.auth.updateUser({ password })
-      return { data, error }
+      return { data, error: error as AuthError | null }
     } catch (err) {
       console.error("Error updating password:", err)
-      return { data: null, error: err as Error }
+      return { data: null, error: null }
     }
   },
 
@@ -111,10 +114,10 @@ export const authHelpers = {
         type: "signup",
         email,
       })
-      return { data, error }
+      return { data, error: error as AuthError | null }
     } catch (err) {
       console.error("Error resending verification:", err)
-      return { data: null, error: err as Error }
+      return { data: null, error: null }
     }
   },
 }

@@ -1,9 +1,37 @@
 import { NextResponse } from "next/server"
 
+// Define types for results structure
+interface EnvVarStatus {
+  exists: boolean
+  preview: string
+}
+interface Results {
+  timestamp: string
+  environment: {
+    required: { [key: string]: EnvVarStatus }
+    optional: { [key: string]: EnvVarStatus }
+  }
+  supabase: {
+    connected?: boolean
+    tablesExist?: boolean
+    message?: string
+    error?: string
+    code?: string
+    profileCount?: number
+  }
+  auth: Record<string, any>
+  tables: { [key: string]: { exists: boolean; status: string } }
+  storage: Record<string, any>
+  summary: Record<string, any>
+}
+
 export async function GET() {
-  const results = {
+  const results: Results = {
     timestamp: new Date().toISOString(),
-    environment: {},
+    environment: {
+      required: {},
+      optional: {},
+    },
     supabase: {},
     auth: {},
     tables: {},
@@ -21,11 +49,6 @@ export async function GET() {
       "DATABASE_URL",
     ]
 
-    results.environment = {
-      required: {},
-      optional: {},
-    }
-
     requiredVars.forEach((varName) => {
       const value = process.env[varName]
       results.environment.required[varName] = {
@@ -38,7 +61,6 @@ export async function GET() {
     console.log("🔗 Testing Supabase connection...")
     try {
       const { createClient } = await import("@supabase/supabase-js")
-
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         results.supabase = {
           connected: false,
@@ -46,10 +68,8 @@ export async function GET() {
         }
       } else {
         const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
         // Test basic connection by trying to access profiles table
-        const { data, error } = await supabase.from("profiles").select("count(*)").limit(1)
-
+        const { count, error } = await supabase.from("profiles").select("*", { count: "exact", head: true })
         if (error) {
           if (error.code === "42P01") {
             results.supabase = {
@@ -68,7 +88,7 @@ export async function GET() {
           results.supabase = {
             connected: true,
             tablesExist: true,
-            profileCount: data?.[0]?.count || 0,
+            profileCount: count || 0,
           }
         }
       }
@@ -84,14 +104,10 @@ export async function GET() {
     if (results.supabase.connected) {
       const { createClient } = await import("@supabase/supabase-js")
       const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-
       const tables = ["profiles", "dj_rooms", "messages", "matches", "swipes"]
-      results.tables = {}
-
       for (const table of tables) {
         try {
-          const { error } = await supabase.from(table).select("count(*)").limit(1)
-
+          const { error } = await supabase.from(table).select("*", { count: "exact", head: true })
           if (error) {
             if (error.code === "42P01") {
               results.tables[table] = { exists: false, status: "Table does not exist" }
@@ -111,9 +127,7 @@ export async function GET() {
     const hasSupabaseVars =
       results.environment.required["NEXT_PUBLIC_SUPABASE_URL"].exists &&
       results.environment.required["NEXT_PUBLIC_SUPABASE_ANON_KEY"].exists
-
     const tablesExist = Object.values(results.tables).some((table: any) => table.exists)
-
     if (!hasSupabaseVars) {
       results.summary = {
         status: "CRITICAL",
