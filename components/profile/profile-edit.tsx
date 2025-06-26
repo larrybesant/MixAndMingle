@@ -176,13 +176,8 @@ export default function ProfileEditPage() {
 
     try {
       // TODO: Upload avatar if changed
-<<<<<<< HEAD
-      const avatar_url = avatarPreview;
-
-=======
       let avatar_url = avatarPreview;
       
->>>>>>> 1ef822f059b7d81d49cba6111a546fd184845679
       if (avatarFile) {
         // Here you would upload to Supabase Storage
         // For now, we'll keep the existing URL
