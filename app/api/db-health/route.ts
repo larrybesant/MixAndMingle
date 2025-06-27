@@ -3,10 +3,8 @@ import { supabase } from "@/lib/supabase/client"
 
 export async function GET() {
   try {
-    // Test basic connection and get count
-    const { count, error } = await supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
+    // Test basic connection
+    const { data, error } = await supabase.from("profiles").select("count(*)").limit(1)
 
     if (error) {
       return NextResponse.json(
@@ -23,7 +21,7 @@ export async function GET() {
     return NextResponse.json({
       status: "healthy",
       message: "Database connection successful",
-      profiles_count: count || 0,
+      profiles_count: data?.[0]?.count || 0,
     })
   } catch (err) {
     return NextResponse.json(

@@ -45,7 +45,7 @@ async function checkSupabaseConnection() {
 
     // Test basic connection
     console.log("Testing basic connection...")
-    const { count, error } = await supabase.from("profiles").select("*", { count: "exact", head: true })
+    const { data, error } = await supabase.from("profiles").select("count(*)")
 
     if (error) {
       if (error.code === "42P01") {
@@ -58,7 +58,7 @@ async function checkSupabaseConnection() {
       }
     } else {
       console.log("✅ Profiles table exists and accessible")
-      console.log(`📊 Current profile count: ${count || 0}`)
+      console.log(`📊 Current profile count: ${data?.[0]?.count || 0}`)
       return { connected: true, tablesExist: true }
     }
   } catch (err) {
@@ -110,7 +110,7 @@ async function checkDatabaseTables() {
 
     const tables = ["profiles", "dj_rooms", "messages", "matches", "swipes"]
 
-    const tableStatus: Record<string, boolean | "error"> = {}
+    const tableStatus = {}
 
     for (const table of tables) {
       try {

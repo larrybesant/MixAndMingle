@@ -104,20 +104,14 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> & {
-    hideLabel?: boolean
-    hideIndicator?: boolean
-    indicator?: "line" | "dot" | "dashed"
-    nameKey?: string
-    labelKey?: string
-    payload?: any
-    label?: any
-    labelFormatter?: any
-    labelClassName?: string
-    formatter?: any
-    color?: string
-    className?: string
-  }
+  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+    React.ComponentProps<"div"> & {
+      hideLabel?: boolean
+      hideIndicator?: boolean
+      indicator?: "line" | "dot" | "dashed"
+      nameKey?: string
+      labelKey?: string
+    }
 >(
   (
     {
@@ -139,14 +133,12 @@ const ChartTooltipContent = React.forwardRef<
   ) => {
     const { config } = useChart()
 
-    // Ensure payload is always an array
-    const safePayload: any[] = Array.isArray(payload) ? payload : [];
-
     const tooltipLabel = React.useMemo(() => {
-      if (hideLabel || !safePayload.length) {
+      if (hideLabel || !payload?.length) {
         return null
       }
-      const [item] = safePayload
+
+      const [item] = payload
       const key = `${labelKey || item.dataKey || item.name || "value"}`
       const itemConfig = getPayloadConfigFromPayload(config, item, key)
       const value =
@@ -157,7 +149,7 @@ const ChartTooltipContent = React.forwardRef<
       if (labelFormatter) {
         return (
           <div className={cn("font-medium", labelClassName)}>
-            {labelFormatter(value, safePayload)}
+            {labelFormatter(value, payload)}
           </div>
         )
       }
@@ -170,34 +162,42 @@ const ChartTooltipContent = React.forwardRef<
     }, [
       label,
       labelFormatter,
-      safePayload,
+      payload,
       hideLabel,
       labelClassName,
       config,
       labelKey,
     ])
 
-    if (!active || !safePayload.length) {
+    if (!active || !payload?.length) {
       return null
     }
 
-    const nestLabel = safePayload.length === 1 && indicator !== "dot"
+    const nestLabel = payload.length === 1 && indicator !== "dot"
 
     return (
       <div
         ref={ref}
         className={cn(
-          "recharts-tooltip-content z-50 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-md",
+          "grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
           className
         )}
       >
+        {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
-          {safePayload.map((item: any, index: number) => {
-            const key = `${labelKey || item.dataKey || item.name || "value"}`;
-            const itemConfig = getPayloadConfigFromPayload(config, item, key);
-            const indicatorColor = item.color || color;
+          {payload.map((item, index) => {
+            const key = `${nameKey || item.name || item.dataKey || "value"}`
+            const itemConfig = getPayloadConfigFromPayload(config, item, key)
+            const indicatorColor = color || item.payload.fill || item.color
+
             return (
-              <div key={index} className="flex items-center gap-2">
+              <div
+                key={item.dataKey}
+                className={cn(
+                  "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
+                  indicator === "dot" && "items-center"
+                )}
+              >
                 {formatter && item?.value !== undefined && item.name ? (
                   formatter(item.value, item.name, item, index, item.payload)
                 ) : (
@@ -244,7 +244,7 @@ const ChartTooltipContent = React.forwardRef<
                   </>
                 )}
               </div>
-            );
+            )
           })}
         </div>
       </div>
@@ -257,33 +257,58 @@ const ChartLegend = RechartsPrimitive.Legend
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> & {
-    payload?: any[];
-    verticalAlign?: string;
-    hideIcon?: boolean;
-    nameKey?: string;
-  }
+  React.ComponentProps<"div"> &
+    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+      hideIcon?: boolean
+      nameKey?: string
+    }
 >(
   (
     { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
     ref
   ) => {
-    // Ensure payload is always an array
-    const safePayload: any[] = Array.isArray(payload) ? payload : [];
+    const { config } = useChart()
 
-    if (!safePayload.length) {
-      return null;
+    if (!payload?.length) {
+      return null
     }
 
     return (
-      <div ref={ref} className={cn("recharts-legend-content", className)}>
-        {safePayload.map((item: any, index: number) => (
-          <div key={index} className="flex items-center gap-2">
-            {/* ...existing legend rendering code... */}
-          </div>
-        ))}
+      <div
+        ref={ref}
+        className={cn(
+          "flex items-center justify-center gap-4",
+          verticalAlign === "top" ? "pb-3" : "pt-3",
+          className
+        )}
+      >
+        {payload.map((item) => {
+          const key = `${nameKey || item.dataKey || "value"}`
+          const itemConfig = getPayloadConfigFromPayload(config, item, key)
+
+          return (
+            <div
+              key={item.value}
+              className={cn(
+                "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
+              )}
+            >
+              {itemConfig?.icon && !hideIcon ? (
+                <itemConfig.icon />
+              ) : (
+                <div
+                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                  style={{
+                    backgroundColor: item.color,
+                  }}
+                />
+              )}
+              {itemConfig?.label}
+            </div>
+          )
+        })}
       </div>
-    );
+    )
   }
 )
 ChartLegendContent.displayName = "ChartLegend"

@@ -110,7 +110,6 @@ class FrontendQATester {
         steps: flow.steps.map((step) => ({
           step,
           status: "pass" as "pass" | "fail",
-          error: undefined as string | undefined,
         })),
       }
 

@@ -131,3 +131,4 @@ console.log("📝 Next steps:")
 console.log("   1. Update .env.local with your actual Supabase credentials")
 console.log("   2. Run 'npm run dev' to start the development server")
 console.log("   3. Visit http://localhost:3000 to test the app")
+`
