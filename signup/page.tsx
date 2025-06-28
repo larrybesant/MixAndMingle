@@ -137,9 +137,7 @@ export default function SignupPage() {
         
         <form onSubmit={handleSignUp} className="space-y-4">
           <div>
-            <label htmlFor="signup-username" className="block text-sm font-medium text-gray-300 mb-1">Username</label>
             <Input
-              id="signup-username"
               placeholder="Username (3-20 characters)"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -151,10 +149,9 @@ export default function SignupPage() {
               <p className="text-red-400 text-xs mt-1">Username must be 3-20 characters, letters, numbers, or underscores only.</p>
             )}
           </div>
+          
           <div>
-            <label htmlFor="signup-email" className="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <Input
-              id="signup-email"
               type="email"
               placeholder="Email address"
               value={email}
@@ -167,10 +164,9 @@ export default function SignupPage() {
               <p className="text-red-400 text-xs mt-1">Please enter a valid email address.</p>
             )}
           </div>
+          
           <div>
-            <label htmlFor="signup-password" className="block text-sm font-medium text-gray-300 mb-1">Password</label>
             <Input
-              id="signup-password"
               type="password"
               placeholder="Password (minimum 8 characters)"
               value={password}
@@ -178,8 +174,7 @@ export default function SignupPage() {
               className="w-full bg-gray-900/50 border-gray-600 text-white placeholder-gray-400"
               autoComplete="new-password"
               required
-            />
-            {password && !isValidPassword(password) && (
+            />            {password && !isValidPassword(password) && (
               <p className="text-red-400 text-xs mt-1">Password must be at least 8 characters.</p>
             )}
           </div>

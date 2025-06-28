@@ -1,21 +1,33 @@
-import type React from "react";
-import AuthProvider from "@/contexts/auth-context";
-import "./globals.css";
+import type React from "react"
+import type { Metadata } from "next"
+import "./globals.css"
+import ClientOnly from "@/components/client-only-provider"
+import { AuthProvider } from "@/contexts/auth-context"
 
-export const metadata = {
-  title: "Mix & Mingle | v0 App",
-  description: "Party from home with friends or solo. Join rooms. Go live. Connect with global vibes.",
-};
+export const metadata: Metadata = {
+  title: "v0 App",
+  description: "Created with v0",
+  generator: "v0.dev",
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
     <html lang="en">
-      <head />
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ClientOnly
+          fallback={
+            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+              <div className="text-xl">Loading...</div>
+            </div>
+          }
+        >
+          <AuthProvider>{children}</AuthProvider>
+        </ClientOnly>
       </body>
     </html>
-  );
+  )
 }

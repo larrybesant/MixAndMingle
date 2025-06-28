@@ -1,11 +1,35 @@
 "use client"
 
-import Link from "next/link"
-import Image from "next/image"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { UserListSchema, type UserList } from "@/lib/zod-schemas-shared"
 
 export default function Page() {
+  const [, setUsers] = useState<UserList>([])
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+    async function fetchUsers() {
+      const { data } = await supabase.from("profiles").select("id, username")
+      const parsed = UserListSchema.safeParse(data || [])
+      if (parsed.success) {
+        setUsers(parsed.data)
+      } else {
+        setUsers([])
+      }
+    }
+    fetchUsers()
+  }, [])
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-2xl">Loading...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative">
       {/* Animated Background */}
@@ -23,25 +47,23 @@ export default function Page() {
       {/* Header */}
       <header className="relative z-10 flex justify-between items-center py-6 px-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          {/* Neon Logo */}
           <div className="text-4xl font-black tracking-wider">
             <span className="text-orange-400 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)] font-extrabold">MIX</span>
             <span className="text-orange-400 text-5xl mx-2 drop-shadow-[0_0_15px_rgba(251,146,60,0.8)]">🎵</span>
             <span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] font-extrabold">MINGLE</span>
           </div>
         </div>
-        <Link
-          href="/login"
-          className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all duration-300 font-semibold"
+        <button
+          onClick={() => (window.location.href = "/demo-login")}
+          className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-3 text-white hover:bg-white/20 transition-all duration-300 font-semibold cursor-pointer"
         >
           Sign In
-        </Link>
+        </button>
       </header>
 
       {/* Hero Section */}
       <section className="relative z-10 text-center py-16 px-6">
         <div className="max-w-5xl mx-auto">
-          {/* Main Headline */}
           <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight">
             <span className="block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">Stream Live Content</span>
             <span className="block text-transparent bg-gradient-to-r from-orange-400 via-pink-400 to-cyan-400 bg-clip-text text-4xl md:text-5xl mt-4 font-bold">
@@ -49,27 +71,25 @@ export default function Page() {
             </span>
           </h1>
 
-          {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
             Party from home with friends or solo. Join rooms. Go live. Connect with global vibes.
           </p>
 
-          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <Link
-              href="/discover"
-              className="group relative bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.5)] hover:shadow-[0_0_40px_rgba(59,130,246,0.8)]"
+            <button
+              onClick={() => (window.location.href = "/discover")}
+              className="group relative bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(59,130,246,0.5)] hover:shadow-[0_0_40px_rgba(59,130,246,0.8)] cursor-pointer"
             >
               <span className="relative z-10">Browse Rooms</span>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-300 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-            </Link>
-            <Link
-              href="/go-live"
-              className="group relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:shadow-[0_0_40px_rgba(147,51,234,0.8)]"
+            </button>
+            <button
+              onClick={() => (window.location.href = "/go-live")}
+              className="group relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:shadow-[0_0_40px_rgba(147,51,234,0.8)] cursor-pointer"
             >
               <span className="relative z-10">Go Live</span>
               <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -78,18 +98,13 @@ export default function Page() {
       <section className="relative z-10 px-6 mb-20">
         <div className="max-w-4xl mx-auto">
           <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
-            <Image
+            <img
               src="/hero-dj.jpg"
               alt="Featured Creator"
-              width={1200}
-              height={600}
               className="w-full h-80 md:h-96 object-cover transition-transform duration-700 group-hover:scale-105"
-              priority
             />
-            {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
 
-            {/* Live Chat Bubble */}
             <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl flex items-center gap-3 border border-white/20">
               <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
               <span className="text-cyan-400 font-bold text-lg">truegrooves</span>
@@ -97,10 +112,9 @@ export default function Page() {
               <span className="text-white/90 text-lg">Love this set!</span>
             </div>
 
-            {/* Live Indicator */}
             <div className="absolute top-6 left-6 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse flex items-center gap-2">
-              <div className="w-3 h-3 bg-white rounded-full animate-ping"></div>
-              <span>LIVE</span>
+              <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+              LIVE
             </div>
           </div>
         </div>
@@ -202,28 +216,26 @@ export default function Page() {
             Create a Room
           </h2>
           <p className="text-xl text-gray-300 mb-8">Ready to share your content with the world?</p>
-          <Link
-            href="/go-live"
-            className="group relative inline-block bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 hover:from-orange-600 hover:via-pink-600 hover:to-purple-700 text-white px-16 py-5 rounded-3xl font-black text-2xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_40px_rgba(251,146,60,0.6)] hover:shadow-[0_0_60px_rgba(251,146,60,0.8)]"
+          <button
+            onClick={() => (window.location.href = "/go-live")}
+            className="group relative inline-block bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 hover:from-orange-600 hover:via-pink-600 hover:to-purple-700 text-white px-16 py-5 rounded-3xl font-black text-2xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_40px_rgba(251,146,60,0.6)] hover:shadow-[0_0_60px_rgba(251,146,60,0.8)] cursor-pointer"
           >
             <span className="relative z-10">Go Live Now</span>
             <div className="absolute inset-0 bg-gradient-to-r from-orange-300 to-purple-400 rounded-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-          </Link>
+          </button>
         </div>
       </section>
 
       {/* Join Live Room Button */}
       <section className="relative z-10 text-center pb-20">
-        <Link
-          href="https://mixandmingle.daily.co/onFsceKakRamUvWONG5y"
-          target="_blank"
-          className="inline-block bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.8)]"
+        <button
+          onClick={() => window.open("https://mixandmingle.daily.co/onFsceKakRamUvWONG5y", "_blank")}
+          className="inline-block bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.8)] cursor-pointer"
         >
           🔴 Join Live Room
-        </Link>
+        </button>
       </section>
 
-      {/* Bottom Glow Effect */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-900/20 to-transparent"></div>
     </div>
   )

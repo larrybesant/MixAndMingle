@@ -267,7 +267,6 @@ export default function DemoLoginPage() {
             <Link
               href="/signup"
               className="text-purple-400 hover:text-purple-300 underline transition-colors duration-200"
-              data-testid="signup-link"
             >
               Sign up
             </Link>
