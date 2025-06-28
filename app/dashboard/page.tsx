@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Users,
   MessageCircle,
@@ -19,13 +19,13 @@ import {
   TrendingUp,
   Bell,
   LogOut,
-} from "lucide-react"
+} from "lucide-react";
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock user data for demo
+  // Mock user data for demo (replace with real user data in production)
   const mockUser = {
     id: "demo-user-123",
     email: "john@example.com",
@@ -37,30 +37,29 @@ export default function DashboardPage() {
     is_dj: true,
     avatar_url: "",
     profile_completed: true,
-  }
+  };
 
   useEffect(() => {
     // Simulate loading then show dashboard
     const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [])
+      setIsLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSignOut = () => {
-    router.push("/demo-login")
-  }
+    router.push("/login");
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-900/20 to-black">
         <div className="text-xl text-white">Loading your dashboard...</div>
       </div>
-    )
+    );
   }
 
-  const profileCompletion = 85
+  const profileCompletion = 85;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-purple-900/20 to-black">
@@ -70,22 +69,25 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Avatar className="w-12 h-12">
-                <AvatarImage src={mockUser.avatar_url || "/placeholder.svg"} alt={mockUser.full_name} />
+                <AvatarImage src={mockUser.avatar_url || "/placeholder.svg"} alt={mockUser.full_name || 'User avatar'} />
                 <AvatarFallback className="bg-purple-600 text-white">
-                  {mockUser.full_name
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
+                  {mockUser.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-2xl font-bold text-white">Welcome back, {mockUser.full_name?.split(" ")[0]}!</h1>
+                <h1 role="heading" aria-level={1} className="text-2xl font-bold text-white">
+                  Welcome back, {mockUser.full_name?.split(" ")[0]}!
+                </h1>
                 <p className="text-gray-400">@{mockUser.username}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" className="border-purple-400 text-purple-400 hover:bg-purple-400/10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-purple-400 text-purple-400 hover:bg-purple-400/10 focus-visible:ring-2 focus-visible:ring-purple-400"
+                aria-label="Notifications"
+              >
                 <Bell className="w-4 h-4 mr-2" />
                 Notifications
               </Button>
@@ -93,7 +95,8 @@ export default function DashboardPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => router.push("/profile-setup")}
-                className="border-purple-400 text-purple-400 hover:bg-purple-400/10"
+                className="border-purple-400 text-purple-400 hover:bg-purple-400/10 focus-visible:ring-2 focus-visible:ring-purple-400"
+                aria-label="Edit Profile"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profile
@@ -102,7 +105,8 @@ export default function DashboardPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleSignOut}
-                className="border-red-400 text-red-400 hover:bg-red-400/10"
+                className="border-red-400 text-red-400 hover:bg-red-400/10 focus-visible:ring-2 focus-visible:ring-red-400"
+                aria-label="Sign Out"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
@@ -140,8 +144,7 @@ export default function DashboardPage() {
                     <Button
                       size="sm"
                       onClick={() => {
-                        console.log("Complete Profile clicked!")
-                        window.location.href = "/profile-setup"
+                        window.location.href = "/profile-setup";
                       }}
                       className="bg-orange-600 hover:bg-orange-700 text-white"
                     >
@@ -162,11 +165,7 @@ export default function DashboardPage() {
                   <Avatar className="w-20 h-20 mx-auto mb-4">
                     <AvatarImage src={mockUser.avatar_url || "/placeholder.svg"} alt={mockUser.full_name} />
                     <AvatarFallback className="bg-purple-600 text-white text-xl">
-                      {mockUser.full_name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()}
+                      {mockUser.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <h3 className="text-xl font-bold text-white">{mockUser.full_name}</h3>
@@ -212,28 +211,32 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <Button
                     onClick={() => router.push("/rooms")}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 h-16 flex-col"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 h-16 flex-col focus-visible:ring-2 focus-visible:ring-purple-400"
+                    aria-label="Join Room"
                   >
                     <Radio className="w-6 h-6 mb-1" />
                     <span className="text-sm">Join Room</span>
                   </Button>
                   <Button
                     onClick={() => router.push("/matchmaking")}
-                    className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 h-16 flex-col"
+                    className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 h-16 flex-col focus-visible:ring-2 focus-visible:ring-pink-400"
+                    aria-label="Find Matches"
                   >
                     <Heart className="w-6 h-6 mb-1" />
                     <span className="text-sm">Find Matches</span>
                   </Button>
                   <Button
                     onClick={() => router.push("/go-live")}
-                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 h-16 flex-col"
+                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 h-16 flex-col focus-visible:ring-2 focus-visible:ring-green-400"
+                    aria-label="Go Live"
                   >
                     <Play className="w-6 h-6 mb-1" />
                     <span className="text-sm">Go Live</span>
                   </Button>
                   <Button
                     onClick={() => router.push("/messages")}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 h-16 flex-col"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 h-16 flex-col focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    aria-label="Messages"
                   >
                     <MessageCircle className="w-6 h-6 mb-1" />
                     <span className="text-sm">Messages</span>
@@ -253,22 +256,38 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { name: "House Vibes Only", dj: "DJ Sarah", listeners: 234, genre: "House" },
-                    { name: "Late Night Techno", dj: "DJ Mike", listeners: 156, genre: "Techno" },
-                    { name: "Hip-Hop Classics", dj: "DJ Alex", listeners: 89, genre: "Hip-Hop" },
+                    {
+                      name: "House Vibes Only",
+                      dj: "DJ Sarah",
+                      listeners: 234,
+                      genre: "House",
+                    },
+                    {
+                      name: "Late Night Techno",
+                      dj: "DJ Mike",
+                      listeners: 156,
+                      genre: "Techno",
+                    },
+                    {
+                      name: "Hip-Hop Classics",
+                      dj: "DJ Alex",
+                      listeners: 89,
+                      genre: "Hip-Hop",
+                    },
                   ].map((room, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg"
+                    >
                       <div>
-                        <h4 className="font-semibold text-white">{room.name}</h4>
+                        <h2 className="font-semibold text-white text-lg">{room.name}</h2>
                         <p className="text-sm text-gray-400">by {room.dj}</p>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="outline" className="border-purple-400 text-purple-400 text-xs">
-                            {room.genre}
-                          </Badge>
+                          <Badge variant="outline" className="border-purple-400 text-purple-400 text-xs">{room.genre}</Badge>
                           <span className="text-xs text-gray-400">{room.listeners} listening</span>
                         </div>
                       </div>
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-purple-400" aria-label={`Join ${room.name}`}>
                         Join
                       </Button>
                     </div>
@@ -288,10 +307,26 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-3">
                   {[
-                    { type: "match", text: "New match with Emma!", time: "2h ago" },
-                    { type: "room", text: 'Joined "Chill Vibes" room', time: "4h ago" },
-                    { type: "message", text: "Message from Alex", time: "6h ago" },
-                    { type: "like", text: "Someone liked your profile", time: "1d ago" },
+                    {
+                      type: "match",
+                      text: "New match with Emma!",
+                      time: "2h ago",
+                    },
+                    {
+                      type: "room",
+                      text: 'Joined "Chill Vibes" room',
+                      time: "4h ago",
+                    },
+                    {
+                      type: "message",
+                      text: "Message from Alex",
+                      time: "6h ago",
+                    },
+                    {
+                      type: "like",
+                      text: "Someone liked your profile",
+                      time: "1d ago",
+                    },
                   ].map((activity, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
@@ -323,12 +358,9 @@ export default function DashboardPage() {
                     <div key={index} className="flex items-center space-x-3">
                       <div className="relative">
                         <Avatar className="w-8 h-8">
-                          <AvatarImage src={friend.avatar || "/placeholder.svg"} alt={friend.name} />
+                          <AvatarImage src={friend.avatar || "/placeholder.svg"} alt={friend.name || 'Friend avatar'} />
                           <AvatarFallback className="bg-purple-600 text-white text-xs">
-                            {friend.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
+                            {friend.name.split(" ").map((n) => n[0]).join("")}
                           </AvatarFallback>
                         </Avatar>
                         <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black"></div>
@@ -342,24 +374,9 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Demo Notice */}
-            <Card className="bg-green-900/20 border-green-500/30">
-              <CardContent className="pt-6">
-                <div className="text-center space-y-2">
-                  <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-                    <Play className="w-4 h-4 text-green-400" />
-                  </div>
-                  <h3 className="text-green-400 font-semibold">Demo Mode Active</h3>
-                  <p className="text-sm text-gray-300">
-                    You're experiencing the full Mix & Mingle interface with sample data.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

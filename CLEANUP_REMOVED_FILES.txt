@@ -1,0 +1,34 @@
+Removed the following files/folders for beta production cleanup:
+
+- app/auth-debug/
+- app/auth-fix/
+- app/bare-test/
+- app/basic-html-test/
+- app/basic-test/
+- app/button-test/
+- app/minimal-test/
+- app/test-buttons/
+- app/test-connection/
+- app/test-dashboard/
+- app/dashboard-fixed/
+- app/demo-dashboard/
+- app/demo-login/
+- app/env-test/
+- app/quick-signup/
+- app/real-login/
+- app/rooms-fixed/
+- app/simple-signup/
+- test-failure-flow-webkit.png
+- test-failure-flow-firefox.png
+- test-failure-flow-chromium.png
+- test-failure-app-flow-webkit.png
+- test-failure-app-flow-firefox.png
+- test-failure-app-flow-chromium.png
+- test-405-fix.js
+- scripts/test-ui-components.ts
+- scripts/test-supabase-key.ts
+- scripts/test-supabase-connection.ts
+- debug-signup-navigation.png
+- debug-room-heading.png
+- e2e/basic.spec.ts
+- e2e/hello.e2e.spec.ts
